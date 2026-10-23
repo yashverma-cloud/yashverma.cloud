@@ -15,7 +15,9 @@
  */
 import { Group } from 'three';
 import type { CameraState, Vec3 } from '../world';
-import type { DrawingScene } from '../engine/scene';
+import type { DrawingScene, LabelState } from '../engine/scene';
+import type { SceneView } from './catalogue';
+import { win } from './plot';
 import { FillLayer, INK, ORDER, plotBox, plotLoop, SolidLayer, StrokeLayer, WEIGHT, type Stroke } from '../engine/kit';
 import { BEATS, layout, type NodeBox } from './karpenter-plan';
 
@@ -182,6 +184,20 @@ export class KarpenterScene implements DrawingScene {
     return this.time;
   }
 
+  /** The waiting pod, the NodeClaim's clock to about 80 seconds, the node counter to 100+. */
+  labels(t: number): LabelState[] {
+    const ready = t >= BEATS.ready + 0.3;
+    const secs = Math.min(1, Math.max(0, (t - BEATS.provision) / (BEATS.ready - BEATS.provision))) * 80;
+    const s = Math.max(0, Math.round(secs));
+    const clock = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    const drawn = this.drawnNodes(t);
+    return [
+      { id: 'pending', anchor: this.anchors.pending, text: ready ? 'pod: running' : 'pod: pending', amber: !ready, show: win(t, 0.78, 2.6, 0.08), dx: 46, dy: -30 },
+      { id: 'node', anchor: this.anchors.node, text: t < BEATS.ready ? 'NodeClaim' : 'node: ready', tick: clock, show: win(t, 1.0, 2.95, 0.08), dx: 54, dy: 18 },
+      { id: 'field', anchor: this.anchors.field, text: 'nodes', tick: drawn >= 100 ? '100+' : String(drawn), show: win(t, BEATS.scale, BEATS.end + 1, 0.08), dx: 36, dy: -26 },
+    ];
+  }
+
   dispose(): void {
     this.strokes.dispose();
     this.fills.dispose();
@@ -189,3 +205,6 @@ export class KarpenterScene implements DrawingScene {
     this.pending.dispose();
   }
 }
+
+export const view: SceneView = { target: [8, 4, -16], from: [70, 170, 330], to: [56, 124, 262], dawn: 0.92 };
+export const create = (origin?: Vec3) => new KarpenterScene(origin);

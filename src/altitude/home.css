@@ -1,0 +1,140 @@
+/*
+ * The home page beyond the shared flight styles: the breaks in the cloud (one plate per
+ * featured case study), the ground sections, and contact landing on the horizon at sunrise.
+ */
+
+/* --- The breaks: title top left, beats low left, the drawing owns the rest ------------- */
+
+.plate-scene .case-copy {
+  grid-template-rows: auto 1fr auto;
+}
+
+.plate-scene .beats {
+  grid-column: 1 / span 5;
+  grid-row: 3;
+  display: grid;
+  align-content: end;
+}
+
+/* Live: the beats replace each other in one place; still: they read down in flow. */
+[data-mode='live'] .plate-scene .beats {
+  grid-template-areas: 'beat';
+}
+
+[data-mode='live'] .plate-scene .sbeat {
+  grid-area: beat;
+  align-self: end;
+  opacity: 0;
+}
+
+/* The link waits until the last beat and stays with it. */
+[data-mode='live'] .plate-scene .sbeat-link {
+  align-self: end;
+  transform: translateY(calc(100% + var(--space-s)));
+}
+
+.plate-scene .sbeat {
+  max-width: 26em;
+  text-wrap: pretty;
+}
+
+.plate-scene .sbeat-figure {
+  color: var(--ink-2);
+  font-size: var(--t-lead);
+  line-height: 1.35;
+}
+
+.plate-scene .sbeat-figure .figure {
+  display: block;
+  font-size: var(--t-display);
+  line-height: var(--lh-display);
+  font-weight: 300;
+  font-stretch: var(--wdth-display);
+  letter-spacing: var(--tr-display);
+  color: var(--ink);
+}
+
+.plate-scene .sbeat-link .case-link {
+  font-weight: 560;
+}
+
+.proof-figure.none {
+  display: none;
+}
+
+.proof-row a:has(.proof-figure.none) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.proof-row a:has(.proof-figure.none) .proof-result {
+  font-size: 0.5em;
+  color: var(--ink);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .plate-scene .beats {
+    grid-column: 1 / -1;
+  }
+}
+
+:root:not([data-mode='live']) .plate-scene .plate-copy {
+  min-height: 100svh;
+  row-gap: var(--space-m);
+}
+
+:root:not([data-mode='live']) .plate-scene .beats {
+  row-gap: var(--space-s);
+}
+
+/* --- The ground ----------------------------------------------------------------------- */
+
+.ground {
+  position: relative;
+  z-index: var(--z-copy);
+  background: var(--sheet);
+}
+
+/* Live: the ground rises over the scene, which fades into it. */
+[data-mode='live'] .ground {
+  margin-top: -40svh;
+  padding-top: 40svh;
+  background: linear-gradient(to bottom, rgb(14 34 64 / 0), var(--sheet) 40svh);
+}
+
+.ground-section {
+  padding-block: var(--space-2xl);
+}
+
+.ground-section + .ground-section {
+  border-top: var(--w-hairline) solid var(--rule-faint);
+}
+
+/* --- Contact, on the horizon at sunrise --------------------------------------------------- */
+
+.landing {
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-block: var(--space-3xl) var(--space-2xl);
+  background: var(--dawn);
+}
+
+.landing :global(.landing-still),
+.landing .landing-still {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+/* A burn under the words, so they read on the lit ground. */
+.landing::before {
+  content: '';
+  position: absolute;
+  inset: 40% 0 0 0;
+  z-index: -1;
+  background: linear-gradient(to bottom, rgb(4 12 31 / 0), rgb(4 12 31 / 0.55) 60%);
+  pointer-events: none;
+}

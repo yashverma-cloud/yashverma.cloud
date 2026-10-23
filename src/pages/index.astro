@@ -1,20 +1,186 @@
 ---
-import Base from '../layouts/Base.astro';
-import Hero from '../components/Hero.astro';
-import Proof from '../components/Proof.astro';
-import Timeline from '../components/Timeline.astro';
-import Recognition from '../components/Recognition.astro';
-import Stack from '../components/Stack.astro';
-import Certifications from '../components/Certifications.astro';
-import Contact from '../components/Contact.astro';
+/**
+ * The home page: the Altitude descent. Above the cloud with the name on the horizon; down
+ * through the sea of cloud; the proof between the layers; four breaks in the cloud, each over
+ * one case study's system drawn on the survey sheet; then the ground: experience, recognition,
+ * stack, credentials, and contact on the horizon at sunrise.
+ *
+ * Two ways in, one document. Live (WebGL2, motion allowed, no Save-Data): a fixed scene flies
+ * the descent and the copy is choreographed against it (src/altitude/home.ts). Still (reduced
+ * motion, no WebGL, Save-Data, JS off): each part is a composed still with its copy in flow.
+ */
+import { getCollection, getEntry } from 'astro:content';
+import Page from '../system/Page.astro';
+import Hero from '../system/components/Hero.astro';
+import ScenePoster from '../system/components/ScenePoster.astro';
+import SectionHeader from '../system/components/SectionHeader.astro';
+import FlightPath from '../system/components/FlightPath.astro';
+import Recognition from '../system/components/Recognition.astro';
+import Stack from '../system/components/Stack.astro';
+import RunbookLink from '../system/components/RunbookLink.astro';
+import Credentials from '../system/components/Credentials.astro';
+import Contact from '../system/components/Contact.astro';
+import { poster } from '../altitude/posters';
+import { FEATURED } from '../altitude/flights/featured';
+import '../altitude/flight.css';
+import '../altitude/home.css';
+
+const work = (await getCollection('work', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+const figure = (f: string) => f.replace(/^(\d+)s$/, '$1 s');
+const featured = await Promise.all(
+  FEATURED.map(async (f) => {
+    const entry = await getEntry('work', f.slug);
+    if (!entry) throw new Error(`${f.slug} is missing`);
+    return { ...f, entry, still: (await poster(`scenes/home-${f.slug}`)) ?? (await poster(`scenes/${f.slug}`)) };
+  }),
+);
+const stills = {
+  hero: (await poster('scenes/home-hero')) ?? (await poster('lab/altitude/hero')),
+  between: (await poster('scenes/home-between')) ?? (await poster('lab/altitude/between')),
+  horizon: await poster('scenes/horizon'),
+};
 ---
 
-<Base>
-  <Hero />
-  <Proof />
-  <Timeline />
-  <Recognition />
-  <Stack />
-  <Certifications />
-  <Contact />
-</Base>
+<Page nav="over" wordmark={false} bodyClass="home">
+  <Fragment slot="head">
+    {
+      stills.hero && (
+        <link rel="preload" as="image" fetchpriority="high" imagesrcset={stills.hero.landAvif} imagesizes="100vw" type="image/avif" media="(min-aspect-ratio: 1/1)" />
+      )
+    }
+    {
+      stills.hero && (
+        <link rel="preload" as="image" fetchpriority="high" imagesrcset={stills.hero.portAvif} imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 1/1)" />
+      )
+    }
+    <script is:inline>
+      // Live or still, decided before first paint so nothing jumps; src/altitude/home.ts may
+      // still fall back to still if WebGL fails to start.
+      (function () {
+        var d = document.documentElement;
+        var q = new URLSearchParams(location.search);
+        var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var save = navigator.connection && navigator.connection.saveData;
+        var forced = q.get('mode');
+        d.dataset.mode = forced === 'still' || forced === 'live' ? forced : !reduce && 'WebGL2RenderingContext' in window && !save ? 'live' : 'still';
+      })();
+    </script>
+  </Fragment>
+
+  <div class="stage" aria-hidden="true">
+    {stills.hero ? <ScenePoster set={stills.hero} eager class="stage-poster" /> : <div class="stage-poster stage-paint" />}
+    <canvas class="stage-canvas" data-canvas></canvas>
+    <svg class="leaders" data-leaders></svg>
+    <div class="labels" data-labels></div>
+  </div>
+
+  <div class="tape" aria-hidden="true" data-tape>
+    <div class="tape-scale"><div class="tape-strip" data-tape-strip></div></div>
+    <p class="tape-read"><span data-tape-read>13,450</span> <span class="unit">ft</span></p>
+  </div>
+
+  <div class="flight" data-flight>
+    <section class="plate plate-hero" id="top" aria-labelledby="name" data-plate="hero">
+      {stills.hero && <ScenePoster set={stills.hero} class="plate-poster" />}
+      <div class="plate-copy">
+        <Hero />
+      </div>
+    </section>
+
+    <section class="plate plate-descent" aria-label="Summary" data-plate="descent">
+      <div class="plate-copy descent-copy bleed">
+        <p class="standfirst" data-descent>
+          Now at Copado: autoscaling, cost and observability across multi-region production infrastructure. Five years on
+          AWS and GCP, before that at BLG and Treebo.
+        </p>
+      </div>
+    </section>
+
+    <section class="plate plate-between" id="work" aria-labelledby="proof-head" data-plate="proof">
+      {stills.between && <ScenePoster set={stills.between} class="plate-poster" />}
+      <div class="plate-copy between-copy bleed">
+        <h2 class="visually-hidden" id="proof-head">Proof</h2>
+        <ul class="proof" role="list">
+          {
+            work.map((w) => (
+              <li class="proof-row" data-proof-row data-slug={w.id}>
+                <a href={`/work/${w.id}/`}>
+                  {w.data.figure ? <span class="proof-figure">{figure(w.data.figure)}</span> : <span class="proof-figure none" />}
+                  <span class="proof-result">{w.data.figure ? w.data.result : w.data.title}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </section>
+
+    {
+      featured.map((f) => (
+        <section class="plate plate-scene" id={`case-${f.slug}`} aria-labelledby={`case-${f.slug}-title`} data-plate={f.slug}>
+          {f.still && <ScenePoster set={f.still} class="plate-poster" alt={f.alt} />}
+          <div class="plate-copy case-copy bleed">
+            <header class="case-head" data-case-head>
+              <h2 class="case-title t-display" id={`case-${f.slug}-title`}>
+                {f.entry.data.title}
+              </h2>
+            </header>
+            <div class="beats">
+              {f.entry.data.figure && (
+                <p class="sbeat sbeat-figure" data-beat="0">
+                  <span class="figure">{figure(f.entry.data.figure)}</span> {f.entry.data.result}
+                </p>
+              )}
+              {f.beats.map((b, i) => (
+                <p class="sbeat" data-beat={i + 1}>
+                  {b}
+                </p>
+              ))}
+              <p class="sbeat sbeat-link" data-beat="link">
+                <a class="case-link" href={`/work/${f.slug}/`}>
+                  Read the case study
+                </a>
+              </p>
+            </div>
+          </div>
+        </section>
+      ))
+    }
+  </div>
+
+  <div class="ground" data-ground>
+    <section class="ground-section" id="experience" aria-labelledby="experience-title">
+      <SectionHeader title="Experience" id="experience-title" />
+      <FlightPath />
+    </section>
+
+    <section class="ground-section" id="recognition" aria-labelledby="recognition-title">
+      <SectionHeader title="Recognition" id="recognition-title" />
+      <Recognition />
+    </section>
+
+    <section class="ground-section" id="stack" aria-labelledby="stack-title">
+      <SectionHeader title="Stack" id="stack-title" />
+      <Stack />
+      <RunbookLink />
+    </section>
+
+    <section class="ground-section" id="certifications" aria-labelledby="certifications-title">
+      <SectionHeader title="Certifications and education" id="certifications-title" />
+      <Credentials />
+    </section>
+
+    <section class="ground-section landing" id="contact" aria-labelledby="contact-title">
+      {stills.horizon && <ScenePoster set={stills.horizon} class="landing-still" />}
+      <SectionHeader title="Work with me" id="contact-title" />
+      <Contact />
+    </section>
+  </div>
+
+  <p class="stats" data-stats hidden></p>
+
+  <script>
+    import { bootHome } from '../altitude/home';
+    bootHome();
+  </script>
+</Page>

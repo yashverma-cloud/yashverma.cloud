@@ -99,6 +99,8 @@ const writing = defineCollection({
      * publishes as soon as it is saved, which is why the writing contract always states it.
      */
     draft: z.boolean().default(false),
+    /** A note is short and dated, read in one go; an article is long form with headings. */
+    kind: z.enum(['note', 'article']).default('article'),
   }),
 });
 

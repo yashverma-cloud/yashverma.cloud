@@ -11,6 +11,24 @@
 import type { Group } from 'three';
 import type { CameraState, Orientation, Vec3 } from '../world';
 
+/** One label on a drawing: HTML in the data face, hung on a leader from a world point. */
+export interface LabelState {
+  id: string;
+  /** World point the leader starts from. */
+  anchor: Vec3;
+  /** State words only: pending, ready, a name. */
+  text: string;
+  /** A tabular value after the words: a clock, a counter. */
+  tick?: string;
+  /** 0 hidden to 1 shown. */
+  show: number;
+  /** A failure or waste state the case study describes. */
+  amber?: boolean;
+  /** Where the label sits from its anchor, in CSS px (scaled down on small screens). */
+  dx: number;
+  dy: number;
+}
+
 export interface DrawingScene {
   readonly group: Group;
   /** Named world points that HTML labels hang from. */
@@ -20,6 +38,10 @@ export interface DrawingScene {
   setViewport(width: number, height: number, dpr: number, near: number): void;
   /** `t` is the clock the director gives for this frame; `camera` is where it looks from. */
   update(t: number, camera: CameraState): void;
+  /** The drawing's labels at clock `t`. */
+  labels?(t: number): LabelState[];
+  /** The survey grid under the drawing, world x0, z0, x1, z1. */
+  readonly site?: [number, number, number, number];
   dispose(): void;
 }
 

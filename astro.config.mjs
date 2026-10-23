@@ -2,6 +2,7 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import { createHash } from 'node:crypto';
+import { readdirSync, readFileSync } from 'node:fs';
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -32,6 +33,15 @@ const hashInlineScripts = {
     },
   },
 };
+
+/**
+ * Whether any post is published. /writing/ is noindex until one is, so the sitemap leaves it
+ * out until then too. `draft` defaults to false in this collection, so only `draft: true` hides.
+ */
+const writingDir = fileURLToPath(new URL('./src/content/writing/', import.meta.url));
+const hasPublishedPosts = readdirSync(writingDir).some(
+  (f) => f.endsWith('.md') && !f.startsWith('_') && !/^draft:\s*true\s*$/m.test(readFileSync(join(writingDir, f), 'utf8')),
+);
 
 // Served from the root of yashverma.cloud by Cloudflare Pages, so no `base`.
 export default defineConfig({
@@ -64,10 +74,12 @@ export default defineConfig({
   },
   integrations: [
     sitemap({
-      // Bio short links redirect and must stay out of the index; /lab/ holds design prototypes.
+      // Bio short links redirect and must stay out of the index; /lab/ holds design prototypes;
+      // /writing/ joins the index with its first published post.
       filter: (page) => {
         const path = new URL(page).pathname;
         if (path.startsWith('/lab/')) return false;
+        if (path.startsWith('/writing') && !hasPublishedPosts) return false;
         return !['/in', '/ig', '/fb', '/x', '/threads'].includes(path.replace(/\/$/, ''));
       },
     }),

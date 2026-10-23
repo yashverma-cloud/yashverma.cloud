@@ -1,36 +1,22 @@
 ---
 import type { GetStaticPaths } from 'astro';
 import { getCollection, render } from 'astro:content';
-import Base from '../../layouts/Base.astro';
+import Page from '../../system/Page.astro';
+import SceneFrame from '../../system/components/SceneFrame.astro';
+import ScenePoster from '../../system/components/ScenePoster.astro';
+import { poster } from '../../altitude/posters';
+import { SCENES } from '../../altitude/scenes/catalogue';
 import { SITE } from '../../consts';
-import CostBars from '../../components/diagrams/CostBars.astro';
-import CutoverTimeline from '../../components/diagrams/CutoverTimeline.astro';
-import AlertPath from '../../components/diagrams/AlertPath.astro';
-import ScalingCurve from '../../components/diagrams/ScalingCurve.astro';
-import AuthFlow from '../../components/diagrams/AuthFlow.astro';
-import DropInInterface from '../../components/diagrams/DropInInterface.astro';
 
 /**
- * Case-study pages — design/notes.md §5.4.
+ * Case-study pages. Each opens on its own scene: the system drawn as white linework on the
+ * survey sheet, playing once as the page opens (live), or its rendered still. Then the case
+ * study itself: Problem, What I did, Result, with the labels in the margin.
  *
- * Only non-draft entries generate a page, so the site never ships a case study with a
- * placeholder body. Each entry is pinned to one drawing (design/notes.md §7.6): four
- * "animated blueprint SVGs" chosen freely would have become four boxes-and-arrows
- * pictures, which is a logo wall in a different vocabulary.
+ * Only non-draft entries generate a page, so the site never ships a placeholder.
  */
-const DIAGRAMS = {
-  'cloud-cost-optimisation': CostBars,
-  'live-migration-to-kubernetes': CutoverTimeline,
-  'alert-payload-reduction': AlertPath,
-  'karpenter-autoscaling': ScalingCurve,
-  'jarvis-slack-ops': AuthFlow,
-  'sendmail-ses-cli': DropInInterface,
-} as const;
-
 export const getStaticPaths = (async () => {
-  const work = (await getCollection('work', ({ data }) => !data.draft)).sort(
-    (a, b) => a.data.order - b.data.order,
-  );
+  const work = (await getCollection('work', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
   return work.map((entry, i) => ({
     params: { slug: entry.id },
     props: { entry, next: work[(i + 1) % work.length] },
@@ -39,150 +25,241 @@ export const getStaticPaths = (async () => {
 
 const { entry, next } = Astro.props;
 const { Content } = await render(entry);
-const Figure = DIAGRAMS[entry.id as keyof typeof DIAGRAMS];
-
-// Employer attribution is deliberately absent for now (design/notes.md §8), so this
-// line is usually empty and the page goes straight from the title to the drawing.
+const scene = SCENES[entry.id as keyof typeof SCENES];
+const still = await poster(`scenes/${entry.id}`);
+const figure = entry.data.figure?.replace(/^(\d+)s$/, '$1 s');
 const meta = [entry.data.employer, entry.data.year].filter(Boolean).join(' · ');
-const description = [entry.data.figure, entry.data.result]
-  .filter(Boolean)
-  .join(' ')
-  .concat(`. ${entry.data.mechanism}.`);
+const description = [entry.data.figure, entry.data.result].filter(Boolean).join(' ').concat(`. ${entry.data.mechanism}.`);
 ---
 
-<Base
+<Page
   title={`${entry.data.title} — ${SITE.name}`}
   description={description}
   ogImage={`/og/work/${entry.id}.png`}
-  ogImageAlt={`Case study by ${SITE.name}: ${entry.data.title}.`}
+  ogImageAlt={`Case study by ${SITE.name}: ${entry.data.title}. ${scene?.alt ?? ''}`.trim()}
   ogType="article"
+  nav="over"
 >
-  <article class="section">
-    <div class="wrap">
-      <p class="micro back"><a href="/#work">← Work</a></p>
-      <h1 class="title">{entry.data.title}</h1>
-      {meta && <p class="micro meta">{meta}</p>}
+  <Fragment slot="head">
+    <script is:inline>
+      // Live or still, decided before first paint (src/altitude/work.ts may still fall back).
+      (function () {
+        var d = document.documentElement;
+        var q = new URLSearchParams(location.search);
+        var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var save = navigator.connection && navigator.connection.saveData;
+        var forced = q.get('mode');
+        d.dataset.mode = forced === 'still' || forced === 'live' ? forced : !reduce && 'WebGL2RenderingContext' in window && !save ? 'live' : 'still';
+      })();
+    </script>
+  </Fragment>
 
-      {Figure && <Figure fig={entry.data.order} />}
+  <div class="opening" data-work-stage={entry.id}>
+    {still && <ScenePoster set={still} alt={scene?.alt} eager class="still" />}
+    <canvas class="scene-canvas" data-canvas aria-hidden="true"></canvas>
+    <svg class="leaders" data-leaders aria-hidden="true"></svg>
+    <div class="labels" data-labels aria-hidden="true"></div>
+    <SceneFrame
+      id="case"
+      as="h1"
+      title={entry.data.title}
+      figure={figure}
+      result={entry.data.figure ? entry.data.result : undefined}
+    >
+      <p class="mechanism t-lead">{entry.data.mechanism}</p>
+    </SceneFrame>
+    <p class="back t-small"><a href="/#work">← Work</a></p>
+  </div>
 
-      <div class="prose-grid">
-        <Content />
-      </div>
-
-      {
-        next && next.id !== entry.id && (
-          <p class="next">
-            <span class="micro">Next</span>
-            <a href={`/work/${next.id}/`}>{next.data.title}</a>
-          </p>
-        )
-      }
+  <article class="case" aria-labelledby="case-title">
+    {meta && <p class="meta t-data bleed">{meta}</p>}
+    <div class="prose bleed">
+      <Content />
     </div>
+    {
+      next && next.id !== entry.id && (
+        <p class="next bleed">
+          <span class="t-small">Next</span>
+          <a class="t-title" href={`/work/${next.id}/`}>
+            {next.data.title}
+          </a>
+        </p>
+      )
+    }
   </article>
-</Base>
+
+  <script>
+    import { bootWork } from '../../altitude/work';
+    bootWork();
+  </script>
+</Page>
 
 <style>
-  .back {
-    margin-bottom: var(--s-8);
+  .opening {
+    position: relative;
+    isolation: isolate;
   }
 
-  .title {
-    font-size: var(--fs-display-l);
-    line-height: var(--lh-display-l);
-    letter-spacing: var(--tr-display-l);
-    max-width: 20ch;
-    margin-bottom: var(--s-8);
+  /* Still, then the live scene over it in the same box (the crossfade moves nothing), then
+     the labels, then the words. */
+  .opening :global(.still),
+  .scene-canvas,
+  .leaders,
+  .labels {
+    position: absolute;
+    inset: 0 0 auto 0;
+    width: 100%;
+    height: 100lvh;
+    pointer-events: none;
+  }
+
+  .opening :global(.still) {
+    z-index: 0;
+  }
+
+  .scene-canvas {
+    z-index: 1;
+    opacity: 0;
+    transition: opacity var(--dur-slow) var(--ease-settle);
+  }
+
+  .opening[data-stage='on'] .scene-canvas {
+    opacity: 1;
+  }
+
+  .leaders,
+  .labels {
+    z-index: 2;
+  }
+
+  .opening :global(.frame) {
+    z-index: 3;
+    background: transparent;
+  }
+
+  .leaders :global(line) {
+    stroke: var(--ink-2);
+    stroke-width: var(--w-hairline);
+    vector-effect: non-scaling-stroke;
+  }
+
+  .labels :global(.label) {
+    position: absolute;
+    left: 0;
+    top: 0;
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: var(--t-data);
+    letter-spacing: var(--tr-data);
+    color: var(--ink);
+    opacity: 0;
+  }
+
+  .labels :global(.label[data-amber]) {
+    color: var(--sun);
+  }
+
+  .labels :global(.label .tick) {
+    color: var(--ink-2);
+  }
+
+  .back {
+    position: absolute;
+    z-index: 4;
+    left: var(--margin);
+    top: calc(env(safe-area-inset-top) + var(--nav-h) + var(--space-s));
+  }
+
+  .back a {
+    color: var(--ink-2);
+  }
+
+  .mechanism {
+    color: var(--ink-2);
+    max-width: 24em;
+  }
+
+  :root:not([data-mode='live']) .scene-canvas,
+  :root:not([data-mode='live']) .leaders,
+  :root:not([data-mode='live']) .labels {
+    display: none;
+  }
+
+  .case {
+    position: relative;
+    z-index: var(--z-copy);
+    background: var(--sheet);
+    padding-block: var(--space-2xl) var(--space-3xl);
+    border-top: var(--w-hairline) solid var(--rule-faint);
   }
 
   .meta {
-    margin-top: calc(var(--s-8) * -1 + var(--s-3));
-    margin-bottom: var(--s-8);
+    color: var(--ink-2);
+    margin-bottom: var(--space-l);
   }
 
   /*
-   * Problem / What I did / Result. On a phone the label sits above its prose; from 48rem
-   * it becomes a real left column, as in the wireframe.
-   *
-   * The two-column version leans on grid's sparse auto-placement: every label is pinned
-   * to column 1 and everything else to column 2, and because a column-1 item after a
-   * column-2 item forces the cursor onto a new row, each label lands level with the
-   * first paragraph of its own section. Nothing here depends on how many paragraphs a
-   * section has, which is the reason for doing it this way rather than wrapping each
-   * section in markup the markdown cannot produce.
+   * Problem / What I did / Result: each label in the margin, level with its first paragraph.
+   * Every label is pinned to the first columns and everything else to the text columns, so
+   * grid auto-placement starts a new row at each label (as the v2 page did).
    */
-  .prose-grid {
+  .prose {
+    row-gap: var(--space-s);
+    align-items: start;
+  }
+
+  .prose > :global(h2) {
+    grid-column: 1 / span 3;
+    font-size: var(--t-small);
+    font-weight: 560;
+    color: var(--ink-2);
+    padding-top: 0.35em;
+    border-top: var(--w-hairline) solid var(--rule);
+  }
+
+  .prose > :global(:not(h2)) {
+    grid-column: 4 / span 7;
+    max-width: var(--measure);
+  }
+
+  .prose > :global(h2:not(:first-child)),
+  .prose > :global(h2:not(:first-child) + *) {
+    margin-top: var(--space-xl);
+  }
+
+  .prose > :global(ul) {
+    padding-left: 1.2em;
     display: grid;
-    row-gap: var(--s-4);
-    --prose-measure: var(--measure-prose);
+    row-gap: var(--space-2xs);
   }
 
-  .prose-grid > :global(h2) {
-    font-size: var(--fs-micro);
-    line-height: var(--lh-micro);
-    letter-spacing: var(--tr-micro);
-    font-weight: 600;
-    color: var(--muted);
-    padding-bottom: var(--s-2);
-    border-bottom: 1px solid var(--rule-faint);
-  }
-
-  .prose-grid > :global(h2:not(:first-child)) {
-    margin-top: var(--s-12);
-  }
-
-  .prose-grid > :global(p),
-  .prose-grid > :global(ul) {
-    max-width: var(--measure-prose);
-  }
-
-  .prose-grid > :global(pre) {
-    max-width: min(100%, var(--prose-measure));
-  }
-
-  .prose-grid > :global(ul) {
-    padding-left: var(--s-4);
-  }
-
-  .prose-grid > :global(li) {
-    margin-bottom: var(--s-2);
-  }
-
-  @media (min-width: 48rem) {
-    .prose-grid {
-      grid-template-columns: 10rem minmax(0, 1fr);
-      column-gap: var(--s-8);
-      align-items: start;
-    }
-
-    .prose-grid > :global(h2) {
-      grid-column: 1;
-      margin-top: 0.35em;
-    }
-
-    .prose-grid > :global(:not(h2)) {
-      grid-column: 2;
-    }
-
-    /* The label and the paragraph beside it share a grid row, so the space between
-       sections has to be pushed onto both. Putting it on the label alone drops the
-       label below its own opening paragraph, which reads as a mistake. */
-    .prose-grid > :global(h2:not(:first-child)) {
-      margin-top: calc(var(--s-12) + 0.35em);
-    }
-
-    .prose-grid > :global(h2:not(:first-child) + *) {
-      margin-top: var(--s-12);
-    }
+  .prose > :global(pre) {
+    max-width: min(100%, 52rem);
   }
 
   .next {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--s-2) var(--s-4);
-    margin-top: var(--s-16);
-    padding-top: var(--s-4);
-    border-top: 1px solid var(--rule-faint);
-    font-size: var(--fs-body-l);
+    margin-top: var(--space-2xl);
+    padding-top: var(--space-m);
+    border-top: var(--w-hairline) solid var(--rule-faint);
+    row-gap: var(--space-2xs);
+  }
+
+  .next span {
+    color: var(--ink-2);
+  }
+
+  .next a {
+    grid-column: 1 / span 9;
+  }
+
+  @media (max-width: 60rem) {
+    .prose > :global(h2),
+    .prose > :global(:not(h2)) {
+      grid-column: 1 / -1;
+    }
+
+    .prose > :global(h2:not(:first-child) + *) {
+      margin-top: 0;
+    }
   }
 </style>

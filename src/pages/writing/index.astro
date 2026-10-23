@@ -1,0 +1,36 @@
+---
+import { getCollection } from 'astro:content';
+import Page from '../../system/Page.astro';
+import SectionHeader from '../../system/components/SectionHeader.astro';
+import WritingList from '../../system/components/WritingList.astro';
+import { SITE } from '../../consts';
+
+/**
+ * The writing list: notes and articles, newest first. Drafts never appear anywhere. While
+ * nothing is published the page says so, carries noindex, and stays out of the sitemap
+ * (astro.config.mjs) and the nav (Nav.astro).
+ */
+const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort((a, b) =>
+  b.data.published === a.data.published ? a.id.localeCompare(b.id) : b.data.published.localeCompare(a.data.published),
+);
+const rows = posts.map((p) => ({ id: p.id, title: p.data.title, description: p.data.description, published: p.data.published, kind: p.data.kind }));
+---
+
+<Page
+  title={`Writing — ${SITE.name}`}
+  description="Postmortems and notes on running production infrastructure — Kubernetes, autoscaling, cost and observability on AWS and GCP."
+  noindex={posts.length === 0}
+>
+  <div class="writing">
+    <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
+    <WritingList posts={rows} />
+  </div>
+</Page>
+
+<style>
+  .writing {
+    min-height: 70svh;
+    padding-block: calc(var(--nav-h) + var(--space-2xl)) var(--space-3xl);
+    background: var(--night);
+  }
+</style>

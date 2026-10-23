@@ -1,0 +1,58 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render } from 'astro:content';
+import Page from '../../system/Page.astro';
+import Article from '../../system/templates/Article.astro';
+import Note from '../../system/templates/Note.astro';
+import { SITE } from '../../consts';
+
+/**
+ * A post: a note (short, dated, read in one go) or an article (long form). Only published
+ * entries build, so a draft has no page, no card and no sitemap entry.
+ */
+export const getStaticPaths = (async () => {
+  const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort((a, b) =>
+    b.data.published === a.data.published ? a.id.localeCompare(b.id) : b.data.published.localeCompare(a.data.published),
+  );
+  return posts.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}) satisfies GetStaticPaths;
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const canonical = new URL(Astro.url.pathname, SITE.url).href;
+const ogImage = `/og/writing/${entry.id}.png`;
+const postLd = {
+  '@type': 'BlogPosting',
+  '@id': `${canonical}#post`,
+  headline: entry.data.title,
+  description: entry.data.description,
+  datePublished: entry.data.published,
+  ...(entry.data.updated ? { dateModified: entry.data.updated } : {}),
+  author: { '@id': `${SITE.url}/#person` },
+  publisher: { '@id': `${SITE.url}/#person` },
+  image: new URL(ogImage, SITE.url).href,
+  mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+  inLanguage: 'en',
+};
+---
+
+<Page
+  title={`${entry.data.title} — ${SITE.name}`}
+  description={entry.data.description}
+  ogImage={ogImage}
+  ogImageAlt={`Writing by ${SITE.name}: ${entry.data.title}.`}
+  ogType="article"
+  jsonLd={postLd}
+>
+  {
+    entry.data.kind === 'note' ? (
+      <Note title={entry.data.title} published={entry.data.published}>
+        <Content />
+      </Note>
+    ) : (
+      <Article title={entry.data.title} description={entry.data.description} published={entry.data.published} updated={entry.data.updated}>
+        <Content />
+      </Article>
+    )
+  }
+</Page>

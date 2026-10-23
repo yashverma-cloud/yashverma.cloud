@@ -1,8 +1,8 @@
 import type { APIRoute } from 'astro';
-import { defaultCard, renderPng } from '../../og/card';
+import { homeCard, renderCard } from '../../og/altitude';
 
-/** The site-wide Open Graph image, rendered once at build time. */
+/** The site-wide Open Graph image: the hero at one size. Rendered once at build time. */
 export const GET: APIRoute = async () =>
-  new Response(new Uint8Array(await renderPng(defaultCard())), {
+  new Response(new Uint8Array(await renderCard(await homeCard())), {
     headers: { 'Content-Type': 'image/png' },
   });

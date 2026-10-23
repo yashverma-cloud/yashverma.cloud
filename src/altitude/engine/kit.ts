@@ -295,6 +295,7 @@ vec2 edgePixels(vec2 q) {
 const FILL_VERT = /* glsl */ `
 attribute float aT;
 attribute float aDur;
+attribute float aOut;
 uniform float uTime;
 varying vec3 vLocal;
 flat varying vec3 vN;
@@ -302,7 +303,7 @@ varying float vOpacity;
 void main() {
   vLocal = position;
   vN = normal;
-  vOpacity = smoothstep(aT + aDur * 0.85, aT + aDur * 1.2, uTime);
+  vOpacity = smoothstep(aT + aDur * 0.85, aT + aDur * 1.2, uTime) * (1.0 - smoothstep(aOut, aOut + 0.15, uTime));
   gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position + vec3(0.0, 0.5, 0.0), 1.0);
 }
 `;
@@ -335,7 +336,8 @@ export class FillLayer {
   private readonly material: ShaderMaterial;
   private readonly geometry: BoxGeometry;
 
-  constructor(boxes: (BoxSpec & { t: number; dur: number })[], alpha = 0.07) {
+  /** `out`: scene seconds when a wash lifts again (the plotter's eraser). */
+  constructor(boxes: (BoxSpec & { t: number; dur: number; out?: number })[], alpha = 0.07, tint?: Vec3) {
     this.geometry = new BoxGeometry(1, 1, 1);
     this.material = new ShaderMaterial({
       vertexShader: FILL_VERT,
@@ -343,7 +345,7 @@ export class FillLayer {
       uniforms: {
         uTime: { value: 0 },
         uKeyDir: shared.uKeyDir,
-        uTint: { value: new Color(0.75, 0.82, 0.9) },
+        uTint: { value: tint ? new Color(...tint) : new Color(0.75, 0.82, 0.9) },
         uAlpha: { value: alpha },
       },
       transparent: true,
@@ -356,14 +358,17 @@ export class FillLayer {
     const m = new Matrix4();
     const aT = new Float32Array(boxes.length);
     const aDur = new Float32Array(boxes.length);
+    const aOut = new Float32Array(boxes.length);
     boxes.forEach((b, i) => {
       m.makeScale(b.w, b.h, b.d).setPosition(b.x, b.y ?? 0, b.z);
       this.mesh.setMatrixAt(i, m);
       aT[i] = b.t;
       aDur[i] = b.dur;
+      aOut[i] = b.out ?? 1e9;
     });
     this.geometry.setAttribute('aT', new InstancedBufferAttribute(aT, 1));
     this.geometry.setAttribute('aDur', new InstancedBufferAttribute(aDur, 1));
+    this.geometry.setAttribute('aOut', new InstancedBufferAttribute(aOut, 1));
     this.mesh.name = 'fills';
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = ORDER.fills;
@@ -381,6 +386,7 @@ export class FillLayer {
 
 const SOLID_VERT = /* glsl */ `
 attribute float aT;
+attribute float aOut;
 uniform float uTime;
 uniform vec2 uResolution;
 flat varying vec3 vMin;
@@ -391,7 +397,7 @@ flat varying vec4 vHull2;
 flat varying float vHullN;
 void main() {
   // A solid grows out of its base when its time comes; aT < 0 means always there.
-  float on = aT < 0.0 ? 1.0 : smoothstep(aT, aT + 0.12, uTime);
+  float on = (aT < 0.0 ? 1.0 : smoothstep(aT, aT + 0.12, uTime)) * (1.0 - smoothstep(aOut, aOut + 0.12, uTime));
   float s = mix(0.2, 1.0, on);
   mat4 m = modelMatrix * instanceMatrix;
   // The exact box in world space: instances are scaled and moved, never turned.
@@ -532,7 +538,7 @@ export class SolidLayer {
   private readonly geometry: BufferGeometry;
 
   constructor(
-    solids: { pos: Vec3; size: Vec3; t: number }[],
+    solids: { pos: Vec3; size: Vec3; t: number; out?: number }[],
     color: Vec3,
     viewpoint: Vec3,
     order: number = ORDER.solids,
@@ -561,12 +567,15 @@ export class SolidLayer {
     this.mesh = new InstancedMesh(this.geometry, this.material, sorted.length);
     const m = new Matrix4();
     const aT = new Float32Array(sorted.length);
+    const aOut = new Float32Array(sorted.length);
     sorted.forEach((s, i) => {
       m.makeScale(s.size[0], s.size[1], s.size[2]).setPosition(s.pos[0], s.pos[1], s.pos[2]);
       this.mesh.setMatrixAt(i, m);
       aT[i] = s.t;
+      aOut[i] = s.out ?? 1e9;
     });
     this.geometry.setAttribute('aT', new InstancedBufferAttribute(aT, 1));
+    this.geometry.setAttribute('aOut', new InstancedBufferAttribute(aOut, 1));
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = order;
   }
