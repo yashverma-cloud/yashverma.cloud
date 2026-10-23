@@ -1,0 +1,118 @@
+---
+/**
+ * The case-study frame: a scene filling the screen, the title in its top-left corner, and the
+ * beats low on the left, clear of the drawing, which the camera keeps to the right (to the top
+ * on tall screens). Used for the breaks in the clouds on the home page and to open each case
+ * study. Without a live scene it shows the scene's rendered still.
+ */
+import type { PosterSet } from '../../altitude/posters';
+import ScenePoster from './ScenePoster.astro';
+
+interface Props {
+  id: string;
+  title: string;
+  /** Headline figure and what it measures, e.g. "80 s" / "from pending pod to a ready node". */
+  figure?: string;
+  result?: string;
+  href?: string;
+  poster?: PosterSet | null;
+  alt?: string;
+  eager?: boolean;
+  /** Heading level: h2 in a page's flow, h1 when the frame opens a case study. */
+  as?: 'h1' | 'h2';
+}
+
+const { id, title, figure, result, href, poster, alt = '', eager = false, as: Heading = 'h2' } = Astro.props;
+---
+
+<section class="frame" id={id} data-frame={id} aria-labelledby={`${id}-title`}>
+  {poster && <ScenePoster set={poster} alt={alt} eager={eager} class="frame-poster" />}
+  <div class="copy bleed">
+    <Heading class="title t-display" id={`${id}-title`} data-frame-title>{title}</Heading>
+    <div class="beats" data-frame-beats>
+      {
+        figure && (
+          <p class="fig" data-beat="figure">
+            <span class="num t-display figure">{figure}</span>
+            {result && <span class="res t-lead">{result}</span>}
+          </p>
+        )
+      }
+      <slot />
+      {
+        href && (
+          <p class="more t-small" data-beat="more">
+            <a href={href}>Read the case study</a>
+          </p>
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .frame {
+    position: relative;
+    display: grid;
+    min-height: 100svh;
+    isolation: isolate;
+    background: var(--sheet);
+  }
+
+  .frame > :global(*) {
+    grid-area: 1 / 1;
+  }
+
+  .frame :global(.frame-poster) {
+    position: sticky;
+    top: 0;
+    height: 100lvh;
+    z-index: -1;
+  }
+
+  .copy {
+    grid-template-rows: auto 1fr auto;
+    padding-block: calc(var(--space-3xl) + var(--space-s)) var(--space-xl);
+    row-gap: var(--space-l);
+  }
+
+  .title {
+    grid-column: 1 / span 6;
+    grid-row: 1;
+    max-width: 13em;
+  }
+
+  .beats {
+    grid-column: 1 / span 5;
+    grid-row: 3;
+    display: grid;
+    row-gap: var(--space-s);
+  }
+
+  .beats > :global(p:not(.fig):not(.more)) {
+    max-width: var(--measure);
+  }
+
+  .num {
+    display: block;
+    font-weight: 300;
+  }
+
+  .res {
+    display: block;
+    margin-top: var(--space-3xs);
+    color: var(--ink-2);
+  }
+
+  .more a {
+    color: var(--ink);
+    font-weight: 520;
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .title,
+    .beats {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

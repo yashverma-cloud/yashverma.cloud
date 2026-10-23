@@ -1,0 +1,44 @@
+---
+/** The 404's words: what happened, and the way home. */
+---
+
+<section class="nf bleed" aria-labelledby="nf-title">
+  <p class="code t-data">404</p>
+  <h1 class="title t-display" id="nf-title">This page doesn't exist.</h1>
+  <p class="standfirst t-lead">The address is wrong, or the page has moved. Nothing is on fire.</p>
+  <p class="home t-lead"><a href="/">Back to the home page</a></p>
+</section>
+
+<style>
+  .nf {
+    position: relative;
+    z-index: var(--z-copy);
+    align-content: center;
+    row-gap: var(--space-m);
+    min-height: 100svh;
+    padding-block: var(--space-3xl);
+  }
+
+  .code {
+    color: var(--ink-2);
+  }
+
+  .title,
+  .standfirst,
+  .home {
+    grid-column: 1 / span 8;
+  }
+
+  .standfirst {
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 48rem) {
+    .title,
+    .standfirst,
+    .home {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

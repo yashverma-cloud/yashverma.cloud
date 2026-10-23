@@ -20,6 +20,11 @@
   margin: 0;
 }
 
+:root {
+  /* The nav bar's height: a 44 px touch target or the label's line, whichever is taller. */
+  --nav-h: calc(max(44px, var(--t-small) * 1.5) + var(--space-xs) * 2);
+}
+
 html {
   background: var(--night);
   color-scheme: dark;
@@ -36,6 +41,8 @@ body {
   line-height: var(--lh-body);
   font-weight: var(--wght-body);
   font-stretch: var(--wdth-body);
+  /* Archivo's space is 0.21 em, tight for running text; display sizes set it back to normal. */
+  word-spacing: 0.05em;
   font-kerning: normal;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -68,6 +75,15 @@ textarea {
 .t-body,
 .t-small {
   font-family: var(--font-sans);
+}
+
+.t-name,
+.t-display {
+  word-spacing: normal;
+}
+
+.t-title {
+  word-spacing: 0.02em;
 }
 
 .t-name {
@@ -242,15 +258,23 @@ hr {
   border-top: var(--w-hairline) solid var(--rule-faint);
 }
 
-/* Rows separated by hairlines: the system's structural device, in place of cards. */
+/* Rows separated by hairlines: the system's structural device, in place of cards. The rules
+   run between the margins, like every other rule; each row lays out on the page's columns. */
 .rows {
   list-style: none;
   padding: 0;
+  margin-inline: max(var(--margin), env(safe-area-inset-left)) max(var(--margin), env(safe-area-inset-right));
   border-top: var(--w-hairline) solid var(--rule-faint);
 }
 
 .rows > li {
   border-bottom: var(--w-hairline) solid var(--rule-faint);
+}
+
+.row-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+  column-gap: var(--gap);
 }
 
 /* --- Buttons ----------------------------------------------------------------- */

@@ -1,0 +1,812 @@
+---
+/**
+ * The Altitude design system's living style guide: tokens, type, grid, line weights, layers,
+ * motion, the drawing kit (live), every component at 390, 1440 and 2560 px, and the identity.
+ * noindex, out of the sitemap and the navigation. Values come from src/system/tokens.mjs, so
+ * this page cannot drift from the code.
+ */
+import Page from '../../../system/Page.astro';
+import SectionHeader from '../../../system/components/SectionHeader.astro';
+import Monogram from '../../../system/components/Monogram.astro';
+import ScenePoster from '../../../system/components/ScenePoster.astro';
+import { poster } from '../../../altitude/posters';
+import {
+  colour,
+  contrast,
+  duration,
+  ease,
+  fluidAt,
+  GROUNDS,
+  grid,
+  layer,
+  space,
+  TEXT_PAIRS,
+  type,
+  weight,
+} from '../../../system/tokens.mjs';
+import { COMPONENTS, COMPONENT_NAMES as componentNames } from '../../../system/demos';
+import wordmarkSvg from '../../../../brand/altitude/wordmark.svg?raw';
+import lockupSvg from '../../../../brand/altitude/lockup.svg?raw';
+
+const close = await poster('lab/altitude/close');
+const wide = await poster('lab/altitude/wide');
+
+const swatch = (name: keyof typeof colour, role: string) => ({ name, hex: colour[name], role });
+const grounds = [
+  swatch('night', 'The top of the descent; the page ground, nav and footer.'),
+  swatch('deck', 'Between the layers; code and quiet panels.'),
+  swatch('dawn', 'The lowest sky; the ground of the last sections.'),
+  swatch('sheet', 'The survey sheet under the drawings.'),
+  swatch('raised', 'The one raised surface; hover and selection.'),
+];
+const inks = [
+  swatch('ink', 'Primary text and the filled button.'),
+  swatch('ink2', 'Secondary text: roles, results, descriptions.'),
+  swatch('ink3', 'Quiet text: meta, cues, the footer line.'),
+  swatch('line', 'The drawings’ white linework.'),
+  swatch('rule', 'Hairlines and component edges, 3:1 on every ground.'),
+  swatch('sun', 'Sunlight, and a failure or waste state the page describes. Nothing else.'),
+];
+const imagery = [
+  swatch('cloudLit', 'Cloud tops in the light.'),
+  swatch('cloudBody', 'Cloud body.'),
+  swatch('cloudShade', 'Cloud in shade.'),
+  swatch('horizon', 'The horizon band.'),
+  swatch('glow', 'The dawn glow.'),
+];
+const ratio = (fg: string, bg: string) => contrast(fg, bg).toFixed(1);
+const pairs = TEXT_PAIRS.map((p) => ({ ...p, r: contrast(colour[p.fg as keyof typeof colour], colour[p.bg as keyof typeof colour]) }));
+
+const roles: { key: keyof typeof type; sample: string; use: string }[] = [
+  { key: 'name', sample: 'Yash Verma', use: 'The name, on the horizon. Once per page.' },
+  { key: 'display', sample: 'Node autoscaling that keeps up with load', use: 'Section titles, statements, figures.' },
+  { key: 'title', sample: 'Infrastructure Engineer, Cloud Operations', use: 'Roles, list titles, sub-heads.' },
+  { key: 'lead', sample: 'LinkedIn is the fastest way to reach me.', use: 'Standfirsts, results, the role under the name.' },
+  { key: 'body', sample: 'A pod that cannot be placed waits, and how long it waits is decided entirely by how the cluster gets more capacity.', use: 'Paragraphs, at a 34em measure.' },
+  { key: 'small', sample: 'Built with Astro. Hosted on Cloudflare Pages.', use: 'Nav, buttons, meta, captions.' },
+  { key: 'data', sample: 'NodeClaim 01:20 · 13,450 ft · Mar 2026', use: 'Data only: readouts, labels on drawings, dates, code.' },
+];
+const curve = (c: number[]) => {
+  const [x1, y1, x2, y2] = c;
+  return `M0,100 C${x1 * 100},${100 - y1 * 100} ${x2 * 100},${100 - y2 * 100} 100,0`;
+};
+
+const sizes = [
+  [390, 844],
+  [1440, 900],
+  [2560, 1440],
+] as const;
+---
+
+<Page title="Altitude — design system" description="The design system for yashverma.cloud. Not linked from the site." noindex analytics={false}>
+  <article class="guide">
+    <header class="intro bleed">
+      <p class="t-data ink-3">yashverma.cloud · design system</p>
+      <h1 class="t-display">Altitude</h1>
+      <p class="t-lead ink-2 measure">
+        The page is a descent. It opens above a pre-dawn sea of cloud with the name on the horizon, and every screen down
+        is lower and closer: summary first, detail later. Case studies are breaks in the cloud with their systems drawn
+        as white linework on a survey sheet. Contact is at ground level.
+      </p>
+      <nav class="toc t-small" aria-label="On this page">
+        <a href="#colour">Colour</a><a href="#type">Type</a><a href="#space">Space and grid</a><a href="#weights">Line weights</a><a href="#layers">Layers</a><a href="#motion">Motion</a><a href="#kit">Drawing kit</a><a href="#components">Components</a><a href="#identity">Identity</a>
+      </nav>
+    </header>
+
+    <section class="block" aria-labelledby="colour">
+      <SectionHeader title="Colour" id="colour" lead="Grounds from the top of the descent to the ground; inks that meet AA on every one of them; imagery colours that never carry text." />
+      <div class="bleed">
+        <ul class="grounds" role="list">
+          {
+            grounds.map((g) => (
+              <li class="ground" style={`background:${g.hex}`}>
+                <p class="t-title">{g.name}</p>
+                <p class="t-data">{g.hex}</p>
+                <p class="t-small">{g.role}</p>
+                <p class="t-data samples">
+                  <span style={`color:${colour.ink}`}>ink {ratio(colour.ink, g.hex)}</span>
+                  <span style={`color:${colour.ink2}`}>ink-2 {ratio(colour.ink2, g.hex)}</span>
+                  <span style={`color:${colour.ink3}`}>ink-3 {ratio(colour.ink3, g.hex)}</span>
+                  <span style={`color:${colour.sun}`}>sun {ratio(colour.sun, g.hex)}</span>
+                </p>
+              </li>
+            ))
+          }
+        </ul>
+        <ul class="chips" role="list">
+          {
+            [...inks, ...imagery].map((c) => (
+              <li class="chip">
+                <span class="dot" style={`background:${c.hex}`} />
+                <span class="t-small">
+                  <strong>{c.name}</strong> <span class="t-data ink-3">{c.hex}</span>
+                </span>
+                <span class="t-small ink-2">{c.role}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <details class="pairs">
+          <summary class="t-small">Every checked pair ({pairs.length}), with its WCAG minimum</summary>
+          <table class="t-data">
+            <thead>
+              <tr><th>Foreground</th><th>Ground</th><th>Ratio</th><th>Minimum</th></tr>
+            </thead>
+            <tbody>
+              {
+                pairs.map((p) => (
+                  <tr>
+                    <td>{p.fg}</td><td>{p.bg}</td><td>{p.r.toFixed(2)}</td><td>{p.min}{p.edge ? ' (edge)' : ''}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </details>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="type">
+      <SectionHeader title="Type" id="type" lead="Archivo for display and text: the name set wide and light, like lettering on an aircraft; text at normal width. B612 Mono, the Airbus cockpit face, for data only. Seven sizes, each one linear clamp from 360 to 2560 px." />
+      <ul class="specimens" role="list">
+        {
+          roles.map((r) => {
+            const t = type[r.key];
+            return (
+              <li class="specimen bleed">
+                <div class="spec t-data ink-3">
+                  <p class="ink-2">{r.key}</p>
+                  <p>{t.min}–{t.max} px</p>
+                  <p>{'mono' in t ? 'B612 Mono 400' : `Archivo ${t.wght} · width ${t.wdth}`}</p>
+                  <p>leading {t.lh}</p>
+                </div>
+                <p class={`sample t-${r.key}`}>{r.sample}</p>
+                <p class="use t-small ink-2">{r.use}</p>
+              </li>
+            );
+          })
+        }
+        <li class="specimen bleed">
+          <div class="spec t-data ink-3">
+            <p class="ink-2">devanagari</p>
+            <p>Anek Devanagari 420</p>
+            <p>12 glyphs, 5.5 KB</p>
+          </div>
+          <p class="sample sa sa-big" lang="sa">साम्ब सदाशिव</p>
+          <p class="use t-small ink-2">The footer’s last line only: small, the quiet ink, never linked or highlighted.</p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="block" aria-labelledby="space">
+      <SectionHeader title="Space and grid" id="space" lead={`Twelve columns at every width between fluid margins (${grid.margin[0]}–${grid.margin[1]} px) and gaps (${grid.gap[0]}–${grid.gap[1]} px). No max-width: the composition fills the screen; only paragraphs keep a measure.`} />
+      <div class="bleed">
+        <ul class="spaces" role="list">
+          {
+            Object.entries(space).map(([k, [a, b]]) => (
+              <li>
+                <span class="t-data ink-3">{k}</span>
+                <span class="bar" style={`width:var(--space-${k})`} />
+                <span class="t-data ink-3">{a}–{b} px</span>
+              </li>
+            ))
+          }
+        </ul>
+        <div class="grid-demo" aria-hidden="true">
+          {Array.from({ length: 12 }, (_, i) => <span>{i + 1}</span>)}
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="weights">
+      <SectionHeader title="Line weights" id="weights" lead="The interface’s hairlines and the drawings’ strokes come from one list. A drawn stroke is never thinner than one device pixel." />
+      <ul class="weights bleed" role="list">
+        {
+          Object.entries(weight).map(([k, w]) => (
+            <li>
+              <svg viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true">
+                <line x1="0" y1="6" x2="400" y2="6" stroke={k === 'guide' ? colour.ink2 : colour.line} stroke-width={w} stroke-dasharray={k === 'guide' ? '6 6' : undefined} vector-effect="non-scaling-stroke" />
+              </svg>
+              <span class="t-data">{k} · {w} px</span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="block" aria-labelledby="layers">
+      <SectionHeader title="Layers" id="layers" />
+      <ol class="layers bleed t-data" role="list">
+        {
+          Object.entries(layer).map(([k, z]) => (
+            <li>
+              <span>{z}</span>
+              <span class="ink-2">{k}</span>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <section class="block" aria-labelledby="motion">
+      <SectionHeader title="Motion" id="motion" lead="Scroll-driven and choreographed per section; nothing fades up for its own sake. Four curves, five durations. Scroll-scrubbed motion has no durations: it is placed in windows of the descent." />
+      <div class="bleed">
+        <ul class="curves" role="list">
+          {
+            Object.entries(ease).map(([k, c]) => (
+              <li>
+                <svg viewBox="-4 -4 108 108" aria-hidden="true">
+                  <rect x="0" y="0" width="100" height="100" fill="none" stroke={colour.ruleFaint} />
+                  <path d={curve(c)} fill="none" stroke={colour.line} stroke-width="1.6" vector-effect="non-scaling-stroke" />
+                </svg>
+                <p class="t-small"><strong>{k}</strong></p>
+                <p class="t-data ink-3">cubic-bezier({c.join(', ')})</p>
+                <span class={`mover ease-${k}`} aria-hidden="true" />
+              </li>
+            ))
+          }
+        </ul>
+        <p class="t-data ink-2 durations">
+          {Object.entries(duration).map(([k, ms]) => <span>{k} {ms} ms</span>)}
+        </p>
+        <div class="rules measure">
+          <h3 class="t-title">Rules</h3>
+          <ul>
+            <li><strong>Hero.</strong> The name rises over the horizon once, on load (epic, rise). Then only the camera’s slow drift. The cue goes first as the descent starts.</li>
+            <li><strong>Descent.</strong> Copy is scrubbed by the same smoothed progress the camera flies on, so world-anchored text never drifts against the scene. Text entering cloud goes soft (blur) with the view; text leaving climbs away with the horizon.</li>
+            <li><strong>Proof.</strong> Figures condense out of the cloud base one by one (stagger), then lift away together as the camera tips toward a break.</li>
+            <li><strong>Case study.</strong> The title arrives as the break opens; beats replace each other low on the left in step with the drawing’s clock; labels hang from the drawing on leaders and fade with their state.</li>
+            <li><strong>Ground sections.</strong> Nothing animates in. Rules draw across as a section’s heading reaches them; the flight path fills as it is scrolled.</li>
+            <li><strong>Interface.</strong> Hover and focus settle in quick (240 ms); the nav slides away on scroll down and back on scroll up (base).</li>
+            <li><strong>Reduced motion, no WebGL, Save-Data, JS off.</strong> The still mode: each section a composed still from the live scene with its copy in normal flow. Nothing moves, nothing is hidden, nothing is missing.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="kit">
+      <SectionHeader title="Drawing kit" id="kit" lead="Every case study’s system is drawn with the same primitives, as white plotter linework on the survey sheet at dawn. Shimmer-free linework is a requirement, not a polish." />
+      <div class="bleed kit">
+        <figure class="specimen-frame">
+          <canvas class="kit-canvas" data-specimen aria-label="The drawing kit’s specimen: three boxes in the primary, secondary and construction weights, a dash-dot boundary, pods on the roofs, and an amber pod waiting over a dashed guide."></canvas>
+          {close && <ScenePoster set={close} class="kit-fallback" />}
+          <figcaption class="t-data ink-3">Live: the kit specimen on a slow turn, redrawn every eight seconds.</figcaption>
+        </figure>
+        <div class="rules kit-rules">
+          <h3 class="t-title">Rules</h3>
+          <ul>
+            <li><strong>Steady while the camera moves.</strong> Strokes are exact screen-space distance fields with round pen ends; fills fade over their last pixel; solids are shaded from eight rays a pixel. Painter’s order, no depth buffer; the ground never writes depth and nothing lies in its plane. No stroke under one device pixel: thinner ones keep a pixel and lose ink. Dashes are box-filtered and fade to an even tone as they recede.</li>
+            <li><strong>Weights.</strong> Primary 1.75 for the system the case study is about; secondary 1.3 for everything around it; construction 1.1 for boundaries, plumb lines and leaders; guide 1.0, dashed, for things that do not exist yet.</li>
+            <li><strong>Order.</strong> The plotter draws a box round its footprint, up its corners, then across its roof; washes arrive once an outline has closed; pods land last. Boundaries first, the system next, the field after.</li>
+            <li><strong>Speed.</strong> A box takes 0.45 s of the drawing’s clock in focus, 0.3 s in a field; strokes ease along with a brighter, wet pen tip while drawing.</li>
+            <li><strong>Labels.</strong> HTML, in the data face, hung on leaders from projected points of the drawing, never baked into the render. State words only (pending, ready, a counter); the copy carries the story.</li>
+            <li><strong>Amber.</strong> Sunlight, and a failure or waste state that the case study itself describes: a pod that cannot be placed, idle capacity. Never a highlight, never a link.</li>
+            <li><strong>Facts.</strong> Each drawing uses only the facts on its case study’s page, every number exactly as published. A counter stops at the published claim.</li>
+          </ul>
+          {wide && <ScenePoster set={wide} class="kit-still" alt="The Karpenter scene at scale: more than a hundred nodes drawn from the middle out." />}
+        </div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="components">
+      <SectionHeader title="Components" id="components" lead="Each one alone on a page, at 390, 1440 and 2560 px. Real content throughout." />
+      {
+        COMPONENTS.map((c) => (
+          <figure class="component bleed">
+            <figcaption class="t-title">
+              {componentNames[c]} <a class="t-small open" href={`/lab/system/c/${c}/`}>Open alone</a>
+            </figcaption>
+            <div class="frames">
+              {sizes.map(([w, h]) => (
+                <div class="frame" style={`--w:${w};--h:${h}`} data-frame-w={w} data-frame-h={h}>
+                  <iframe src={`/lab/system/c/${c}/`} width={w} height={h} loading="lazy" title={`${componentNames[c]} at ${w} pixels`} tabindex="-1" />
+                  <span class="t-data ink-3 size">{w} × {h}</span>
+                </div>
+              ))}
+            </div>
+          </figure>
+        ))
+      }
+    </section>
+
+    <section class="block" aria-labelledby="identity">
+      <SectionHeader title="Identity" id="identity" lead="A Y inside a V: Yash inside Verma. Read top down, the V is a descent chevron. Original linework, one colour, legible at 16 px." />
+      <div class="bleed identity">
+        <div class="marks">
+          {
+            [16, 24, 32, 64, 128].map((s) => (
+              <div class="mark-at" style={`--s:${s}px`}>
+                <Monogram fine={s >= 120} />
+                <span class="t-data ink-3">{s}</span>
+              </div>
+            ))
+          }
+          <div class="mark-at inverse" style="--s:64px">
+            <Monogram />
+            <span class="t-data">one colour</span>
+          </div>
+        </div>
+        <div class="wordmarks">
+          <figure class="svg-mark" set:html={wordmarkSvg} aria-label="The wordmark: Yash Verma in Archivo Expanded Light." role="img" />
+          <figure class="svg-mark" set:html={lockupSvg} aria-label="The lockup: the monogram beside the wordmark." role="img" />
+        </div>
+        <ul class="icons" role="list">
+          <li><img src="/favicon.svg" alt="" width="32" height="32" /><span class="t-data ink-3">favicon.svg</span></li>
+          <li><img src="/favicon.ico" alt="" width="32" height="32" /><span class="t-data ink-3">favicon.ico 16·32·48</span></li>
+          <li><img src="/apple-touch-icon.png" alt="" width="90" height="90" /><span class="t-data ink-3">apple-touch-icon 180</span></li>
+          <li><img src="/icon-512.png" alt="" width="128" height="128" loading="lazy" /><span class="t-data ink-3">icon-512</span></li>
+        </ul>
+        <div class="brand" data-brand></div>
+      </div>
+    </section>
+  </article>
+
+  <script>
+    // Frames: scale each component page down to the column it sits in.
+    const fit = () => {
+      document.querySelectorAll<HTMLElement>('[data-frame-w]').forEach((f) => {
+        const w = Number(f.dataset.frameW);
+        const s = f.clientWidth / w;
+        f.style.setProperty('--scale', String(s));
+      });
+    };
+    fit();
+    new ResizeObserver(fit).observe(document.body);
+
+    // The kit specimen, live once it is near the screen.
+    const canvas = document.querySelector<HTMLCanvasElement>('[data-specimen]');
+    if (canvas) {
+      new IntersectionObserver(
+        (entries, io) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io.disconnect();
+            import('../../../altitude/specimen').then((m) => m.mountSpecimen(canvas)).catch(() => {});
+          }
+        },
+        { rootMargin: '300px' },
+      ).observe(canvas);
+    }
+  </script>
+</Page>
+
+<style>
+  .guide {
+    padding-top: calc(var(--nav-h) + var(--space-xl));
+  }
+
+  .intro {
+    row-gap: var(--space-s);
+    padding-bottom: var(--space-2xl);
+  }
+
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-m);
+    margin-top: var(--space-s);
+  }
+
+  .toc a {
+    color: var(--ink-2);
+  }
+
+  .block {
+    padding-block: var(--space-2xl);
+  }
+
+  .grounds {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .ground {
+    padding: var(--space-m) var(--space-s);
+    min-height: 16rem;
+    display: grid;
+    align-content: start;
+    row-gap: var(--space-2xs);
+  }
+
+  .samples {
+    display: grid;
+    margin-top: var(--space-s);
+  }
+
+  .chips {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr));
+    gap: var(--space-s) var(--gap);
+    margin-top: var(--space-l);
+  }
+
+  .chip {
+    display: grid;
+    grid-template-columns: 2.4rem 1fr;
+    column-gap: var(--space-xs);
+    align-items: start;
+  }
+
+  .chip .dot {
+    grid-row: span 2;
+    width: 2.4rem;
+    height: 2.4rem;
+    border: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .chip strong {
+    font-weight: 560;
+  }
+
+  .pairs {
+    margin-top: var(--space-l);
+  }
+
+  .pairs summary {
+    cursor: pointer;
+    color: var(--ink-2);
+  }
+
+  .pairs table {
+    margin-top: var(--space-s);
+    border-collapse: collapse;
+    min-width: 24rem;
+  }
+
+  .pairs td,
+  .pairs th {
+    text-align: left;
+    padding: 0.2em 1.5em 0.2em 0;
+    border-bottom: var(--w-hairline) solid var(--rule-faint);
+    font-weight: 400;
+  }
+
+  .specimens {
+    list-style: none;
+    padding: 0;
+  }
+
+  .specimens .specimen {
+    padding-inline: 0;
+    margin-inline: var(--margin);
+  }
+
+  .specimen {
+    align-items: baseline;
+    padding-block: var(--space-m);
+    border-top: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .spec {
+    grid-column: 1 / span 2;
+  }
+
+  .sample {
+    grid-column: 3 / span 7;
+    overflow-wrap: anywhere;
+  }
+
+  .sa-big {
+    font-size: var(--t-display);
+    color: var(--ink);
+  }
+
+  .use {
+    grid-column: 10 / -1;
+  }
+
+  .spaces {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    row-gap: var(--space-2xs);
+  }
+
+  .spaces li {
+    display: grid;
+    grid-template-columns: 4rem auto 1fr;
+    align-items: center;
+    column-gap: var(--space-s);
+  }
+
+  .spaces .bar {
+    height: 0.6rem;
+    background: var(--ink-2);
+  }
+
+  .grid-demo {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--gap);
+    margin-top: var(--space-l);
+    height: 8rem;
+  }
+
+  .grid-demo span {
+    border: var(--w-hairline) solid var(--rule);
+    background: rgb(95 130 171 / 0.12);
+    font: 400 var(--t-data) / 1 var(--font-mono);
+    color: var(--ink-3);
+    padding: 0.4em;
+  }
+
+  .weights {
+    list-style: none;
+    padding: 0;
+    row-gap: var(--space-s);
+  }
+
+  .weights li {
+    grid-column: 1 / span 8;
+    display: grid;
+    grid-template-columns: 1fr 14rem;
+    align-items: center;
+    column-gap: var(--space-m);
+  }
+
+  .weights svg {
+    width: 100%;
+    height: 12px;
+  }
+
+  .layers {
+    list-style: none;
+    padding: 0;
+  }
+
+  .layers li {
+    grid-column: 1 / span 4;
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    padding-block: var(--space-3xs);
+    border-bottom: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .curves {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--gap);
+  }
+
+  .curves li {
+    position: relative;
+  }
+
+  .curves svg {
+    width: 100%;
+    max-width: 14rem;
+    aspect-ratio: 1;
+    margin-bottom: var(--space-2xs);
+  }
+
+  .mover {
+    display: block;
+    margin-top: var(--space-xs);
+    width: 0.6rem;
+    height: 0.6rem;
+    background: var(--ink);
+  }
+
+  .curves li:hover .mover {
+    transform: translateX(min(12rem, 60%));
+  }
+
+  .ease-rise {
+    transition: transform var(--dur-slow) var(--ease-rise);
+  }
+
+  .ease-settle {
+    transition: transform var(--dur-slow) var(--ease-settle);
+  }
+
+  .ease-glide {
+    transition: transform var(--dur-slow) var(--ease-glide);
+  }
+
+  .ease-lift {
+    transition: transform var(--dur-slow) var(--ease-lift);
+  }
+
+  .durations {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-m);
+    margin-top: var(--space-l);
+  }
+
+  .rules {
+    margin-top: var(--space-l);
+  }
+
+  .rules ul {
+    margin-top: var(--space-s);
+    padding-left: 1.1em;
+    display: grid;
+    row-gap: var(--space-xs);
+    color: var(--ink-2);
+  }
+
+  .rules strong {
+    color: var(--ink);
+    font-weight: 560;
+  }
+
+  .kit {
+    row-gap: var(--space-l);
+    align-items: start;
+  }
+
+  .specimen-frame {
+    grid-column: 1 / span 7;
+    position: relative;
+    isolation: isolate;
+  }
+
+  .kit-canvas,
+  .specimen-frame :global(.kit-fallback) {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    height: auto;
+    border: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .specimen-frame :global(.kit-fallback) {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: -1;
+  }
+
+  .kit-canvas[data-on] {
+    position: relative;
+  }
+
+  .specimen-frame figcaption {
+    margin-top: var(--space-2xs);
+  }
+
+  .kit-rules {
+    grid-column: 8 / -1;
+    margin-top: 0;
+  }
+
+  .kit-rules :global(.kit-still) {
+    margin-top: var(--space-m);
+    aspect-ratio: 16 / 9;
+    height: auto;
+  }
+
+  .component {
+    padding-block: var(--space-l);
+    border-top: var(--w-hairline) solid var(--rule-faint);
+    row-gap: var(--space-s);
+  }
+
+  .open {
+    margin-left: var(--space-s);
+    color: var(--ink-2);
+  }
+
+  .frames {
+    display: grid;
+    grid-template-columns: 390fr 1440fr;
+    gap: var(--gap);
+    align-items: start;
+  }
+
+  .frame[data-frame-w='2560'] {
+    grid-column: 1 / -1;
+  }
+
+  .frame {
+    position: relative;
+    aspect-ratio: var(--w) / var(--h);
+    overflow: hidden;
+    border: var(--w-hairline) solid var(--rule);
+    background: var(--night);
+  }
+
+  .frame iframe {
+    position: absolute;
+    left: 0;
+    top: 0;
+    border: 0;
+    transform-origin: 0 0;
+    transform: scale(var(--scale, 0.25));
+  }
+
+  .frame .size {
+    position: absolute;
+    right: 0.4rem;
+    bottom: 0.3rem;
+    background: var(--night);
+    padding: 0 0.3em;
+  }
+
+  .identity {
+    row-gap: var(--space-l);
+  }
+
+  .marks {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-l);
+  }
+
+  .mark-at {
+    display: grid;
+    justify-items: center;
+    row-gap: var(--space-2xs);
+    color: var(--ink);
+  }
+
+  .mark-at :global(.monogram) {
+    width: var(--s);
+    height: var(--s);
+  }
+
+  .mark-at.inverse {
+    background: var(--ink);
+    color: var(--night);
+    padding: var(--space-s);
+  }
+
+  .wordmarks {
+    display: grid;
+    row-gap: var(--space-m);
+    color: var(--ink);
+  }
+
+  .svg-mark :global(svg) {
+    width: min(100%, 40rem);
+    height: auto;
+  }
+
+  .icons {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: var(--space-l);
+  }
+
+  .icons li {
+    display: grid;
+    row-gap: var(--space-2xs);
+  }
+
+  @media (max-width: 60rem) {
+    .grounds {
+      grid-template-columns: 1fr;
+    }
+
+    .ground {
+      min-height: 0;
+    }
+
+    .spec,
+    .sample,
+    .use,
+    .specimen-frame,
+    .kit-rules,
+    .weights li,
+    .layers li {
+      grid-column: 1 / -1;
+    }
+
+    .curves {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .frames {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

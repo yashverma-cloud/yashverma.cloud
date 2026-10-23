@@ -1,0 +1,33 @@
+---
+/**
+ * The monogram, inline: a Y inside a V, as linework in the current colour (src/system/monogram.mjs).
+ * Decorative unless given a `title`. `fine` is the lighter stroke for large sizes.
+ */
+import { MONOGRAM, monogramPaths } from '../monogram.mjs';
+
+interface Props {
+  title?: string;
+  fine?: boolean;
+  class?: string;
+}
+
+const { title, fine = false, class: className } = Astro.props;
+const body = (title ? `<title>${title}</title>` : '') + monogramPaths('currentColor', fine ? MONOGRAM.fine : MONOGRAM.stroke);
+---
+
+<svg
+  class:list={['monogram', className]}
+  viewBox={`0 0 ${MONOGRAM.grid} ${MONOGRAM.grid}`}
+  role={title ? 'img' : undefined}
+  aria-hidden={title ? undefined : 'true'}
+  focusable="false"
+  set:html={body}
+/>
+
+<style>
+  .monogram {
+    width: 1.5em;
+    height: 1.5em;
+    flex: none;
+  }
+</style>

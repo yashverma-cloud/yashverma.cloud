@@ -229,12 +229,6 @@ export async function startLive(): Promise<void> {
       }
     }
   });
-  $('.skip').addEventListener('click', (e) => {
-    e.preventDefault();
-    flyTo(0.7);
-    $<HTMLElement>('#case-title').setAttribute('tabindex', '-1');
-    $<HTMLElement>('#case-title').focus({ preventScroll: true });
-  });
 
   let lastHorizon = -1;
   const frame = (dt: number, render = true) => {

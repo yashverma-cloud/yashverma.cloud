@@ -1,0 +1,163 @@
+---
+/**
+ * The hero: the name first, standing on the horizon; the role directly below the horizon; the
+ * one line to the right. Plain HTML, and the LCP element: never rendered by script.
+ *
+ * It lays itself out against `--horizon`, the horizon's height from the top of its box. The
+ * still poster puts the horizon at a fixed fraction of the screen (the defaults below); the
+ * live scene writes `--horizon-px` every frame, so name and render agree at every width.
+ */
+import { SITE } from '../../consts';
+
+interface Props {
+  /** The line beside the name. */
+  line?: string;
+  /** The cue at the foot of the hero; false for none. */
+  cue?: string | false;
+  /** Heading level of the name: h1 on the home page, a plain paragraph in demos. */
+  as?: 'h1' | 'p';
+}
+
+const {
+  line = 'I keep production Kubernetes running when nodes die.',
+  cue = 'Scroll to descend',
+  as: Name = 'h1',
+} = Astro.props;
+const place = SITE.location.split(',')[0];
+---
+
+<div class="hero" data-hero>
+  <Name class="name t-name" id="name" data-hero-name>
+    <span class="mask"><span class="word">Yash</span></span>{' '}
+    <span class="mask"><span class="word">Verma</span></span>
+  </Name>
+  <div class="below">
+    <p class="role" data-hero-role>
+      <span class="title">{SITE.jobTitle}</span>
+      <span class="at">at {SITE.employer}, {place}</span>
+    </p>
+    <p class="line t-display" data-hero-line>{line}</p>
+  </div>
+  {cue && <p class="cue t-small" data-hero-cue>{cue}</p>}
+</div>
+
+<style>
+  .hero {
+    --horizon: 50%;
+    position: relative;
+    height: 100%;
+    min-height: inherit;
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .hero {
+      --horizon: 46%;
+    }
+  }
+
+  /* The horizon line, from the top: the live scene's value wins over the poster's. */
+  .hero > * {
+    --h: var(--horizon-px, var(--horizon));
+  }
+
+  .name {
+    position: absolute;
+    left: calc(var(--margin) - 0.045em);
+    bottom: calc(100% - var(--h));
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.22em;
+    /* Glyph baselines on the horizon, not the line box. */
+    margin-bottom: calc(var(--t-name) * -0.035);
+  }
+
+  .mask {
+    display: block;
+    overflow: hidden;
+    padding-top: 0.08em;
+    margin-top: -0.08em;
+  }
+
+  .word {
+    display: block;
+  }
+
+  /* Under the horizon: the role, and the line beside it (under it on tall screens). */
+  .below {
+    position: absolute;
+    top: calc(var(--h) + var(--space-s));
+    left: var(--margin);
+    right: var(--margin);
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+    column-gap: var(--gap);
+    align-items: start;
+  }
+
+  .role {
+    grid-column: 1 / span 6;
+    max-width: 30em;
+    font-size: var(--t-lead);
+    line-height: 1.35;
+    font-weight: 380;
+    font-stretch: 108%;
+    color: var(--ink);
+  }
+
+  .role .title,
+  .role .at {
+    display: block;
+  }
+
+  .role .at {
+    color: var(--ink-2);
+  }
+
+  .line {
+    grid-column: 7 / -1;
+    max-width: 12.5em;
+    text-wrap: balance;
+  }
+
+  .cue {
+    position: absolute;
+    left: var(--margin);
+    bottom: max(var(--space-m), env(safe-area-inset-bottom));
+    color: var(--ink-3);
+  }
+
+  /* Tall screens: the name stacks above the horizon, the line drops under the role. */
+  @media (max-aspect-ratio: 1/1) {
+    .name {
+      flex-direction: column;
+      font-size: clamp(4rem, 24vw, 10rem);
+    }
+
+    .below {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-l);
+    }
+
+    .line {
+      max-width: 11.5em;
+      font-size: clamp(1.75rem, 8.4vw, 3.4rem);
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    :global([data-mode='live']) .word {
+      animation: rise var(--dur-epic) var(--ease-rise) both;
+    }
+
+    :global([data-mode='live']) .mask + .mask .word {
+      animation-delay: 120ms;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      transform: translateY(105%);
+    }
+  }
+</style>

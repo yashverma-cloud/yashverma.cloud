@@ -1,0 +1,66 @@
+---
+/**
+ * Recognition: third-party validation of what Experience claims, in the same hairline rows as
+ * everything else. No trophies, no badges. Award names and citations exactly as Yash states them.
+ */
+import { getCollection } from 'astro:content';
+import { formatMonth } from '../../utils/dates';
+
+const awards = await getCollection('recognition');
+---
+
+<ul class="rows" role="list">
+  {
+    awards.map((a) => (
+      <li class="row row-grid">
+        <h3 class="award t-lead">{a.data.award}</h3>
+        <p class="reason">{a.data.reason}</p>
+        <p class="meta t-data">
+          {a.data.issuer}
+          {a.data.date ? ` · ${formatMonth(a.data.date)}` : ''}
+        </p>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .row {
+    align-items: baseline;
+    padding-block: var(--space-m);
+  }
+
+  .award {
+    grid-column: 1 / span 4;
+    font-weight: 460;
+  }
+
+  .reason {
+    grid-column: 5 / span 5;
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+
+  .meta {
+    grid-column: 10 / -1;
+    text-align: right;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 60rem) {
+    .award,
+    .reason,
+    .meta {
+      grid-column: 1 / -1;
+      text-align: left;
+    }
+
+    .reason {
+      margin-top: var(--space-3xs);
+    }
+
+    .meta {
+      margin-top: var(--space-2xs);
+    }
+  }
+</style>

@@ -1,0 +1,61 @@
+---
+/**
+ * A section's heading, standing on a horizon: the hairline runs from the end of the words to
+ * the margin, as the name stands on the horizon in the hero. One lead line may sit under it.
+ */
+interface Props {
+  title: string;
+  id?: string;
+  lead?: string;
+  /** h2 inside a page; h1 when the section is the page (Writing, a 404). */
+  as?: 'h1' | 'h2';
+}
+
+const { title, id, lead, as: Heading = 'h2' } = Astro.props;
+---
+
+<header class="sh bleed">
+  <div class="line">
+    <Heading class="title t-display" id={id}>{title}</Heading>
+    <span class="rule" aria-hidden="true"></span>
+  </div>
+  {lead && <p class="lead t-lead">{lead}</p>}
+</header>
+
+<style>
+  .sh {
+    row-gap: var(--space-s);
+    margin-bottom: var(--space-xl);
+  }
+
+  .line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-s);
+  }
+
+  .title {
+    flex: none;
+    max-width: 100%;
+  }
+
+  /* An empty box aligns its bottom edge to the baseline: the rule sits on the words' feet. */
+  .rule {
+    flex: 1 1 auto;
+    min-width: var(--space-l);
+    height: var(--w-hairline);
+    background: var(--rule);
+  }
+
+  .lead {
+    grid-column: 1 / span 7;
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 48rem) {
+    .lead {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

@@ -47,6 +47,7 @@ export const GROUNDS = ['night', 'deck', 'dawn', 'sheet', 'raised'];
  * Every pair that carries text or a component edge, with its WCAG minimum:
  * 4.5 for text, 3 for edges and focus rings (non-text contrast, 1.4.11).
  */
+/** @type {{ fg: string, bg: string, min: number, edge?: boolean }[]} */
 export const TEXT_PAIRS = [
   ...['ink', 'ink2', 'ink3', 'sun'].flatMap((fg) => GROUNDS.map((bg) => ({ fg, bg, min: 4.5 }))),
   ...['rule', 'ink'].flatMap((fg) => GROUNDS.map((bg) => ({ fg, bg, min: 3, edge: true }))),

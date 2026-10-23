@@ -1,0 +1,214 @@
+---
+/**
+ * One system component alone on a page, for the style guide's frames at 390, 1440 and 2560 px.
+ * Real content throughout: every component reads the same collections the site does.
+ */
+import type { GetStaticPaths } from 'astro';
+import { getEntry, render } from 'astro:content';
+import Page from '../../../../system/Page.astro';
+import Hero from '../../../../system/components/Hero.astro';
+import SectionHeader from '../../../../system/components/SectionHeader.astro';
+import ProofFigures from '../../../../system/components/ProofFigures.astro';
+import SceneFrame from '../../../../system/components/SceneFrame.astro';
+import FlightPath from '../../../../system/components/FlightPath.astro';
+import Stack from '../../../../system/components/Stack.astro';
+import RunbookLink from '../../../../system/components/RunbookLink.astro';
+import Recognition from '../../../../system/components/Recognition.astro';
+import Credentials from '../../../../system/components/Credentials.astro';
+import WritingList from '../../../../system/components/WritingList.astro';
+import Contact from '../../../../system/components/Contact.astro';
+import NotFound from '../../../../system/components/NotFound.astro';
+import ScenePoster from '../../../../system/components/ScenePoster.astro';
+import Article from '../../../../system/templates/Article.astro';
+import Note from '../../../../system/templates/Note.astro';
+import { poster } from '../../../../altitude/posters';
+
+import { COMPONENTS, type ComponentName } from '../../../../system/demos';
+
+export const getStaticPaths = (() => COMPONENTS.map((name) => ({ params: { name } }))) satisfies GetStaticPaths;
+
+const { name } = Astro.params as { name: ComponentName };
+const hero = await poster('lab/altitude/hero');
+const close = await poster('lab/altitude/close');
+const karpenter = await getEntry('work', 'karpenter-autoscaling');
+const draft = await getEntry('writing', 'tuning-karpenter-disruption');
+const Draft = draft ? (await render(draft)).Content : null;
+const posts = draft
+  ? [
+      { id: 'specimen-article', title: draft.data.title, description: draft.data.description, published: draft.data.published, kind: 'article' as const },
+      {
+        id: 'specimen-note',
+        title: 'Autoscaling that is not tuned',
+        description: 'Autoscaling that is not tuned is just a faster way to move workloads you did not want moved.',
+        published: '2026-09-20',
+        kind: 'note' as const,
+      },
+    ]
+  : [];
+---
+
+<Page title={`${name} — Altitude system`} noindex analytics={false} nav={name === 'nav' || name === 'hero' ? 'over' : 'none'} wordmark={name !== 'hero'} footer={name === 'footer' || name === 'not-found'} bodyClass="demo">
+  {
+    name === 'nav' && (
+      <div class="demo-sky">
+        {hero && <ScenePoster set={hero} class="demo-poster" />}
+      </div>
+    )
+  }
+  {
+    name === 'hero' && (
+      <section class="demo-hero">
+        {hero && <ScenePoster set={hero} eager class="demo-poster" />}
+        <Hero />
+      </section>
+    )
+  }
+  {
+    name === 'section-header' && (
+      <div class="demo-pad">
+        <SectionHeader title="Experience" id="experience" />
+        <SectionHeader title="Work with me" id="contact" lead="LinkedIn is the fastest way to reach me." />
+      </div>
+    )
+  }
+  {
+    name === 'proof' && (
+      <div class="demo-pad">
+        <SectionHeader title="Work" id="work" />
+        <ProofFigures />
+      </div>
+    )
+  }
+  {
+    name === 'scene-frame' && karpenter && (
+      <SceneFrame
+        id="karpenter"
+        title={karpenter.data.title}
+        figure="80 s"
+        result={karpenter.data.result}
+        href="/work/karpenter-autoscaling/"
+        poster={close}
+        alt="A Kubernetes cluster drawn as white linework on a survey sheet at dawn: a pending pod, in amber, waits over an empty lot while a new node is drawn around it."
+      >
+        <p>A pod that cannot be placed waits, and how long it waits is decided entirely by how the cluster gets more capacity.</p>
+      </SceneFrame>
+    )
+  }
+  {
+    name === 'flight-path' && (
+      <div class="demo-pad">
+        <SectionHeader title="Experience" id="experience" />
+        <FlightPath />
+      </div>
+    )
+  }
+  {
+    name === 'stack' && (
+      <div class="demo-pad">
+        <SectionHeader title="Stack" id="stack" />
+        <Stack />
+        <RunbookLink />
+      </div>
+    )
+  }
+  {
+    name === 'runbook' && (
+      <div class="demo-pad">
+        <RunbookLink />
+      </div>
+    )
+  }
+  {
+    name === 'recognition' && (
+      <div class="demo-pad">
+        <SectionHeader title="Recognition" id="recognition" />
+        <Recognition />
+      </div>
+    )
+  }
+  {
+    name === 'credentials' && (
+      <div class="demo-pad">
+        <SectionHeader title="Certifications and education" id="certifications" />
+        <Credentials />
+      </div>
+    )
+  }
+  {
+    name === 'writing-list' && (
+      <div class="demo-pad">
+        <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
+        <WritingList posts={posts} />
+      </div>
+    )
+  }
+  {
+    name === 'writing-empty' && (
+      <div class="demo-pad">
+        <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
+        <WritingList posts={[]} />
+      </div>
+    )
+  }
+  {
+    name === 'article' && draft && Draft && (
+      <Article title={draft.data.title} description={draft.data.description} published={draft.data.published}>
+        <Draft />
+      </Article>
+    )
+  }
+  {
+    name === 'note' && (
+      <Note title="Autoscaling that is not tuned" published="2026-09-20">
+        <p>
+          Installing it was the short part. Most of the work was what came after, because a controller that adds and removes
+          capacity on its own will do exactly that, and its defaults have no way of knowing which of your workloads mind
+          being moved.
+        </p>
+        <p>Autoscaling that is not tuned is just a faster way to move workloads you did not want moved.</p>
+      </Note>
+    )
+  }
+  {
+    name === 'contact' && (
+      <div class="demo-pad">
+        <SectionHeader title="Work with me" id="contact" />
+        <Contact />
+      </div>
+    )
+  }
+  {name === 'footer' && <div class="demo-fill" />}
+  {name === 'not-found' && <NotFound />}
+</Page>
+
+<style>
+  :global(body.demo) {
+    background: var(--sheet);
+  }
+
+  .demo-pad {
+    padding-block: var(--space-2xl);
+  }
+
+  .demo-sky,
+  .demo-hero {
+    position: relative;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .demo-hero :global(.hero) {
+    position: absolute;
+    inset: 0;
+  }
+
+  .demo-sky :global(.demo-poster),
+  .demo-hero :global(.demo-poster) {
+    position: absolute;
+    inset: 0;
+  }
+
+  .demo-fill {
+    height: 40svh;
+  }
+</style>
