@@ -165,7 +165,8 @@ export class AltitudeEngine {
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
     this.gpu = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? '');
     this.camera = new PerspectiveCamera(FOV.landscape, 1, 2, 140000);
-    this.sceneRT = new WebGLRenderTarget(1, 1, { type: HalfFloatType, format: RGBAFormat, depthBuffer: true });
+    // No depth buffer: the drawing is painted in order (kit.ts) and the ground lies beneath it.
+    this.sceneRT = new WebGLRenderTarget(1, 1, { type: HalfFloatType, format: RGBAFormat, depthBuffer: false });
     this.ground = createGround(1);
     this.scene.add(this.ground.group);
     this.blueprint = new Blueprint();
@@ -263,7 +264,7 @@ export class AltitudeEngine {
     this.sceneRT.setSize(bw, bh);
     shared.uResolution.value.set(bw, bh);
     this.ground.setDpr(this.dpr);
-    this.blueprint.setViewport(bw, bh, this.dpr);
+    this.blueprint.setViewport(bw, bh, this.dpr, this.camera.near);
     this.clouds?.resize(bw, bh);
   }
 
@@ -332,7 +333,7 @@ export class AltitudeEngine {
 
     this.renderer.setRenderTarget(this.sceneRT);
     this.renderer.setClearColor(0x000000, 0);
-    this.renderer.clear(true, true, false);
+    this.renderer.clear(true, false, false);
     this.renderer.render(this.scene, this.camera);
     const t2 = performance.now();
 

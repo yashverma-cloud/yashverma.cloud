@@ -18,11 +18,8 @@ import { HAZE } from './glsl';
 import { shared } from './uniforms';
 
 const GROUND_VERT = /* glsl */ `
-varying vec3 vWorld;
 void main() {
-  vec4 w = modelMatrix * vec4(position, 1.0);
-  vWorld = w.xyz;
-  gl_Position = projectionMatrix * viewMatrix * w;
+  gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0);
 }
 `;
 
@@ -36,8 +33,18 @@ uniform vec3 uSunDir;
 uniform float uFogDensity;
 uniform float uMapOn;
 uniform vec4 uSite;
-varying vec3 vWorld;
+uniform mat4 uInvViewProj;
+uniform vec2 uResolution;
 ${HAZE}
+// The point of the sheet under this pixel, from the camera ray. Interpolating a position
+// across the sheet's two 90 km triangles loses centimetres to rounding, which made the site
+// grid crawl as the camera turned; the ray is exact to a fraction of a millimetre.
+vec3 sheetPoint() {
+  vec2 ndc = gl_FragCoord.xy / uResolution * 2.0 - 1.0;
+  vec4 far = uInvViewProj * vec4(ndc, 1.0, 1.0);
+  vec3 rd = normalize(far.xyz / far.w - uCamPos);
+  return uCamPos + rd * (-uCamPos.y / min(rd.y, -1e-6));
+}
 float sunAzimuth0(vec3 dir) {
   vec2 h = normalize(dir.xz + vec2(1e-5));
   vec2 s = normalize(uSunDir.xz + vec2(1e-5));
@@ -74,6 +81,7 @@ float grid(vec2 p, float spacing) {
 }
 
 void main() {
+  vec3 vWorld = sheetPoint();
   vec3 toFrag = vWorld - uCamPos;
   float dist = length(toFrag);
   vec3 rd = toFrag / dist;
@@ -154,7 +162,12 @@ export function createGround(dpr: number): { group: Group; setDpr(v: number): vo
       uFogDensity: shared.uFogDensity,
       uMapOn: { value: 1 },
       uSite: { value: [SITE_RECT.x0, SITE_RECT.z0, SITE_RECT.x1, SITE_RECT.z1] },
+      uInvViewProj: shared.uInvViewProj,
+      uResolution: shared.uResolution,
     },
+    // The sheet lies under everything and writes no depth, so nothing drawn on it can fight it.
+    depthTest: false,
+    depthWrite: false,
   });
   const ground = new Mesh(plane, material);
   ground.frustumCulled = false;
@@ -192,7 +205,7 @@ export function createGround(dpr: number): { group: Group; setDpr(v: number): vo
     uniforms: { uDpr: { value: dpr }, uStarsI: shared.uStarsI },
     blending: AdditiveBlending,
     depthWrite: false,
-    depthTest: true,
+    depthTest: false,
     transparent: true,
   });
   const stars = new Points(geo, starMat);
