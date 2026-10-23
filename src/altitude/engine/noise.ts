@@ -200,11 +200,3 @@ export function generateCloudNoise(renderer: WebGLRenderer): CloudNoise {
     },
   };
 }
-
-/** Reads the coverage map back so the billboard method can place puffs where the raymarcher has cloud. */
-export function readWeather(renderer: WebGLRenderer, noise: CloudNoise): Uint8Array {
-  const buffer = new Uint8Array(256 * 256 * 4);
-  renderer.readRenderTargetPixels(noise.weatherTarget, 0, 0, 256, 256, buffer);
-  return buffer;
-}
-

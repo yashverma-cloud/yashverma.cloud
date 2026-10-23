@@ -3,7 +3,7 @@
  * updates each value once per frame and every shader sees it.
  */
 import { Color, Matrix4, Vector2, Vector3, Vector4 } from 'three';
-import { BREAK, keyElevation, LAYERS, palette, sunElevation, SUN_AZIMUTH, WISP_CLEAR, type Vec3 } from '../world';
+import { keyElevation, LAYERS, palette, sunElevation, SUN_AZIMUTH, type Vec3 } from '../world';
 
 const v3 = () => ({ value: new Vector3() });
 const col = () => ({ value: new Color() });
@@ -37,8 +37,11 @@ export const shared = {
       (l) => new Vector4(1 / l.shapePeriod, 1 / l.detailPeriod, l.type, 1 / l.weatherPeriod),
     ),
   },
-  uBreak: { value: new Vector4(BREAK.x, BREAK.z, BREAK.radius, BREAK.feather) },
-  uWispClear: { value: new Vector4(WISP_CLEAR.x, WISP_CLEAR.z, WISP_CLEAR.radius, WISP_CLEAR.feather) },
+  /** The weather, set by the director every frame (engine/scene.ts): the deck's break, the
+   *  wisps' clearing (x, z, radius, feather) and the survey grid under the drawing. */
+  uBreak: { value: new Vector4(0, 0, 0, 1) },
+  uWispClear: { value: new Vector4(0, 0, 0, 1) },
+  uSite: { value: new Vector4(0, 0, 0, 0) },
 };
 
 export type SharedUniforms = typeof shared;

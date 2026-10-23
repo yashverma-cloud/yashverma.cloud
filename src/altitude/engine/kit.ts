@@ -29,25 +29,27 @@ import {
   ShaderMaterial,
   Vector2,
 } from 'three';
+import { colour, weight } from '../../system/tokens.mjs';
 import { lin, type Vec3 } from '../world';
 import { shared } from './uniforms';
 
-/** Linework white and the one warm colour, in linear RGB. */
+/** Linework white and the one warm colour (sunlight and failure), in linear RGB. */
 export const INK = {
-  line: lin('#eaf1f4'),
-  signal: lin('#f5a524'),
+  line: lin(colour.line),
+  signal: lin(colour.sun),
 } as const;
 
-/** Stroke weights in CSS pixels; the kit multiplies by the device pixel ratio. */
+/**
+ * Stroke weights in CSS pixels, the system's line weights (src/system/tokens.mjs); the kit
+ * multiplies by the device pixel ratio. primary: the system the case study is about;
+ * secondary: everything around it; construction: boundaries, plumb lines, leaders; guide:
+ * outlines of things that do not exist yet.
+ */
 export const WEIGHT = {
-  /** The system the case study is about. */
-  primary: 1.75,
-  /** Everything around it: the rest of the field. */
-  secondary: 1.3,
-  /** Boundaries, plumb lines and other construction lines. */
-  construction: 1.1,
-  /** Outlines of things that do not exist yet. */
-  guide: 1.0,
+  primary: weight.primary,
+  secondary: weight.secondary,
+  construction: weight.construction,
+  guide: weight.guide,
 } as const;
 
 /** Dash patterns, as a fraction of their period that carries ink. */
@@ -98,7 +100,8 @@ void main() {
     return;
   }
   vec3 b = mix(iA, iB, p);
-  mat4 vp = projectionMatrix * viewMatrix;
+  // Scenes are placed on the sheet by their group's transform.
+  mat4 vp = projectionMatrix * viewMatrix * modelMatrix;
   vec4 ca = vp * vec4(iA, 1.0);
   vec4 cb = vp * vec4(b, 1.0);
   // Clip to the near plane, so a stroke that passes beside the camera still projects.
@@ -130,7 +133,7 @@ void main() {
   vWidth = vec2(halfW, min(wpx, 1.0) * lift);
   vDash = vec3(iDash.x, iDash.y, length(b - iA));
   vDrawing = p < 1.0 ? 1.0 : 0.0;
-  vec3 end = start ? iA : b;
+  vec3 end = (modelMatrix * vec4(start ? iA : b, 1.0)).xyz;
   vFog = 1.0 - exp(-length(end - uCamPos) * uFogDensity * 1.6);
 }
 `;

@@ -9,9 +9,11 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import { BEATS } from './site';
-import { cameraAt, feet, FOV, sceneClockAt } from './world';
-import type { AltitudeEngine, MethodName, Tier } from './engine/engine';
+import { prototypeFlight } from './flights/prototype';
+import { BEATS } from './scenes/karpenter-plan';
+import type { KarpenterScene } from './scenes/karpenter';
+import { feet, FOV } from './world';
+import type { AltitudeEngine, Tier } from './engine/engine';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -251,7 +253,7 @@ export async function startLive(): Promise<void> {
         el.style.pointerEvents = shown ? 'auto' : 'none';
       }
     }
-    const cam = cameraAt(p, orientation());
+    const cam = prototypeFlight.camera(p, orientation());
     tape.set(feet(cam.pos[1]));
     if (engine && render) {
       engine.setProgress(p, true);
@@ -267,8 +269,8 @@ export async function startLive(): Promise<void> {
     }
 
     if (engine) {
-      const t = sceneClockAt(p);
-      const bp = engine.blueprint;
+      const t = prototypeFlight.clock(p);
+      const bp = engine.scene as KarpenterScene;
       const near = Math.min(window.innerWidth, window.innerHeight) < 600 ? 0.7 : 1;
       const pendShow = window01(t, 0.78, 2.6);
       const podState = t < BEATS.ready + 0.3 ? 'pending' : 'running';
@@ -319,29 +321,13 @@ export async function startLive(): Promise<void> {
     engine?.resize();
   });
 
-  // Review switches at the end of the page.
-  const switches = $$<HTMLAnchorElement>('[data-switch]');
-  const markMethod = (m: string) =>
-    switches.forEach((a) => a.setAttribute('aria-current', String(a.dataset.switch === m)));
-  markMethod(root.dataset.clouds ?? 'raymarch');
-  switches.forEach((a) =>
-    a.addEventListener('click', (e) => {
-      if (!engine) return;
-      e.preventDefault();
-      const m = a.dataset.switch as MethodName;
-      engine.setMethod(m);
-      root.dataset.clouds = m;
-      const u = new URL(location.href);
-      u.searchParams.set('clouds', m);
-      history.replaceState(null, '', u);
-      markMethod(m);
-    }),
-  );
-
   // The scene loads after everything else, when the main thread is idle.
   const loadScene = async () => {
     try {
-      const { AltitudeEngine, guessTier } = await import('./engine/engine');
+      const [{ AltitudeEngine, guessTier }, { KarpenterScene }] = await Promise.all([
+        import('./engine/engine'),
+        import('./scenes/karpenter'),
+      ]);
       const canvas = $<HTMLCanvasElement>('[data-canvas]');
       const probe = document.createElement('canvas').getContext('webgl2');
       if (!probe) throw new Error('WebGL2 is not available');
@@ -350,7 +336,8 @@ export async function startLive(): Promise<void> {
       probe.getExtension('WEBGL_lose_context')?.loseContext();
       const e = new AltitudeEngine({
         canvas,
-        method: (root.dataset.clouds as MethodName) ?? 'raymarch',
+        scene: new KarpenterScene(),
+        director: prototypeFlight,
         tier,
         capture,
         dpr: Number(params.get('dpr')) || undefined,
@@ -425,7 +412,7 @@ function showStats(e: AltitudeEngine): void {
     const s = e.stats();
     el.textContent =
       `${s.fps.toFixed(1)} fps  ${s.ms.toFixed(1)} ms\n` +
-      `${s.method}  clouds ${s.cloudRes}  steps ${s.steps}\n` +
+      `clouds ${s.cloudRes}  steps ${s.steps}\n` +
       `${s.drawRes} @${s.dpr.toFixed(2)}x  tier ${s.tier}\n` +
       s.gpu.slice(0, 48);
   }, 500);

@@ -102,6 +102,7 @@ void main() {
   float major = isoline(h, 62.5, 0.7) * 0.3;
   col = mix(col, vec3(0.62, 0.72, 0.84), (minor + major) * near * uMapOn);
 
+  // The survey grid under the current drawing (the director's weather).
   vec2 lo = uSite.xy - 70.0;
   vec2 hi = uSite.zw + 70.0;
   vec2 inside = smoothstep(lo, lo + 60.0, vWorld.xz) * (1.0 - smoothstep(hi - 60.0, hi, vWorld.xz));
@@ -143,8 +144,6 @@ void main() {
 }
 `;
 
-export const SITE_RECT = { x0: -170, z0: -110, x1: 170, z1: 110 } as const;
-
 export function createGround(dpr: number): { group: Group; setDpr(v: number): void; dispose(): void } {
   const group = new Group();
   const plane = new PlaneGeometry(90000, 90000, 1, 1);
@@ -161,7 +160,7 @@ export function createGround(dpr: number): { group: Group; setDpr(v: number): vo
       uSunDir: shared.uSunDir,
       uFogDensity: shared.uFogDensity,
       uMapOn: { value: 1 },
-      uSite: { value: [SITE_RECT.x0, SITE_RECT.z0, SITE_RECT.x1, SITE_RECT.z1] },
+      uSite: shared.uSite,
       uInvViewProj: shared.uInvViewProj,
       uResolution: shared.uResolution,
     },

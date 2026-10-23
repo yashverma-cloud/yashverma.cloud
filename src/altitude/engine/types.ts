@@ -1,6 +1,6 @@
 import type { Texture, WebGLRenderer } from 'three';
 
-/** Knobs the adaptive quality loop turns. Not every method uses every knob. */
+/** Knobs the adaptive quality loop turns. */
 export interface CloudQuality {
   /** Cloud buffer size as a fraction of the drawing buffer, per axis. */
   scale: number;
@@ -14,11 +14,11 @@ export interface CloudQuality {
 }
 
 /**
- * A cloud renderer. Each draws premultiplied cloud colour into its own buffer, with
- * coverage in alpha, so the composite treats both methods identically.
+ * A cloud renderer: draws premultiplied cloud colour into its own buffer, with coverage in
+ * alpha, for the composite.
  */
 export interface CloudMethod {
-  readonly name: 'raymarch' | 'billboard';
+  readonly name: 'raymarch';
   readonly texture: Texture;
   readonly resolution: { w: number; h: number };
   setQuality(q: CloudQuality): void;

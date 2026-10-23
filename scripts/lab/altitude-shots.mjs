@@ -1,7 +1,7 @@
 /**
  * Screenshots of the Altitude prototype at review widths, from the built site.
  *
- *   npm run build:fast && PLAYWRIGHT_BROWSERS_PATH=0 node scripts/lab/altitude-shots.mjs [--method=billboard] [--sizes=1440x900,390x844]
+ *   npm run build:fast && PLAYWRIGHT_BROWSERS_PATH=0 node scripts/lab/altitude-shots.mjs [--sizes=1440x900,390x844]
  *
  * Writes .screenshots/web-04/shots/<method>-<w>x<h>-<frame>.png, then one contact sheet per size.
  */
@@ -25,7 +25,7 @@ try {
   for (const [w, h] of sizes) {
     const phone = w < 600;
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: phone ? 2 : 1, isMobile: phone, hasTouch: phone });
-    await page.goto(`http://127.0.0.1:4322/lab/altitude/?capture=1&q=high&clouds=${method}`, { waitUntil: 'load' });
+    await page.goto(`http://127.0.0.1:4322/lab/altitude/?capture=1&q=high`, { waitUntil: 'load' });
     await page.waitForFunction(() => window.__altReady, null, { timeout: 300000 });
     const files = [];
     for (const [name, p] of Object.entries(FRAMES)) {

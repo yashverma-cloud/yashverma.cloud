@@ -15,7 +15,7 @@ import { getCollection, getEntry } from 'astro:content';
 import { getImage } from 'astro:assets';
 import { SITE } from '../../../consts';
 import '../../../styles/fonts.css';
-import '../../../lab/altitude/altitude.css';
+import '../../../altitude/altitude.css';
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const proof = work.filter((w) => w.data.figure && !w.data.draft).slice(0, 4);
@@ -64,7 +64,7 @@ const role = `${SITE.jobTitle} at ${SITE.employer}, ${SITE.location.split(',')[0
 ---
 
 <!doctype html>
-<html lang="en" data-clouds="raymarch">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -108,7 +108,7 @@ const role = `${SITE.jobTitle} at ${SITE.employer}, ${SITE.location.split(',')[0
     }
     <script is:inline>
       // Decide the mode before first paint, so the layout never jumps. A failed WebGL start
-      // later drops back to still (lab/altitude/live.ts).
+      // later drops back to still (src/altitude/live.ts).
       (function () {
         var d = document.documentElement;
         var q = new URLSearchParams(location.search);
@@ -117,8 +117,6 @@ const role = `${SITE.jobTitle} at ${SITE.employer}, ${SITE.location.split(',')[0
         var gl = 'WebGL2RenderingContext' in window;
         var forced = q.get('mode');
         d.dataset.mode = forced === 'still' || forced === 'live' ? forced : !reduce && gl && !save ? 'live' : 'still';
-        var c = q.get('clouds');
-        if (c === 'billboard' || c === 'raymarch') d.dataset.clouds = c;
         d.classList.add('js');
       })();
     </script>
@@ -288,8 +286,6 @@ const role = `${SITE.jobTitle} at ${SITE.employer}, ${SITE.location.split(',')[0
             the rest of the work, then to contact at ground level.
           </p>
           <ul class="end-links" role="list">
-            <li><a href="?clouds=raymarch" data-switch="raymarch">Clouds: raymarched</a></li>
-            <li><a href="?clouds=billboard" data-switch="billboard">Clouds: billboards</a></li>
             <li><a href="?mode=still">Still version</a></li>
             <li><a href="?stats=1">With frame stats</a></li>
             <li><a href="/">The live site</a></li>
@@ -301,7 +297,7 @@ const role = `${SITE.jobTitle} at ${SITE.employer}, ${SITE.location.split(',')[0
     <p class="stats" data-stats hidden></p>
 
     <script>
-      import { boot } from '../../../lab/altitude/main';
+      import { boot } from '../../../altitude/main';
       boot();
     </script>
   </body>

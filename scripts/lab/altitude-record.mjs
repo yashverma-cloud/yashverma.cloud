@@ -50,7 +50,7 @@ const server = await serveDist(4322);
 const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 try {
   const page = await browser.newPage({ viewport: { width: w, height: h } });
-  await page.goto(`http://127.0.0.1:4322/lab/altitude/?capture=1&q=high&clouds=${method}`, { waitUntil: 'load' });
+  await page.goto(`http://127.0.0.1:4322/lab/altitude/?capture=1&q=high`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__altReady, null, { timeout: 300000 });
   const total = Math.round(KEYS.at(-1)[0] * FPS);
   // Warm the temporal history at the first frame so the opening is converged.

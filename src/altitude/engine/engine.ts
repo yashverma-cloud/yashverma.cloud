@@ -1,29 +1,20 @@
 /**
- * The live scene: renderer, camera on the descent, clouds, ground, the drawing and the
- * composite, with adaptive quality. Loaded only after the page has rendered (main.ts).
+ * The live scene: renderer, camera, clouds, ground, one drawing and the composite, with
+ * adaptive quality. Loaded only after the page has rendered. What is drawn (a DrawingScene)
+ * and how the camera moves (a Director) come from the page, so one engine serves the home
+ * page's descent, each case study's opening scene and the style guide.
  */
-import {
-  HalfFloatType,
-  Matrix4,
-  PerspectiveCamera,
-  RGBAFormat,
-  Scene,
-  Vector3,
-  WebGLRenderer,
-  WebGLRenderTarget,
-} from 'three';
-import { cameraAt, FOV, sceneClockAt, type CameraState } from '../world';
-import { Blueprint } from './blueprint';
-import { BillboardClouds } from './billboard';
+import { HalfFloatType, Matrix4, PerspectiveCamera, RGBAFormat, Scene, Vector3, WebGLRenderer, WebGLRenderTarget } from 'three';
+import { FOV, type CameraState, type Orientation } from '../world';
 import { Composite } from './composite';
 import { createGround } from './ground';
 import { generateCloudNoise, type CloudNoise } from './noise';
 import { RaymarchClouds } from './raymarch';
-import type { CloudMethod, CloudQuality } from './types';
+import type { Director, DrawingScene } from './scene';
+import type { CloudQuality } from './types';
 import { applyDawn, shared } from './uniforms';
 
 export type Tier = 'high' | 'mid' | 'low' | 'ultra' | 'poster';
-export type MethodName = 'raymarch' | 'billboard';
 
 interface TierSpec {
   dpr: number;
@@ -62,8 +53,9 @@ export const TIERS: Record<Tier, TierSpec> = {
 
 export interface EngineOptions {
   canvas: HTMLCanvasElement;
-  method: MethodName;
   tier: Tier;
+  scene: DrawingScene;
+  director: Director;
   /** Capture mode: no idle drift, no smoothing, frames rendered on request. */
   capture?: boolean;
   /** Forces the drawing buffer's pixel ratio (measurement only). */
@@ -77,7 +69,6 @@ export interface FrameStats {
   drawRes: string;
   dpr: number;
   tier: Tier;
-  method: MethodName;
   steps: number;
   gpu: string;
   cpuMs: { clouds: number; scene: number; composite: number };
@@ -102,15 +93,15 @@ export function guessTier(gl: WebGL2RenderingContext | null): Tier {
 export class AltitudeEngine {
   readonly renderer: WebGLRenderer;
   readonly camera: PerspectiveCamera;
-  readonly blueprint: Blueprint;
+  readonly scene: DrawingScene;
+  readonly director: Director;
   private readonly canvas: HTMLCanvasElement;
-  private readonly scene = new Scene();
+  private readonly world = new Scene();
   private readonly sceneRT: WebGLRenderTarget;
   private readonly composite = new Composite();
   private readonly ground: ReturnType<typeof createGround>;
-  private noise!: CloudNoise;
-  private clouds!: CloudMethod;
-  private methodName: MethodName;
+  private noise: CloudNoise | null = null;
+  private clouds: RaymarchClouds | null = null;
   private tier: Tier;
   private quality: CloudQuality;
   private dpr = 1;
@@ -119,7 +110,7 @@ export class AltitudeEngine {
   private target = 0;
   private progress = 0;
   private sceneTime = 0;
-  /** Negative: derive the drawing's clock from the flight. */
+  /** Negative: the director's clock runs the drawing; otherwise the drawing is pinned here. */
   private sceneTimeOverride = -1;
   private frame = 0;
   private emaMs = 16.7;
@@ -128,9 +119,8 @@ export class AltitudeEngine {
   private readonly prevViewProj = new Matrix4();
   private readonly tmp = new Vector3();
   private state: CameraState;
-  private orientation: 'landscape' | 'portrait' = 'landscape';
+  private orientation: Orientation = 'landscape';
   private drift = { yaw: 0, pitch: 0, y: 0 };
-  private listeners: ((s: AltitudeEngine) => void)[] = [];
   private fpsFrames = 0;
   private fpsTime = 0;
   private fps = 0;
@@ -148,9 +138,10 @@ export class AltitudeEngine {
     this.canvas = opts.canvas;
     this.capture = !!opts.capture;
     this.dprOverride = opts.dpr ?? 0;
-    this.methodName = opts.method;
     this.tier = opts.tier;
     this.quality = { ...TIERS[opts.tier].clouds };
+    this.scene = opts.scene;
+    this.director = opts.director;
     this.renderer = new WebGLRenderer({
       canvas: opts.canvas,
       antialias: false,
@@ -168,64 +159,41 @@ export class AltitudeEngine {
     // No depth buffer: the drawing is painted in order (kit.ts) and the ground lies beneath it.
     this.sceneRT = new WebGLRenderTarget(1, 1, { type: HalfFloatType, format: RGBAFormat, depthBuffer: false });
     this.ground = createGround(1);
-    this.scene.add(this.ground.group);
-    this.blueprint = new Blueprint();
-    this.scene.add(this.blueprint.group);
-    this.state = cameraAt(0, 'landscape');
+    this.world.add(this.ground.group);
+    this.world.add(this.scene.group);
+    this.state = this.director.camera(0, 'landscape');
   }
 
   /** Builds the noise and compiles every shader. Resolves when the first frame can be drawn. */
   async init(): Promise<void> {
-    this.noise = generateCloudNoise(this.renderer);
-    this.clouds = this.makeMethod(this.methodName);
+    if (this.director.clouds) {
+      this.noise = generateCloudNoise(this.renderer);
+      this.clouds = new RaymarchClouds(this.noise, this.quality);
+    }
     this.resize();
     applyDawn(0);
     this.updateCamera(0);
-    await this.renderer.compileAsync(this.scene, this.camera);
+    await this.renderer.compileAsync(this.world, this.camera);
     // Draw a few frames off-screen so the clouds have history before anyone sees them.
-    for (let i = 0; i < 4; i++) this.draw(0);
-  }
-
-  private makeMethod(name: MethodName): CloudMethod {
-    const m =
-      name === 'raymarch'
-        ? new RaymarchClouds(this.noise, this.quality)
-        : new BillboardClouds(this.renderer, this.noise, this.quality, this.camera);
-    m.resize(this.canvas.width, this.canvas.height);
-    return m;
-  }
-
-  get method(): MethodName {
-    return this.methodName;
-  }
-
-  setMethod(name: MethodName): void {
-    if (name === this.methodName) return;
-    this.clouds.dispose();
-    this.methodName = name;
-    this.clouds = this.makeMethod(name);
+    for (let i = 0; i < (this.clouds ? 4 : 1); i++) this.draw(0);
   }
 
   setTier(tier: Tier): void {
     this.tier = tier;
     this.quality = { ...TIERS[tier].clouds };
-    this.clouds.setQuality(this.quality);
+    this.clouds?.setQuality(this.quality);
     this.resize();
   }
 
-  /** Scroll progress through the page, 0 to 1. */
+  /** Progress through the page, 0 to 1. */
   setProgress(p: number, immediate = false): void {
     this.target = Math.min(1, Math.max(0, p));
     if (immediate || this.capture) this.progress = this.target;
   }
 
-  /** Pins the drawing's clock (capture); a negative value hands it back to the flight. */
+  /** Pins the drawing's clock; a negative value hands it back to the director. */
   setSceneTime(t: number): void {
     this.sceneTimeOverride = t;
-  }
-
-  onFrame(fn: (s: AltitudeEngine) => void): void {
-    this.listeners.push(fn);
   }
 
   get cameraState(): CameraState {
@@ -236,7 +204,7 @@ export class AltitudeEngine {
     return this.sceneTime;
   }
 
-  get viewportOrientation(): 'landscape' | 'portrait' {
+  get viewportOrientation(): Orientation {
     return this.orientation;
   }
 
@@ -264,17 +232,15 @@ export class AltitudeEngine {
     this.sceneRT.setSize(bw, bh);
     shared.uResolution.value.set(bw, bh);
     this.ground.setDpr(this.dpr);
-    this.blueprint.setViewport(bw, bh, this.dpr, this.camera.near);
+    this.scene.setViewport(bw, bh, this.dpr, this.camera.near);
     this.clouds?.resize(bw, bh);
   }
 
-  /** Projects a world point to CSS pixels; z > 1 means behind the camera. */
+  /** Projects a world point to CSS pixels; `visible` is false behind the camera or off screen. */
   project(p: [number, number, number], out: { x: number; y: number; visible: boolean }): void {
     this.tmp.set(p[0], p[1], p[2]).project(this.camera);
-    const w = this.cssW;
-    const h = this.cssH;
-    out.x = (this.tmp.x * 0.5 + 0.5) * w;
-    out.y = (-this.tmp.y * 0.5 + 0.5) * h;
+    out.x = (this.tmp.x * 0.5 + 0.5) * this.cssW;
+    out.y = (-this.tmp.y * 0.5 + 0.5) * this.cssH;
     out.visible = this.tmp.z < 1 && Math.abs(this.tmp.x) < 1.2 && Math.abs(this.tmp.y) < 1.2;
   }
 
@@ -292,12 +258,12 @@ export class AltitudeEngine {
       this.progress += (this.target - this.progress) * k;
       if (Math.abs(this.target - this.progress) < 1e-5) this.progress = this.target;
     }
-    this.state = cameraAt(this.progress, this.orientation);
+    this.state = this.director.camera(this.progress, this.orientation);
     const s = this.state;
-    // A slow idle sway, strongest above the clouds where there is nothing else moving.
+    // A slow idle sway, strongest where nothing else moves.
     if (!this.capture) {
       const t = performance.now() / 1000;
-      const calm = 1 - Math.min(1, this.progress / 0.5) * 0.6;
+      const calm = this.director.drift(this.progress);
       this.drift.yaw = Math.sin(t * 0.07) * 0.9 * calm;
       this.drift.pitch = Math.sin(t * 0.053 + 1.3) * 0.25 * calm;
       this.drift.y = Math.sin(t * 0.045 + 0.4) * 18 * calm;
@@ -314,6 +280,10 @@ export class AltitudeEngine {
     shared.uInvViewProj.value.copy(this.viewProj).invert();
     shared.uCamPos.value.copy(this.camera.position);
     applyDawn(s.dawn);
+    const w = this.director.weather(this.progress);
+    shared.uBreak.value.set(...w.deck);
+    shared.uWispClear.value.set(...w.wisps);
+    shared.uSite.value.set(...w.site);
     // Below the deck the light is brighter; the exposure keeps it from blowing out.
     this.exposure = 1.05 - s.dawn * 0.22;
   }
@@ -322,23 +292,23 @@ export class AltitudeEngine {
     this.updateCamera(dt);
     shared.uFrame.value = this.frame++;
     if (!this.capture) shared.uTime.value += dt;
-    this.sceneTime = this.sceneTimeOverride >= 0 ? this.sceneTimeOverride : sceneClockAt(this.progress);
-    this.blueprint.update(this.sceneTime, this.state.pos[1]);
-    // Above the cloud sea the ground is hidden; skip its shading entirely.
-    this.ground.group.visible = this.state.pos[1] < 1950;
+    this.sceneTime = this.sceneTimeOverride >= 0 ? this.sceneTimeOverride : this.director.clock(this.progress);
+    this.scene.update(this.sceneTime, this.state);
+    this.ground.group.visible = this.director.groundVisible(this.state);
 
     const t0 = performance.now();
-    this.clouds.render(this.renderer);
+    this.clouds?.render(this.renderer);
     const t1 = performance.now();
 
     this.renderer.setRenderTarget(this.sceneRT);
     this.renderer.setClearColor(0x000000, 0);
     this.renderer.clear(true, false, false);
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.world, this.camera);
     const t2 = performance.now();
 
     const u = this.composite.uniforms;
-    this.composite.setInputs(this.clouds.texture, this.clouds.resolution, this.sceneRT.texture);
+    this.composite.setInputs(this.clouds?.texture ?? null, this.clouds?.resolution ?? { w: 1, h: 1 }, this.sceneRT.texture);
+    u.uCloudsOn.value = this.clouds ? 1 : 0;
     // Nine taps per pixel is the composite's main cost; weaker tiers take one.
     u.uBicubic.value = this.tier === 'mid' || this.tier === 'low' ? 0 : 1;
     u.uExposure.value = this.exposure;
@@ -351,15 +321,13 @@ export class AltitudeEngine {
     this.cpu.clouds += (t1 - t0 - this.cpu.clouds) * 0.1;
     this.cpu.scene += (t2 - t1 - this.cpu.scene) * 0.1;
     this.cpu.composite += (t3 - t2 - this.cpu.composite) * 0.1;
-    for (const fn of this.listeners) fn(this);
   }
 
-  /** One frame, driven by the page's own clock (live.ts) so copy and scene stay in step. */
+  /** One frame, driven by the page's own clock so copy and scene stay in step. */
   tick(dt: number): void {
     this.track(dt);
     this.draw(dt);
   }
-
 
   /** Steps quality down if frames stay slow; never thrashes back up. */
   private track(dt: number): void {
@@ -383,34 +351,33 @@ export class AltitudeEngine {
 
   private stepDown(): void {
     const q = this.quality;
-    if (q.scale > 0.28) q.scale = Math.round((q.scale - 0.06) * 100) / 100;
-    else if (q.steps > 24) q.steps -= 8;
-    else if (q.lightSteps > 2) q.lightSteps -= 1;
+    if (this.clouds && q.scale > 0.28) q.scale = Math.round((q.scale - 0.06) * 100) / 100;
+    else if (this.clouds && q.steps > 24) q.steps -= 8;
+    else if (this.clouds && q.lightSteps > 2) q.lightSteps -= 1;
     else if (this.dpr > 0.8) {
       TIERS[this.tier] = { ...TIERS[this.tier], dpr: Math.max(0.75, this.dpr - 0.25) };
       this.resize();
       return;
     } else return;
-    this.clouds.setQuality(q);
+    this.clouds?.setQuality(q);
   }
 
   stats(): FrameStats {
-    const r = this.clouds.resolution;
+    const r = this.clouds?.resolution ?? { w: 0, h: 0 };
     return {
       fps: this.fps,
       ms: this.emaMs,
-      cloudRes: `${r.w}×${r.h}`,
+      cloudRes: this.clouds ? `${r.w}×${r.h}` : 'off',
       drawRes: `${this.canvas.width}×${this.canvas.height}`,
       dpr: this.dpr,
       tier: this.tier,
-      method: this.methodName,
       steps: this.quality.steps,
       gpu: this.gpu,
       cpuMs: { ...this.cpu },
     };
   }
 
-  /** Capture mode: renders `frames` frames at progress `p` and scene time `t`. */
+  /** Capture mode: renders `frames` frames at progress `p` and drawing time `t`. */
   renderAt(p: number, t = -1, frames = 1, time = 0): void {
     this.setProgress(p, true);
     this.sceneTimeOverride = t;
@@ -418,12 +385,17 @@ export class AltitudeEngine {
     for (let i = 0; i < frames; i++) this.draw(1 / 60);
   }
 
+  /** Renders one frame now, at the current progress (used when nothing is scrolling). */
+  renderNow(): void {
+    this.draw(0);
+  }
+
   dispose(): void {
     this.clouds?.dispose();
     this.noise?.dispose();
     this.sceneRT.dispose();
     this.ground.dispose();
-    this.blueprint.dispose();
+    this.scene.dispose();
     this.renderer.dispose();
   }
 }

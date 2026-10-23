@@ -1,10 +1,10 @@
 /**
- * The site plan for the case-study drawing: rows of nodes in four sizes, the running cluster
- * in the middle, and the empty lot the pending pod is waiting for. Deterministic, so every
- * device and every poster draws the same plan. No three.js here: world.ts aims the camera
- * at the lot.
+ * The Karpenter scene's site plan and timeline, as plain data (no three.js), so the page's
+ * script can read the beats without loading the 3D chunk. Rows of nodes in four sizes, the
+ * running cluster in the middle, and the empty lot the pending pod is waiting for.
+ * Deterministic: every device and every poster draws the same plan.
  */
-import type { Vec3 } from './world';
+import type { Vec3 } from '../world';
 
 /** The case-study timeline inside the reveal: beat boundaries in scene seconds. */
 export const BEATS = {
@@ -112,4 +112,3 @@ export function layout(): { nodes: NodeBox[]; newNode: NodeBox; pendingPod: Vec3
   const pendingPod: Vec3 = [newNode.x - newNode.w / 2 + 3.2, newNode.h + 18, newNode.z - newNode.d / 2 + 3.2];
   return { nodes, newNode, pendingPod };
 }
-

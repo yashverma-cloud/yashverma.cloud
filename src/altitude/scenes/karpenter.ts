@@ -1,25 +1,36 @@
 /**
- * The case study, drawn: Karpenter keeping up with load, as white plotter linework on the
- * survey sheet. Structure from /work/karpenter-autoscaling; nothing here is a measurement.
- * Built from the drawing kit (kit.ts), which keeps the linework steady while the camera moves.
+ * Case-study scene: Karpenter keeping up with load (/work/karpenter-autoscaling/), as white
+ * plotter linework on the survey sheet. Structure from the case study; nothing here is a
+ * measurement. The node counter is the drawing's own state and stops at "100+", the published
+ * claim. Built from the drawing kit (engine/kit.ts), which keeps the linework steady while the
+ * camera moves.
  *
- *   0.0–0.7  the running cluster draws itself in as the cloud breaks
- *   0.8      a pod arrives that fits no node (amber: the one warm colour, for the pending state)
- *   1.0–2.2  Karpenter provisions a node for it, edge by edge
- *   2.2–2.5  the node is ready and the pod lands on it
- *   3.0–4.8  under load the field grows past 100 nodes, from the middle out
+ *   0.0-0.7  the running cluster draws itself in as the cloud breaks
+ *   0.8      a pod arrives that fits no node (amber: the pending state)
+ *   1.0-2.2  Karpenter provisions a node for it, edge by edge
+ *   2.2-2.5  the node is ready and the pod lands on it
+ *   3.0-4.8  under load the field grows past 100 nodes, from the middle out
+ *
+ * The site plan is deterministic, so every device and every poster draws the same plan.
  */
 import { Group } from 'three';
-import type { Vec3 } from '../world';
-import { BEATS, layout, type NodeBox } from '../site';
-import { FillLayer, INK, ORDER, plotBox, plotLoop, SolidLayer, StrokeLayer, WEIGHT, type Stroke } from './kit';
+import type { CameraState, Vec3 } from '../world';
+import type { DrawingScene } from '../engine/scene';
+import { FillLayer, INK, ORDER, plotBox, plotLoop, SolidLayer, StrokeLayer, WEIGHT, type Stroke } from '../engine/kit';
+import { BEATS, layout, type NodeBox } from './karpenter-plan';
+
+export { BEATS, layout };
 
 const POD = { w: 1.9, h: 1.3, pitch: 3.4, inset: 3.2 } as const;
 const PENDING = { w: 2.1, h: 1.5 } as const;
 
-export class Blueprint {
+export class KarpenterScene implements DrawingScene {
   readonly group = new Group();
+  /** World points the labels hang from: the waiting pod, the new node, the field, the site. */
   readonly anchors: { pending: Vec3; node: Vec3; field: Vec3; site: Vec3 };
+  readonly duration = BEATS.end;
+  /** The survey grid under the drawing, in world x0, z0, x1, z1. */
+  readonly site: [number, number, number, number];
   readonly nodeCount: number;
   readonly nodes: NodeBox[];
   private readonly strokes: StrokeLayer;
@@ -30,7 +41,8 @@ export class Blueprint {
   private readonly pendingEnd: Vec3;
   private time = 0;
 
-  constructor() {
+  /** `origin` places the drawing on the sheet; everything inside is laid out around it. */
+  constructor(readonly origin: Vec3 = [0, 0, 0]) {
     const { nodes, newNode, pendingPod } = layout();
     this.nodes = nodes;
     this.nodeCount = nodes.length;
@@ -124,13 +136,16 @@ export class Blueprint {
     this.pendingEnd = [pendingPod[0], newNode.h + 0.05, pendingPod[2]];
 
     this.group.add(this.fills.mesh, this.strokes.mesh, this.pods.mesh, this.pending.mesh);
+    this.group.position.set(...origin);
+    const at = (p: Vec3): Vec3 => [p[0] + origin[0], p[1] + origin[1], p[2] + origin[2]];
     this.anchors = {
-      pending: pendingPod,
-      node: [newNode.x + newNode.w / 2, newNode.h, newNode.z - newNode.d / 2],
-      field: [150, 9, -96],
-      site: [-166, 0, 104],
+      pending: at(pendingPod),
+      node: at([newNode.x + newNode.w / 2, newNode.h, newNode.z - newNode.d / 2]),
+      field: at([150, 9, -96]),
+      site: at([-166, 0, 104]),
     };
-    this.update(0, 0);
+    this.site = [origin[0] - 170, origin[2] - 110, origin[0] + 170, origin[2] + 110];
+    this.update(0);
   }
 
   setViewport(w: number, h: number, dpr: number, near: number): void {
@@ -144,9 +159,9 @@ export class Blueprint {
     return k;
   }
 
-  update(t: number, cameraY: number): void {
+  update(t: number, camera?: CameraState): void {
     this.time = t;
-    this.group.visible = cameraY < 2200;
+    this.group.visible = !camera || camera.pos[1] < 2200;
     this.strokes.setTime(t);
     this.fills.setTime(t);
     this.pods.setTime(t);

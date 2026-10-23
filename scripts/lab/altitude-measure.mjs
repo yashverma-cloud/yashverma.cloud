@@ -131,7 +131,7 @@ async function cpuRun(method) {
   const context = await browser.newContext(MOBILE);
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
-  await page.goto(`${BASE}?perf=1&dpr=0.08&q=low&clouds=${method}`, { waitUntil: 'load' });
+  await page.goto(`${BASE}?perf=1&dpr=0.08&q=low`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__altLive && window.__altLive.on(), null, { timeout: 240000 });
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
   await page.evaluate(() => {
@@ -172,7 +172,7 @@ async function cpuRun(method) {
 async function gpuRelative(method, ctxOpts, tier) {
   const browser = await chromium.launch({ args: GPU_ARGS });
   const page = await browser.newPage(ctxOpts);
-  await page.goto(`${BASE}?capture=1&q=${tier}&clouds=${method}`, { waitUntil: 'load' });
+  await page.goto(`${BASE}?capture=1&q=${tier}`, { waitUntil: 'load' });
   await page.waitForFunction(() => window.__altReady, null, { timeout: 240000 });
   const points = [0, 0.2, 0.42, 0.62, 0.83, 0.95];
   const out = {};
@@ -243,13 +243,13 @@ try {
   log('load: desktop');
   results.loadDesktop = await loadRun('desktop', DESKTOP);
   log({ ...results.loadDesktop, requests: undefined });
-  for (const method of ['raymarch', 'billboard']) {
+  for (const method of ['raymarch']) {
     log(`cpu: ${method}, 4x CPU`);
     results[`cpu4x_${method}`] = await cpuRun(method);
     log(results[`cpu4x_${method}`]);
   }
   if (!quick) {
-    for (const method of ['raymarch', 'billboard']) {
+    for (const method of ['raymarch']) {
       log(`gpu (software), ${method}, phone low tier`);
       results[`gpuPhoneLow_${method}`] = await gpuRelative(method, { viewport: { width: 412, height: 915 }, deviceScaleFactor: 1.5 }, 'low');
       log(results[`gpuPhoneLow_${method}`]);

@@ -123,7 +123,7 @@ export class Composite {
     this.uniforms = material.uniforms;
   }
 
-  setInputs(clouds: Texture, cloudRes: { w: number; h: number }, scene: Texture): void {
+  setInputs(clouds: Texture | null, cloudRes: { w: number; h: number }, scene: Texture): void {
     this.uniforms.uClouds.value = clouds;
     (this.uniforms.uCloudRes.value as Vector2).set(cloudRes.w, cloudRes.h);
     this.uniforms.uScene.value = scene;
