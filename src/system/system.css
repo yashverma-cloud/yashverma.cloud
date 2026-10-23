@@ -1,0 +1,338 @@
+/*
+ * The Altitude system's base layer: reset, type roles, the full-bleed grid, links, focus,
+ * buttons and rules. Tokens come from tokens.css (generated); components add their own styles.
+ *
+ * Rules this file enforces (design/system.md):
+ *   - Full bleed. No max-width container: twelve columns between fluid margins at every width.
+ *     Only paragraphs keep a measure.
+ *   - Radius 0, no shadows for elevation, no gradients on interface. Edges are hairlines.
+ *   - Sentence case. No letterspaced capitals.
+ *   - Amber (--sun) is sunlight and failure. It never marks a link, a button or focus.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  background: var(--night);
+  color-scheme: dark;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100svh;
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  font-weight: var(--wght-body);
+  font-stretch: var(--wdth-body);
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* --- Type roles ------------------------------------------------------------ */
+
+.t-name,
+.t-display,
+.t-title,
+.t-lead,
+.t-body,
+.t-small {
+  font-family: var(--font-sans);
+}
+
+.t-name {
+  font-size: var(--t-name);
+  line-height: var(--lh-name);
+  letter-spacing: var(--tr-name);
+  font-weight: var(--wght-name);
+  font-stretch: var(--wdth-name);
+}
+
+.t-display {
+  font-size: var(--t-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tr-display);
+  font-weight: var(--wght-display);
+  font-stretch: var(--wdth-display);
+}
+
+.t-title {
+  font-size: var(--t-title);
+  line-height: var(--lh-title);
+  letter-spacing: var(--tr-title);
+  font-weight: var(--wght-title);
+  font-stretch: var(--wdth-title);
+}
+
+.t-lead {
+  font-size: var(--t-lead);
+  line-height: var(--lh-lead);
+  letter-spacing: var(--tr-lead);
+  font-weight: var(--wght-lead);
+}
+
+.t-body {
+  font-size: var(--t-body);
+  line-height: var(--lh-body);
+  font-weight: var(--wght-body);
+}
+
+.t-small {
+  font-size: var(--t-small);
+  line-height: var(--lh-small);
+  letter-spacing: var(--tr-small);
+  font-weight: var(--wght-small);
+}
+
+/* Data only: readouts, labels on drawings, dates, code. */
+.t-data,
+code,
+kbd,
+pre,
+samp {
+  font-family: var(--font-mono);
+  font-size: var(--t-data);
+  line-height: var(--lh-data);
+  letter-spacing: var(--tr-data);
+  font-weight: 400;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: inherit;
+  text-wrap: balance;
+}
+
+p,
+li,
+dd {
+  text-wrap: pretty;
+}
+
+/* Every figure that aligns or changes. */
+.figure,
+time,
+.t-data,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.ink-2 {
+  color: var(--ink-2);
+}
+
+.ink-3 {
+  color: var(--ink-3);
+}
+
+.measure {
+  max-width: var(--measure);
+}
+
+/* --- Code ------------------------------------------------------------------ */
+
+:not(pre) > code {
+  font-size: 0.88em;
+}
+
+pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: var(--space-s);
+  background: var(--deck);
+  border: var(--w-hairline) solid var(--rule);
+  color: var(--line);
+  font-size: var(--t-small);
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+/* --- Links and focus --------------------------------------------------------- */
+
+a {
+  color: inherit;
+  text-decoration-line: underline;
+  text-decoration-color: var(--rule);
+  text-decoration-thickness: var(--w-hairline);
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color var(--dur-quick) var(--ease-settle);
+}
+
+a:hover {
+  text-decoration-color: var(--ink);
+}
+
+/* Ink ring with a night ring inside it: reads on the night sky, on cloud and on paper. */
+:focus-visible {
+  outline: var(--w-focus) solid var(--ink);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--night);
+}
+
+.skip {
+  position: fixed;
+  left: var(--margin);
+  top: var(--space-s);
+  z-index: var(--z-skip);
+  padding: var(--space-2xs) var(--space-s);
+  background: var(--night);
+  color: var(--ink);
+  border: var(--w-hairline) solid var(--rule);
+  text-decoration: none;
+  transform: translateY(-300%);
+}
+
+.skip:focus-visible {
+  transform: none;
+}
+
+/* --- Layout ------------------------------------------------------------------ */
+
+/* Twelve columns between the fluid margins: the composition fills the viewport. */
+.bleed {
+  display: grid;
+  grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+  column-gap: var(--gap);
+  padding-inline: max(var(--margin), env(safe-area-inset-left)) max(var(--margin), env(safe-area-inset-right));
+}
+
+.bleed > * {
+  grid-column: 1 / -1;
+}
+
+/* A hairline across the full width of the grid. */
+.rule-top {
+  border-top: var(--w-hairline) solid var(--rule-faint);
+}
+
+hr {
+  border: 0;
+  border-top: var(--w-hairline) solid var(--rule-faint);
+}
+
+/* Rows separated by hairlines: the system's structural device, in place of cards. */
+.rows {
+  list-style: none;
+  padding: 0;
+  border-top: var(--w-hairline) solid var(--rule-faint);
+}
+
+.rows > li {
+  border-bottom: var(--w-hairline) solid var(--rule-faint);
+}
+
+/* --- Buttons ----------------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2xs);
+  min-height: 48px;
+  padding: var(--space-2xs) var(--space-m);
+  font-size: var(--t-small);
+  font-weight: 560;
+  letter-spacing: 0.005em;
+  line-height: 1.2;
+  text-decoration: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink);
+  border: var(--w-hairline) solid var(--rule);
+  border-radius: 0;
+  transition:
+    border-color var(--dur-quick) var(--ease-settle),
+    background-color var(--dur-quick) var(--ease-settle),
+    color var(--dur-quick) var(--ease-settle);
+}
+
+.btn:hover {
+  border-color: var(--ink);
+}
+
+/* The one filled element: ink, not amber (amber is sunlight and failure). */
+.btn-primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--night);
+}
+
+.btn-primary:hover {
+  background: var(--line);
+  border-color: var(--line);
+}
+
+/* --- The footer's last line ---------------------------------------------------- */
+
+/* Quiet by rule: small, the muted ink, never a link, never highlighted. */
+.sa {
+  font-family: var(--font-deva);
+  font-size: var(--t-small);
+  font-weight: 420;
+  line-height: 1.7;
+  color: var(--ink-3);
+}
+
+/* --- Utility ------------------------------------------------------------------- */
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Controls that do nothing without a script, hidden by CSS so nothing shifts after load. */
+@media (scripting: none) {
+  .js-only {
+    display: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

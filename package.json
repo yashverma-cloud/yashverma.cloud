@@ -7,11 +7,12 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro check && astro build",
+    "build": "node scripts/system/tokens.mjs --check && astro check && astro build",
     "build:fast": "astro build",
     "preview": "astro preview",
     "brand": "node brand/render.mjs",
-    "astro": "astro"
+    "astro": "astro",
+    "tokens": "node scripts/system/tokens.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
