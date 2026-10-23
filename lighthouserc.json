@@ -15,7 +15,7 @@
       "numberOfRuns": 3,
       "settings": {
         "chromeFlags": "--no-sandbox --headless=new",
-        "blockedUrlPatterns": ["*google-analytics.com*", "*analytics.google.com*"]
+        "blockedUrlPatterns": ["*google-analytics.com*", "*analytics.google.com*", "*google.com/g/collect*"]
       }
     },
     "assert": {

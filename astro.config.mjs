@@ -40,13 +40,14 @@ export default defineConfig({
   trailingSlash: 'ignore',
   security: {
     // Astro hashes every script and <style> it emits into a CSP <meta> on each page.
-    // GA4 loads from googletagmanager.com and reports to google-analytics.com (Base.astro).
+    // GA4 loads from googletagmanager.com and reports to google-analytics.com and
+    // www.google.com/g/collect (Base.astro).
     // Directives a <meta> can't carry (frame-ancestors) are headers in public/_headers.
     csp: {
       directives: [
         "default-src 'self'",
-        "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com",
-        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+        "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://www.google.com",
+        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com",
         "font-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",
