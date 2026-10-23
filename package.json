@@ -14,13 +14,13 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.10",
+    "@astrojs/check": "^0.9.11",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource-variable/overpass": "^5.3.0",
     "@fontsource/overpass": "^5.3.0",
     "@fontsource/overpass-mono": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",
-    "astro": "^7.3.5",
+    "astro": "^7.4.1",
     "satori": "^0.33.5",
     "three": "^0.186.1",
     "typescript": "^6.0.3",
