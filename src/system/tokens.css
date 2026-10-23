@@ -21,7 +21,7 @@
   --sun: #f5a524;
 
   /* Type */
-  --font-sans: 'Archivo', 'Archivo Fallback', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-sans: 'Archivo', 'Archivo Fallback', 'Archivo Fallback Android', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'B612 Mono', 'B612 Mono Fallback', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', monospace;
   --font-deva: 'Anek Devanagari', 'Noto Sans Devanagari', 'Nirmala UI', 'Kohinoor Devanagari', sans-serif;
   --t-name: clamp(4rem, 1.7909rem + 9.8182vw, 17.5rem); /* 64px at 360, 280px at 2560 */
