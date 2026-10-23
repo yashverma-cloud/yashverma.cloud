@@ -12,7 +12,7 @@
  *   2.8-5.4  Coralogix's lane, later
  */
 import type { LabelState } from '../engine/scene';
-import type { SceneView } from './catalogue';
+import { orbit, type SceneView } from './catalogue';
 import { AMBER, BUILD, FIELD, LINE, PlotScene, win } from './plot';
 import type { Vec3 } from '../world';
 
@@ -95,13 +95,13 @@ export class AlertsScene extends PlotScene {
   labels(t: number): LabelState[] {
     const lane = (id: string, z: number, at: number, name: string): LabelState[] => [
       this.label(`${id}-platform`, [-12, 10, z - 11], name, win(t, at + 0.4, BEATS.end + 2), -20, -34),
-      this.label(`${id}-payload`, [-121, FIELDS * SLAB, z], 'payload', win(t, at + 0.6, at + 1.4), -110, -10),
-      this.label(`${id}-cut`, [-121, KEPT * SLAB, z], 'payload', win(t, at + 1.4, BEATS.end + 2), -110, -10, { tick: '>50% smaller' }),
+      this.label(`${id}-payload`, [-104, FIELDS * SLAB, z - 8], 'payload', win(t, at + 0.6, at + 1.4), 16, -52),
+      this.label(`${id}-cut`, [-104, KEPT * SLAB, z - 8], 'payload', win(t, at + 1.4, BEATS.end + 2), 16, -52, { tick: '>50% smaller' }),
       this.label(`${id}-slack`, [120, 26, z], 'Slack', win(t, at + 1.9, BEATS.end + 2), 28, -16),
     ];
     return [...lane('a', -36, BEATS.first, 'Grafana'), ...lane('b', 40, BEATS.later, 'Coralogix')];
   }
 }
 
-export const view: SceneView = { target: [0, 8, 0], from: [70, 150, 300], to: [62, 108, 232], dawn: 0.9 };
+export const view: SceneView = orbit([0, 8, 2], 320);
 export const create = (origin?: Vec3) => new AlertsScene(origin);

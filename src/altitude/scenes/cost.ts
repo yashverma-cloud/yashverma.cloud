@@ -11,7 +11,7 @@
  *   4.6-5.6  the bill meter falls by 40%
  */
 import type { LabelState } from '../engine/scene';
-import type { SceneView } from './catalogue';
+import { orbit, type SceneView } from './catalogue';
 import { AMBER, BUILD, FIELD, GUIDE, LINE, PlotScene, win } from './plot';
 import type { Vec3 } from '../world';
 
@@ -52,7 +52,7 @@ export class CostScene extends PlotScene {
     });
 
     // HPA: a load curve drawn on a board behind the nodes, replicas in front following it.
-    const board = { x0: -120, x1: 72, y0: 3, y1: 34, z: -62 };
+    const board = { x0: -36, x1: 136, y0: 3, y1: 34, z: -62 };
     this.loop(
       [
         [board.x0, board.y0, board.z],
@@ -115,11 +115,11 @@ export class CostScene extends PlotScene {
     return [
       this.label('idle', [NODES[4] + 8, BIG.h, -12 - BIG.d / 2], 'idle capacity', win(t, BEATS.idle + 0.2, BEATS.rightsize + 0.2), 40, -28, { amber: true }),
       this.label('fit', [NODES[0] - BIG.w / 2, FIT.h, -12 + BIG.d / 2], 'rightsized', win(t, BEATS.rightsize + 0.5, BEATS.end + 2), -150, 26),
-      this.label('hpa', [-72, 26, -62], 'HPA replicas', win(t, BEATS.hpa + 0.3, BEATS.end + 2), 30, -30),
-      this.label('bill', [128, 27.6, 30], 'monthly bill', win(t, BEATS.bill + 0.5, BEATS.end + 2), 38, -18, { tick: '−40%' }),
+      this.label('hpa', [130, 34, -62], 'HPA replicas', win(t, BEATS.hpa + 0.3, BEATS.end + 2), 20, -26),
+      this.label('bill', [116, 27.6, 30], 'monthly bill', win(t, BEATS.bill + 0.5, BEATS.end + 2), -40, -40, { tick: '−40%' }),
     ];
   }
 }
 
-export const view: SceneView = { target: [0, 6, -4], from: [70, 150, 300], to: [60, 112, 238], dawn: 0.92 };
+export const view: SceneView = orbit([4, 6, -10], 340);
 export const create = (origin?: Vec3) => new CostScene(origin);

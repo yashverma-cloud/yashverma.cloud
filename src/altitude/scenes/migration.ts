@@ -14,7 +14,7 @@
  *   5.0-5.8  one planned cutover moves the traffic across
  */
 import type { LabelState } from '../engine/scene';
-import type { SceneView } from './catalogue';
+import { orbit, type SceneView } from './catalogue';
 import { BUILD, FIELD, GUIDE, LINE, PlotScene, ramp, win } from './plot';
 import type { Vec3 } from '../world';
 
@@ -112,5 +112,5 @@ export class MigrationScene extends PlotScene {
   }
 }
 
-export const view: SceneView = { target: [0, 4, -4], from: [60, 160, 310], to: [52, 118, 246], dawn: 0.9 };
+export const view: SceneView = orbit([2, 4, 14], 350);
 export const create = (origin?: Vec3) => new MigrationScene(origin);

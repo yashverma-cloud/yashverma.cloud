@@ -127,9 +127,11 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
     opacity: 1;
   }
 
+  /* Labels near an edge must never widen the page: a phone would zoom the whole page out. */
   .leaders,
   .labels {
     z-index: 2;
+    overflow: hidden;
   }
 
   .opening :global(.frame) {

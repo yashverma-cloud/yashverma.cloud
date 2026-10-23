@@ -14,15 +14,14 @@ export function workFlight(view: SceneView, site: [number, number, number, numbe
     clouds: false,
     camera(p: number, orientation: Orientation): CameraState {
       const e = 1 - (1 - p) ** 3;
-      const pos: Vec3 = [
-        view.from[0] + (view.to[0] - view.from[0]) * e,
-        view.from[1] + (view.to[1] - view.from[1]) * e,
-        view.from[2] + (view.to[2] - view.from[2]) * e,
-      ];
+      // A tall screen sees a narrow slice: it stands further back until the drawing fits.
+      const back = orientation === 'portrait' ? 1.6 : 1;
+      const at = (k: 0 | 1 | 2) => view.target[k] + (view.from[k] + (view.to[k] - view.from[k]) * e - view.target[k]) * back;
+      const pos: Vec3 = [at(0), at(1), at(2)];
       const dx = view.target[0] - pos[0];
       const dz = view.target[2] - pos[2];
       const d = Math.hypot(dx, dz) || 1;
-      const shift = orientation === 'landscape' ? 0.24 : 0;
+      const shift = orientation === 'landscape' ? 0.1 : 0;
       // Left of the line of sight, so the drawing lands right of centre.
       const look: Vec3 = [view.target[0] + (dz / d) * shift * d, view.target[1], view.target[2] - (dx / d) * shift * d];
       return { pos, ...aim(pos, look), dawn: view.dawn };

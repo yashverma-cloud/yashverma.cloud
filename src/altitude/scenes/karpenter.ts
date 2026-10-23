@@ -16,7 +16,7 @@
 import { Group } from 'three';
 import type { CameraState, Vec3 } from '../world';
 import type { DrawingScene, LabelState } from '../engine/scene';
-import type { SceneView } from './catalogue';
+import { orbit, type SceneView } from './catalogue';
 import { win } from './plot';
 import { FillLayer, INK, ORDER, plotBox, plotLoop, SolidLayer, StrokeLayer, WEIGHT, type Stroke } from '../engine/kit';
 import { BEATS, layout, type NodeBox } from './karpenter-plan';
@@ -206,5 +206,5 @@ export class KarpenterScene implements DrawingScene {
   }
 }
 
-export const view: SceneView = { target: [8, 4, -16], from: [70, 170, 330], to: [56, 124, 262], dawn: 0.92 };
+export const view: SceneView = orbit([0, 4, -12], 380, { dawn: 0.92 });
 export const create = (origin?: Vec3) => new KarpenterScene(origin);

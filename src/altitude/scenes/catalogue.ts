@@ -16,6 +16,21 @@ export interface SceneView {
   dawn: number;
 }
 
+/**
+ * A view orbiting the drawing: `distance` metres out at `elevation` degrees, from `azimuth`
+ * degrees east of south. The camera starts a little further out and higher, and eases in.
+ */
+export function orbit(target: Vec3, distance: number, { elevation = 35, azimuth = 14, dawn = 0.92, approach = 1.2 } = {}): SceneView {
+  const el = (elevation * Math.PI) / 180;
+  const az = (azimuth * Math.PI) / 180;
+  const at = (d: number, lift = 0): Vec3 => [
+    target[0] + Math.sin(az) * Math.cos(el) * d,
+    target[1] + Math.sin(el) * d + lift,
+    target[2] + Math.cos(az) * Math.cos(el) * d,
+  ];
+  return { target, to: at(distance), from: at(distance * approach, distance * 0.08), dawn };
+}
+
 export interface SceneModule {
   create(origin?: Vec3): DrawingScene;
   view: SceneView;
