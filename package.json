@@ -21,7 +21,7 @@
     "@fontsource/overpass-mono": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",
     "astro": "^7.3.5",
-    "satori": "^0.33.5",
+    "satori": "^0.63.0",
     "three": "^0.186.1",
     "typescript": "^6.0.3",
     "zod": "^4.6.5"
