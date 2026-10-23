@@ -1,0 +1,38 @@
+{
+  "name": "yashverma-cloud-github-io",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal site of Yash Verma — cloud infrastructure engineer.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro check && astro build",
+    "build:fast": "astro build",
+    "preview": "astro preview",
+    "brand": "node brand/render.mjs",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/overpass": "^5.3.0",
+    "@fontsource/overpass": "^5.3.0",
+    "@fontsource/overpass-mono": "^5.3.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "astro": "^7.3.5",
+    "satori": "^0.33.5",
+    "three": "^0.186.1",
+    "typescript": "^6.0.3",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/three": "^0.186.0",
+    "playwright": "^1.63.0"
+  },
+  "overrides": {
+    "satori": {
+      "fflate": "0.7.5"
+    }
+  }
+}

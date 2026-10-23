@@ -1,0 +1,58 @@
+---
+/**
+ * Fig. 6 — sendmail, drawn as the seam that did not move.
+ *
+ * The shape is the argument: one unchanged interface across the middle, the callers above
+ * it untouched, and the new implementation below it in place of the old daemon. A
+ * before/after pair would have said the opposite of what this page says, which is that
+ * the caller side has no before and after.
+ *
+ * The old daemon is a ghost on its own row, not a stage in the flow. Drawn in line with
+ * the seam's arrow it read as a relay in front of SES, which is not what was built.
+ */
+import Diagram from '../Diagram.astro';
+
+interface Props {
+  fig: number;
+}
+const { fig } = Astro.props;
+
+const box = (x: number, w: number, y: number, h: number) =>
+  `M${x} ${y} H${x + w} V${y + h} H${x} Z`;
+---
+
+<Diagram fig={fig} caption="the interface that did not change">
+  <svg
+    viewBox="0 0 640 336"
+    role="img"
+    aria-label="Drawing. Analytics jobs pipe a message into the same stdin interface as before, unchanged. Below that interface, a new sendmail sends through AWS SES, and the old mail daemon is removed."
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <!-- callers: unchanged -->
+    <path class="d" style="--i:0" pathLength="1" d={box(0, 260, 16, 56)} />
+    <text x="130" y="50" text-anchor="middle" style="--i:0">analytics jobs</text>
+    <text class="sub" x="286" y="50" style="--i:0">unchanged</text>
+
+    <path class="d thin" style="--i:0" pathLength="1" d="M130 72 V104 M124 96 L130 106 L136 96" />
+
+    <!-- the seam -->
+    <path class="d" style="--i:1" pathLength="1" d={box(0, 640, 108, 56)} />
+    <text x="20" y="142" style="--i:1">stdin: headers, blank line, body</text>
+
+    <path class="d thin" style="--i:2" pathLength="1" d="M130 164 V196 M124 188 L130 198 L136 188" />
+
+    <!-- what was built, directly under the seam -->
+    <path class="d" style="--i:2" pathLength="1" d={box(0, 260, 200, 52)} />
+    <text x="130" y="232" text-anchor="middle" style="--i:2">new sendmail</text>
+
+    <path class="d thin" style="--i:3" pathLength="1" d="M260 226 H316 M308 220 L318 226 L308 232" />
+
+    <path class="d" style="--i:3" pathLength="1" d={box(334, 260, 200, 52)} />
+    <text x="464" y="232" text-anchor="middle" style="--i:3">AWS SES</text>
+
+    <!-- what it replaced: out of the flow entirely -->
+    <path class="d ghost" style="--i:4" d={box(0, 260, 276, 52)} />
+    <text class="sub" x="130" y="308" text-anchor="middle" style="--i:4">mail daemon</text>
+    <text class="sub" x="286" y="308" style="--i:4">removed</text>
+  </svg>
+</Diagram>

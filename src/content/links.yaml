@@ -1,0 +1,25 @@
+# Exactly the public links listed in CLAUDE.md. No phone number, no resume link.
+# Email is deliberately absent: it is assembled in JS behind a copy button, never a
+# raw mailto: in the HTML.
+#
+# The site links out to LinkedIn, GitHub and email only, plus one line to the cloud runbook
+# (a project page on this same domain, rendered at the end of Stack). The other profiles are
+# identity, not links: they live in `SAME_AS` (src/consts.ts) and are never rendered.
+
+- id: linkedin
+  label: 'LinkedIn'
+  url: 'https://www.linkedin.com/in/yashcloud/'
+  kind: primary
+  order: 1
+
+- id: github
+  label: 'GitHub'
+  url: 'https://github.com/yashverma-cloud'
+  kind: social
+  order: 2
+
+- id: runbook
+  label: 'cloud runbook'
+  url: 'https://yashverma-cloud.github.io/yv-cloud-runbook/'
+  kind: secondary
+  order: 3

@@ -1,0 +1,19 @@
+# Third-party validation of the work the rest of the page claims. From Yash's resume.
+# Award names and citations exactly as he states them — nothing paraphrased upward.
+
+- id: copado-star-of-the-month
+  award: 'Star of the Month'
+  issuer: 'Copado'
+  date: '2026-08'
+  reason: 'Introducing Karpenter autoscaling, and production root-cause analysis.'
+
+- id: copadocon-ceo-recognition
+  award: 'CEO recognition'
+  issuer: 'CopadoCon 2026, Bangalore'
+  date: '2026'
+  reason: 'Cited for anticipating needs and moving work forward without being asked.'
+
+- id: treebo-employee-of-the-month
+  award: 'Employee of the Month, twice'
+  issuer: 'Treebo Hospitality Ventures'
+  reason: 'Infrastructure alerting improvements, and cloud cost optimisation.'

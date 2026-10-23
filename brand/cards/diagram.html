@@ -1,0 +1,52 @@
+<!doctype html>
+<!-- Post card: a blueprint drawing with a title and a caption. Fields: label, title,
+     diagram ("cluster", or an SVG path relative to brand/), caption. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Card: diagram</title>
+    <link rel="stylesheet" href="/brand/brand.css" />
+    <link rel="stylesheet" href="/brand/cards/card.css" />
+    <style>
+      .figure {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-block: 40px;
+      }
+
+      .figure > div {
+        width: 100%;
+      }
+
+      /* The cluster draws at ~1.9× here, so its 12-unit labels would land near 23px.
+         19 units lands them at the cards' 36px floor; the ingress label is lifted so the
+         larger text clears its tile. */
+      [data-kind='cluster'] svg text {
+        font-size: 19px;
+      }
+
+      [data-kind='cluster'] svg text:first-of-type {
+        transform: translateY(-8px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <div class="titleblock">
+        <span class="who">Yash Verma</span>
+        <span class="where">yashverma-cloud.github.io</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <p class="label-ruled" data-field="label"></p>
+      <p class="headline title" data-field="title"></p>
+      <div class="figure"><div data-field="diagram"></div></div>
+      <p class="caption" data-field="caption"></p>
+    </div>
+
+    <script type="module" src="/brand/brand.js"></script>
+  </body>
+</html>

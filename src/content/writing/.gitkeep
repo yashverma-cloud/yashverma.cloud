@@ -1,0 +1,2 @@
+# The `writing` collection. `_contract.md` in this folder is the frontmatter and content
+# contract for a post; the section's code is in `src/pages/_writing/` (parked — see README.md).

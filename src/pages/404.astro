@@ -1,0 +1,27 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../consts';
+---
+
+<Base title={`Page not found — ${SITE.name}`} noindex>
+  <section class="section">
+    <div class="wrap">
+      <p class="micro">404</p>
+      <h1>This page doesn't exist.</h1>
+      <p class="standfirst">
+        The address is wrong, or the page has moved. Nothing is on fire.
+      </p>
+      <p class="back"><a href="/">Back to the home page</a></p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  h1 {
+    margin-block: var(--s-4) var(--s-6);
+  }
+
+  .back {
+    margin-top: var(--s-8);
+  }
+</style>

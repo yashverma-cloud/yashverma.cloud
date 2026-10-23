@@ -1,0 +1,21 @@
+# Earned credentials only. No "in progress" badges (CLAUDE.md).
+# The 2021 virtual-experience programmes (Goldman Sachs, JPMorgan Chase, Deloitte) and the
+# 2020 Coursera / UC San Diego coursework were dropped in the Phase 1 review — see design/notes.md §8.
+
+- id: anthropic-ai-fluency
+  name: 'AI fluency and Claude development'
+  issuer: 'Anthropic'
+  date: '2026'
+  includes:
+    - 'AI Fluency: Framework & Foundations'
+    - 'Claude 101'
+    - 'Claude Platform 101'
+    - 'Claude Code 101'
+    - 'Claude Code in Action'
+    - 'Introduction to Agent Skills'
+    - 'Introduction to Claude Cowork'
+
+- id: copado-ai
+  name: 'Copado AI'
+  issuer: 'Copado'
+  date: '2026-03'

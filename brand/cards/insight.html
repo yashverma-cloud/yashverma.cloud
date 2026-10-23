@@ -1,0 +1,45 @@
+<!doctype html>
+<!-- Post card: one statement, set large. Fields: label, statement, source. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Card: key insight</title>
+    <link rel="stylesheet" href="/brand/brand.css" />
+    <link rel="stylesheet" href="/brand/cards/card.css" />
+    <style>
+      .body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .statement {
+        font-size: 84px;
+        line-height: 1.08;
+      }
+
+      .caption {
+        margin-top: 48px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <div class="titleblock">
+        <span class="who">Yash Verma</span>
+        <span class="where">yashverma-cloud.github.io</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <p class="label-ruled" data-field="label"></p>
+      <div class="body">
+        <p class="headline statement" data-field="statement"></p>
+        <p class="caption" data-field="source"></p>
+      </div>
+    </div>
+
+    <script type="module" src="/brand/brand.js"></script>
+  </body>
+</html>

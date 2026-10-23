@@ -1,0 +1,72 @@
+/*
+ * Design tokens — design/notes.md §2–4. Do not add colours here without recording the
+ * contrast ratio against both grounds in that file.
+ */
+
+:root {
+  /* --- Colour (all ratios measured, design/notes.md §2) --- */
+  --deep: #0c2442; /* deepest ground: hero plate, footer, code */
+  --blueprint: #15345c; /* page ground */
+  --rule: #5580b0; /* hairlines, borders, interactive edges. 3.04:1 on blueprint */
+  --line: #eaf1f4; /* primary text and linework. 10.96:1 on blueprint */
+  --muted: #8fa9c4; /* secondary text. 5.15:1 on blueprint */
+  --signal: #f5a524; /* RESERVED: hero failure state, LinkedIn button, focus ring */
+
+  /* Decorative graticule only — never carries meaning. */
+  --rule-faint: color-mix(in srgb, var(--rule) 45%, transparent);
+
+  /* --- Type --- */
+  --font-sans: 'Overpass Variable', 'Overpass', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+  --font-mono: 'Overpass Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', monospace;
+
+  --fs-display-xl: clamp(2.5rem, 2rem + 2.4vw, 4rem);
+  --fs-display-l: clamp(1.875rem, 1.55rem + 1.1vw, 2.5rem);
+  --fs-display-m: clamp(1.4375rem, 1.24rem + 0.55vw, 1.75rem);
+  --fs-body-l: clamp(1.1875rem, 1.1rem + 0.28vw, 1.3125rem);
+  --fs-body: clamp(1.0625rem, 1.03rem + 0.1vw, 1.125rem);
+  --fs-body-s: clamp(0.9375rem, 0.93rem + 0.05vw, 0.96875rem);
+  --fs-micro: clamp(0.8125rem, 0.81rem + 0.04vw, 0.84375rem);
+
+  --lh-display-xl: 1.05;
+  --lh-display-l: 1.12;
+  --lh-display-m: 1.25;
+  --lh-body-l: 1.5;
+  --lh-body: 1.6;
+  --lh-micro: 1.4;
+
+  --tr-display-xl: -0.02em;
+  --tr-display-l: -0.015em;
+  --tr-display-m: -0.01em;
+  --tr-micro: 0.01em;
+
+  /* --- Space (4px base) --- */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-6: 1.5rem;
+  --s-8: 2rem;
+  --s-12: 3rem;
+  --s-16: 4rem;
+  --s-24: 6rem;
+  --s-32: 8rem;
+
+  /* --- Layout --- */
+  /* 18ch broke the approved headline over five lines; 23ch gives the three the
+     storyboard's SplitText stagger assumes. */
+  --measure-display: 23ch;
+  --measure-standfirst: 46ch;
+  --measure-prose: 66ch;
+  --content-max: 1120px;
+  --gutter: 1.25rem;
+  --header-h: 52px;
+  --section-gap: var(--s-24);
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --gutter: 2.5rem;
+    --section-gap: var(--s-32);
+  }
+}

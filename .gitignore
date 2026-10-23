@@ -1,0 +1,37 @@
+# Local development docs — kept on disk, deliberately not committed.
+# The v2 brief, the phased plan and the design decisions are working notes,
+# not part of the published site. Back them up outside this repo.
+CLAUDE.md
+REDESIGN_PLAN.md
+design/
+
+# Source photos. Only the processed crop in src/assets is committed.
+images/
+
+# Rendered brand images; regenerate with `npm run build && npm run brand`.
+brand/export/
+
+# Local tooling and agent config (machine-specific)
+.mcp.json
+.claude/
+.screenshots/
+
+# Build output and dependencies
+node_modules/
+dist/
+.astro/
+.output/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db

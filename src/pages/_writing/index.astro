@@ -1,0 +1,118 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../consts';
+import { formatDay } from '../../utils/dates';
+
+/**
+ * PARKED — the `_` in this folder's name keeps Astro from building it, so /writing does not
+ * exist on the site. To bring the section back, follow "Parked: /writing" in README.md.
+ *
+ * The listing — rule-separated rows, the site's structural device in place of cards
+ * (base.css `.rows`), with the date in its own column from 48rem as on the timeline.
+ *
+ * Draft entries are excluded here and in every other place the collection is read, so an
+ * unfinished post has no row, no page and no card. While nothing is published the page
+ * carries `noindex` and the nav has no Writing item: the Phase 1 decision, with the data as
+ * the gate (design/notes.md §8).
+ */
+const posts = (await getCollection('writing', ({ data }) => !data.draft)).sort((a, b) =>
+  b.data.published === a.data.published
+    ? a.id.localeCompare(b.id)
+    : b.data.published.localeCompare(a.data.published),
+);
+---
+
+<Base
+  title={`Writing — ${SITE.name}`}
+  description="Postmortems and notes on running production infrastructure — Kubernetes, autoscaling, cost and observability on AWS and GCP."
+  noindex={posts.length === 0}
+>
+  <section class="section">
+    <div class="wrap">
+      <div class="section-head">
+        <h1 class="title">Writing</h1>
+        <p class="standfirst">Postmortems and notes on running production infrastructure.</p>
+      </div>
+
+      {
+        posts.length === 0 ? (
+          <p class="empty">No posts yet.</p>
+        ) : (
+          <ul class="rows">
+            {posts.map((post) => (
+              <li>
+                <a class="row" href={`/writing/${post.id}`}>
+                  <time class="micro when" datetime={post.data.published}>
+                    {formatDay(post.data.published)}
+                  </time>
+                  <span class="what">
+                    <span class="post-title">{post.data.title}</span>
+                    <span class="summary body-s">{post.data.description}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Matches the case-study page: a sub-page title sits a step below the hero's h1. */
+  .title {
+    font-size: var(--fs-display-l);
+    line-height: var(--lh-display-l);
+    letter-spacing: var(--tr-display-l);
+    margin-bottom: var(--s-4);
+  }
+
+  .row {
+    display: grid;
+    gap: var(--s-1) var(--s-8);
+    padding-block: var(--s-6);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .what {
+    display: grid;
+    gap: var(--s-1);
+  }
+
+  .post-title {
+    font-size: var(--fs-body-l);
+  }
+
+  .summary {
+    color: var(--muted);
+    max-width: var(--measure-prose);
+  }
+
+  /* The underline belongs to the title, not the whole row: the row is the hit area, the
+     title is the link. Same treatment as the proof rows. */
+  .row:hover .post-title,
+  .row:focus-visible .post-title {
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+    text-underline-offset: 0.2em;
+  }
+
+  .empty {
+    color: var(--muted);
+  }
+
+  @media (min-width: 48rem) {
+    .row {
+      grid-template-columns: 8rem minmax(0, 1fr);
+      align-items: baseline;
+    }
+
+    .when {
+      /* Optical alignment with the title's first line, as on the timeline. */
+      margin-top: 0.15em;
+    }
+  }
+</style>

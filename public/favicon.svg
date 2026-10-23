@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>Yash Verma</title>
+  <rect width="32" height="32" fill="#0C2442"/>
+  <!-- One node of the cluster, in the site's axonometric. Solid faces so it survives 16px. -->
+  <polygon points="16,5 27,11.5 16,18 5,11.5" fill="#EAF1F4"/>
+  <polygon points="5,11.5 16,18 16,27 5,20.5" fill="#15345C"/>
+  <polygon points="16,18 27,11.5 27,20.5 16,27" fill="#5580B0"/>
+</svg>

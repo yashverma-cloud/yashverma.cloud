@@ -1,0 +1,68 @@
+---
+/**
+ * Fig. 2 — the 2 TB migration, drawn as a cutover timeline (design/notes.md §7.6).
+ *
+ * The argument of the page is in the shape: the source lane runs unbroken to the band,
+ * the target lane runs ghosted until it, one narrow band separates them, and the two
+ * verification ticks bracket the DMS run — because the verification is the part that made
+ * the window short. The source lane being unbroken *is* "serving throughout", so that
+ * label is not drawn; a drawing that captions what it already shows is drawing the wrong
+ * thing. Nothing here says "zero downtime", because it was not; see the claim-discipline
+ * note in the case study.
+ *
+ * Label widths are the real constraint. At 350px every label is roughly twice as wide, in
+ * user units, as it is on a laptop, so the lane names are short and the detail sits in the
+ * middle of the sheet where there is room for it.
+ */
+import Diagram from '../Diagram.astro';
+
+interface Props {
+  fig: number;
+}
+const { fig } = Astro.props;
+
+const BAND_L = 520;
+const BAND_R = 570;
+const LANE_X = 150;
+---
+
+<Diagram fig={fig} caption="2 TB migration, cutover">
+  <svg
+    viewBox="0 0 640 272"
+    role="img"
+    aria-label="Timeline drawing. The target structure is checked, then AWS DMS carries a 2 TB bulk load and a live sync while the source keeps serving. Row and index counts are verified, and one planned cutover separates the two lanes, after which the Kubernetes-backed target serves."
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <!-- source: unbroken all the way to the window -->
+    <text x="0" y="76" style="--i:0">source</text>
+    <path class="d" style="--i:0" pathLength="1" d={`M${LANE_X} 70 H${BAND_L}`} />
+
+    <!-- target: ghosted while it is only receiving, solid once it serves -->
+    <text x="0" y="196" style="--i:1">target</text>
+    <path class="d ghost" style="--i:1" d={`M170 190 H${BAND_L}`} />
+
+    <!-- what carries the data down -->
+    <path
+      class="d thin"
+      style="--i:2"
+      pathLength="1"
+      d="M250 78 V182 M243 174 L250 184 L257 174"
+    />
+    <text x="274" y="116" style="--i:2">AWS DMS · 2 TB</text>
+    <text class="sub" x="274" y="140" style="--i:2">bulk load, then sync</text>
+
+    <!-- the scripts that bracket it: DMS moves data, not structure -->
+    <path class="d thin" style="--i:3" pathLength="1" d="M170 198 V228 M450 198 V228" />
+    <text class="sub" x="170" y="250" text-anchor="middle" style="--i:3">
+      structure check
+    </text>
+    <text class="sub" x="450" y="250" text-anchor="middle" style="--i:3">
+      row + index counts
+    </text>
+
+    <!-- the one planned window -->
+    <path class="d ghost" style="--i:4" d={`M${BAND_L} 30 V214 M${BAND_R} 30 V214`} />
+    <text x={(BAND_L + BAND_R) / 2} y="22" text-anchor="middle" style="--i:4">cutover</text>
+    <path class="d" style="--i:4" pathLength="1" d={`M${BAND_R} 190 H640`} />
+  </svg>
+</Diagram>

@@ -1,0 +1,68 @@
+---
+/**
+ * Fig. 1 — cloud cost. Before/after bars, indexed (design/notes.md §7.6).
+ *
+ * Indexed to 100 deliberately: the percentage and the mechanism carry the claim, and
+ * publishing an employer's actual bill is the disclosure this site does not make.
+ * The eliminated 40% is drawn as the dashed remainder of the "after" bar, so the figure
+ * shows what went rather than only what is left.
+ */
+import Diagram from '../Diagram.astro';
+
+interface Props {
+  fig: number;
+}
+const { fig } = Astro.props;
+
+// 530 user units = index 100, so the "after" bar is 318.
+const X0 = 86;
+const FULL = 616;
+const AFTER = 404;
+---
+
+<Diagram fig={fig} caption="monthly cloud spend, indexed">
+  <svg
+    viewBox="0 0 640 232"
+    role="img"
+    aria-label="Bar drawing. Monthly cloud spend indexed to 100 before the work and 60 after, a reduction of 40 per cent."
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <!-- before -->
+    <text class="sub" x="0" y="52" style="--i:0">before</text>
+    <path
+      class="d"
+      style="--i:0"
+      pathLength="1"
+      d={`M${X0} 30 H${FULL} V76 H${X0} Z`}
+    />
+    <text class="num sub" x={FULL - 14} y="60" text-anchor="end" style="--i:0">100</text>
+
+    <!-- after -->
+    <text class="sub" x="0" y="142" style="--i:1">after</text>
+    <path
+      class="d"
+      style="--i:1"
+      pathLength="1"
+      d={`M${X0} 120 H${AFTER} V166 H${X0} Z`}
+    />
+    <text class="num sub" x={AFTER - 14} y="150" text-anchor="end" style="--i:1">60</text>
+
+    <!-- what came out -->
+    <path class="d ghost" style="--i:2" d={`M${AFTER} 120 H${FULL} V166 H${AFTER}`} />
+
+    <!-- the difference, measured between the two bar ends -->
+    <path
+      class="d thin"
+      style="--i:3"
+      pathLength="1"
+      d={`M${AFTER} 176 V198 M${FULL} 176 V198 M${AFTER} 192 H${FULL}`}
+    />
+    <text
+      class="num"
+      x={(AFTER + FULL) / 2}
+      y="222"
+      text-anchor="middle"
+      style="--i:3">−40%</text
+    >
+  </svg>
+</Diagram>

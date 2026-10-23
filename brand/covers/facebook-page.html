@@ -1,0 +1,63 @@
+<!doctype html>
+<!--
+  Facebook Page cover, 1640×924 (16:9). Facebook Help, checked Sep 2026: the cover shows
+  full-bleed at 16:9 on computers and at 2.4:1 on phones, so a phone keeps only a
+  1640×683 band of this image. All content sits inside that band's centre, clear of the
+  bottom-left where the profile picture overlaps. Facebook recommends JPG under 100 KB for
+  speed; PNG is kept here because this is flat line art with text.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Facebook Page cover</title>
+    <link rel="stylesheet" href="/brand/brand.css" />
+    <style>
+      :root {
+        --w: 1640px;
+        --h: 924px;
+      }
+
+      .copy {
+        position: absolute;
+        left: 150px;
+        top: 0;
+        bottom: 0;
+        width: 640px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .headline {
+        font-size: 66px;
+      }
+
+      .where {
+        margin-top: 24px;
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      .cluster {
+        position: absolute;
+        left: 860px;
+        top: 50%;
+        width: 660px;
+        transform: translateY(-50%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <p class="headline">I keep production Kubernetes running when nodes die.</p>
+      <p class="where muted">yashverma-cloud.github.io</p>
+    </div>
+    <div class="cluster" data-cluster></div>
+
+    <!-- The 2.4:1 band a phone shows, centred vertically, with a margin inside it. -->
+    <div class="guide safe" style="left: 80px; top: 180px; width: 1480px; height: 564px"></div>
+    <div class="guide covered" style="left: 0; bottom: 0; width: 360px; height: 240px"></div>
+
+    <script type="module" src="/brand/brand.js"></script>
+  </body>
+</html>

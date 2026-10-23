@@ -1,0 +1,54 @@
+<!doctype html>
+<!-- Post card: real code or terminal output, set in Overpass Mono on the deep ground.
+     Fields: label, title, code (whitespace kept), caption. -->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Card: snippet</title>
+    <link rel="stylesheet" href="/brand/brand.css" />
+    <link rel="stylesheet" href="/brand/cards/card.css" />
+    <style>
+      /* Centred between the label and the title block, so a short snippet does not leave
+         the bottom half of the card empty. */
+      .body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .code {
+        margin-block: 56px 48px;
+        padding: 40px 44px;
+        background: var(--deep);
+        /* --blueprint on --deep is 1.25:1, so the edge is a --rule hairline. */
+        border: 1px solid var(--rule);
+        font-family: var(--font-mono);
+        font-size: 36px;
+        line-height: 1.6;
+        white-space: pre;
+        overflow: hidden;
+        text-wrap: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="sheet">
+      <div class="titleblock">
+        <span class="who">Yash Verma</span>
+        <span class="where">yashverma-cloud.github.io</span>
+      </div>
+    </div>
+
+    <div class="content">
+      <p class="label-ruled" data-field="label"></p>
+      <div class="body">
+        <p class="headline title" data-field="title"></p>
+        <pre class="code" data-field="code"></pre>
+        <p class="caption" data-field="caption"></p>
+      </div>
+    </div>
+
+    <script type="module" src="/brand/brand.js"></script>
+  </body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<!--
+  LinkedIn profile background, 1584×396 (LinkedIn's maximum; checked Sep 2026).
+  The profile photo covers the bottom-left, more on mobile, and the app crops the edges.
+  Everything sits inside the centred ~1350×220 safe zone and at least 300px from the left.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>LinkedIn profile background</title>
+    <link rel="stylesheet" href="/brand/brand.css" />
+    <style>
+      :root {
+        --w: 1584px;
+        --h: 396px;
+      }
+
+      /* Centred on the safe zone's height (88–308), not pinned to its top edge. */
+      .copy {
+        position: absolute;
+        left: 420px;
+        top: 88px;
+        height: 220px;
+        width: 520px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .headline {
+        font-size: 46px;
+      }
+
+      .where {
+        margin-top: 18px;
+        font-size: 22px;
+        font-weight: 600;
+      }
+
+      .cluster {
+        position: absolute;
+        left: 990px;
+        top: 198px;
+        width: 470px;
+        transform: translateY(-50%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <p class="headline">I keep production Kubernetes running when nodes die.</p>
+      <p class="where muted">yashverma-cloud.github.io</p>
+    </div>
+    <div class="cluster" data-cluster></div>
+
+    <div class="guide safe" style="left: 117px; top: 88px; width: 1350px; height: 220px"></div>
+    <div class="guide covered" style="left: 0; bottom: 0; width: 300px; height: 230px"></div>
+
+    <script type="module" src="/brand/brand.js"></script>
+  </body>
+</html>

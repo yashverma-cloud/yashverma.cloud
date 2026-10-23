@@ -1,0 +1,111 @@
+---
+import { getCollection } from 'astro:content';
+import { formatMonth } from '../utils/dates';
+
+/**
+ * Plain list, issuer and date. No badges, no credential IDs, no counts —
+ * "5 Credentials" and "20+ Courses Completed" were v1's padding (design/notes.md §1).
+ * Earned only; nothing in progress.
+ */
+const certs = await getCollection('certifications');
+---
+
+<section class="section" id="certifications">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Certifications and education</h2>
+    </div>
+
+    <ul class="rows">
+      {
+        certs.map((cert) => (
+          <li>
+            <div class="row">
+              <div>
+                <h3>{cert.data.name}</h3>
+                {cert.data.includes && (
+                  <ul class="includes body-s">
+                    {cert.data.includes.map((name) => (
+                      <li>{name}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <p class="micro meta">
+                {cert.data.issuer} · {formatMonth(cert.data.date)}
+              </p>
+            </div>
+          </li>
+        ))
+      }
+      <li>
+        <div class="row">
+          <div>
+            <h3>Bachelor of Engineering, Computer Science</h3>
+          </div>
+          <p class="micro meta">Chandigarh University · 2018–2022</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+</section>
+
+<style>
+  .row {
+    display: grid;
+    gap: var(--s-2) var(--s-8);
+    padding-block: var(--s-4);
+  }
+
+  h3 {
+    font-size: var(--fs-body);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  /* One credential per line. Seven names joined by a separator read as a wall. */
+  .includes {
+    color: var(--muted);
+    margin: var(--s-2) 0 0;
+    padding: 0;
+    list-style: none;
+    max-width: var(--measure-prose);
+  }
+
+  .includes li {
+    padding-left: var(--s-4);
+    position: relative;
+  }
+
+  .includes li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.65em;
+    width: 4px;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  @media (min-width: 48rem) {
+    .includes {
+      columns: 2;
+      column-gap: var(--s-8);
+    }
+  }
+
+  .meta {
+    margin: 0;
+  }
+
+  @media (min-width: 48rem) {
+    .row {
+      grid-template-columns: minmax(0, 1fr) 14rem;
+      align-items: baseline;
+    }
+
+    .meta {
+      text-align: right;
+    }
+  }
+</style>

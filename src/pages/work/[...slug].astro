@@ -1,0 +1,188 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { SITE } from '../../consts';
+import CostBars from '../../components/diagrams/CostBars.astro';
+import CutoverTimeline from '../../components/diagrams/CutoverTimeline.astro';
+import AlertPath from '../../components/diagrams/AlertPath.astro';
+import ScalingCurve from '../../components/diagrams/ScalingCurve.astro';
+import AuthFlow from '../../components/diagrams/AuthFlow.astro';
+import DropInInterface from '../../components/diagrams/DropInInterface.astro';
+
+/**
+ * Case-study pages — design/notes.md §5.4.
+ *
+ * Only non-draft entries generate a page, so the site never ships a case study with a
+ * placeholder body. Each entry is pinned to one drawing (design/notes.md §7.6): four
+ * "animated blueprint SVGs" chosen freely would have become four boxes-and-arrows
+ * pictures, which is a logo wall in a different vocabulary.
+ */
+const DIAGRAMS = {
+  'cloud-cost-optimisation': CostBars,
+  'live-migration-to-kubernetes': CutoverTimeline,
+  'alert-payload-reduction': AlertPath,
+  'karpenter-autoscaling': ScalingCurve,
+  'jarvis-slack-ops': AuthFlow,
+  'sendmail-ses-cli': DropInInterface,
+} as const;
+
+export const getStaticPaths = (async () => {
+  const work = (await getCollection('work', ({ data }) => !data.draft)).sort(
+    (a, b) => a.data.order - b.data.order,
+  );
+  return work.map((entry, i) => ({
+    params: { slug: entry.id },
+    props: { entry, next: work[(i + 1) % work.length] },
+  }));
+}) satisfies GetStaticPaths;
+
+const { entry, next } = Astro.props;
+const { Content } = await render(entry);
+const Figure = DIAGRAMS[entry.id as keyof typeof DIAGRAMS];
+
+// Employer attribution is deliberately absent for now (design/notes.md §8), so this
+// line is usually empty and the page goes straight from the title to the drawing.
+const meta = [entry.data.employer, entry.data.year].filter(Boolean).join(' · ');
+const description = [entry.data.figure, entry.data.result]
+  .filter(Boolean)
+  .join(' ')
+  .concat(`. ${entry.data.mechanism}.`);
+---
+
+<Base
+  title={`${entry.data.title} — ${SITE.name}`}
+  description={description}
+  ogImage={`/og/work/${entry.id}.png`}
+  ogImageAlt={`Case study by ${SITE.name}: ${entry.data.title}.`}
+  ogType="article"
+>
+  <article class="section">
+    <div class="wrap">
+      <p class="micro back"><a href="/#work">← Work</a></p>
+      <h1 class="title">{entry.data.title}</h1>
+      {meta && <p class="micro meta">{meta}</p>}
+
+      {Figure && <Figure fig={entry.data.order} />}
+
+      <div class="prose-grid">
+        <Content />
+      </div>
+
+      {
+        next && next.id !== entry.id && (
+          <p class="next">
+            <span class="micro">Next</span>
+            <a href={`/work/${next.id}/`}>{next.data.title}</a>
+          </p>
+        )
+      }
+    </div>
+  </article>
+</Base>
+
+<style>
+  .back {
+    margin-bottom: var(--s-8);
+  }
+
+  .title {
+    font-size: var(--fs-display-l);
+    line-height: var(--lh-display-l);
+    letter-spacing: var(--tr-display-l);
+    max-width: 20ch;
+    margin-bottom: var(--s-8);
+  }
+
+  .meta {
+    margin-top: calc(var(--s-8) * -1 + var(--s-3));
+    margin-bottom: var(--s-8);
+  }
+
+  /*
+   * Problem / What I did / Result. On a phone the label sits above its prose; from 48rem
+   * it becomes a real left column, as in the wireframe.
+   *
+   * The two-column version leans on grid's sparse auto-placement: every label is pinned
+   * to column 1 and everything else to column 2, and because a column-1 item after a
+   * column-2 item forces the cursor onto a new row, each label lands level with the
+   * first paragraph of its own section. Nothing here depends on how many paragraphs a
+   * section has, which is the reason for doing it this way rather than wrapping each
+   * section in markup the markdown cannot produce.
+   */
+  .prose-grid {
+    display: grid;
+    row-gap: var(--s-4);
+    --prose-measure: var(--measure-prose);
+  }
+
+  .prose-grid > :global(h2) {
+    font-size: var(--fs-micro);
+    line-height: var(--lh-micro);
+    letter-spacing: var(--tr-micro);
+    font-weight: 600;
+    color: var(--muted);
+    padding-bottom: var(--s-2);
+    border-bottom: 1px solid var(--rule-faint);
+  }
+
+  .prose-grid > :global(h2:not(:first-child)) {
+    margin-top: var(--s-12);
+  }
+
+  .prose-grid > :global(p),
+  .prose-grid > :global(ul) {
+    max-width: var(--measure-prose);
+  }
+
+  .prose-grid > :global(pre) {
+    max-width: min(100%, var(--prose-measure));
+  }
+
+  .prose-grid > :global(ul) {
+    padding-left: var(--s-4);
+  }
+
+  .prose-grid > :global(li) {
+    margin-bottom: var(--s-2);
+  }
+
+  @media (min-width: 48rem) {
+    .prose-grid {
+      grid-template-columns: 10rem minmax(0, 1fr);
+      column-gap: var(--s-8);
+      align-items: start;
+    }
+
+    .prose-grid > :global(h2) {
+      grid-column: 1;
+      margin-top: 0.35em;
+    }
+
+    .prose-grid > :global(:not(h2)) {
+      grid-column: 2;
+    }
+
+    /* The label and the paragraph beside it share a grid row, so the space between
+       sections has to be pushed onto both. Putting it on the label alone drops the
+       label below its own opening paragraph, which reads as a mistake. */
+    .prose-grid > :global(h2:not(:first-child)) {
+      margin-top: calc(var(--s-12) + 0.35em);
+    }
+
+    .prose-grid > :global(h2:not(:first-child) + *) {
+      margin-top: var(--s-12);
+    }
+  }
+
+  .next {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--s-2) var(--s-4);
+    margin-top: var(--s-16);
+    padding-top: var(--s-4);
+    border-top: 1px solid var(--rule-faint);
+    font-size: var(--fs-body-l);
+  }
+</style>

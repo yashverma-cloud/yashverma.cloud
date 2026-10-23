@@ -1,0 +1,25 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer>
+  <div class="wrap inner">
+    <p class="micro">© {year} Yash Verma</p>
+    <p class="micro">Built with Astro. Hosted on GitHub Pages.</p>
+  </div>
+</footer>
+
+<style>
+  footer {
+    background: var(--deep);
+    border-top: 1px solid var(--rule-faint);
+    padding-block: var(--s-8);
+  }
+
+  .inner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2) var(--s-6);
+    justify-content: space-between;
+  }
+</style>

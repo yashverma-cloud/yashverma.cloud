@@ -1,0 +1,57 @@
+---
+/**
+ * Fig. 4 — Karpenter, drawn as a scaling curve (design/notes.md §7.6).
+ *
+ * A staircase, not a smooth curve: nodes arrive one at a time, and drawing it as a
+ * continuous line would be a small lie about how capacity actually appears.
+ * Both marked points are Yash's measured figures; the axes carry no absolute scale,
+ * because the shape is the claim and a fleet size would be an employer's business.
+ */
+import Diagram from '../Diagram.astro';
+
+interface Props {
+  fig: number;
+}
+const { fig } = Astro.props;
+
+const AX_X = 56;
+const AX_Y = 206;
+---
+
+<Diagram fig={fig} caption="node count against time">
+  <svg
+    viewBox="0 0 640 272"
+    role="img"
+    aria-label="Step drawing of node count against time. The first replacement node is ready in about 80 seconds, and the cluster scales past 100 nodes in under 10 minutes."
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <!-- axes -->
+    <path
+      class="d thin"
+      style="--i:0"
+      pathLength="1"
+      d={`M${AX_X} 18 V${AX_Y} H634`}
+    />
+    <text class="sub" x="0" y="26" style="--i:0">nodes</text>
+    <text class="sub" x="634" y="234" text-anchor="end" style="--i:0">time</text>
+
+    <!-- capacity arriving, a step at a time -->
+    <path
+      class="d"
+      style="--i:1"
+      pathLength="1"
+      d={`M${AX_X} 198 H104 V172 H156 V150 H220 V126 H296 V102 H384 V78 H486 V56 H570 V44 H634`}
+    />
+
+    <!-- first node ready -->
+    <path class="d thin" style="--i:2" pathLength="1" d={`M104 172 V${AX_Y}`} />
+    <text class="num" x="118" y="168" style="--i:2">~80 s</text>
+    <text class="sub" x="118" y="192" style="--i:2">first node ready</text>
+
+    <!-- and past a hundred of them. The annotation hangs under the curve rather than
+         beside it: the space above the steps is where the steps are. -->
+    <path class="d thin" style="--i:3" pathLength="1" d="M570 44 V124" />
+    <text class="num" x="634" y="150" text-anchor="end" style="--i:3">100+ nodes</text>
+    <text class="sub" x="634" y="174" text-anchor="end" style="--i:3">under 10 minutes</text>
+  </svg>
+</Diagram>

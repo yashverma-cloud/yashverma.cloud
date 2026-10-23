@@ -1,0 +1,62 @@
+<!doctype html>
+<!--
+  X (Twitter) header, 1500×500 (3:1; checked Sep 2026). Phones trim about 70px off the top
+  and bottom, so everything sits inside the centred 1500×360 band. On a computer the profile
+  picture overlaps the bottom-left; the copy starts well to the right of it. The header is
+  shown at about 600px wide on a computer and 390px on a phone, so the type is larger than
+  on the LinkedIn banner.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>X header</title>
+    <link rel="stylesheet" href="/brand/brand.css" />
+    <style>
+      :root {
+        --w: 1500px;
+        --h: 500px;
+      }
+
+      .copy {
+        position: absolute;
+        left: 440px;
+        top: 70px;
+        height: 360px;
+        width: 540px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .headline {
+        font-size: 58px;
+      }
+
+      .where {
+        margin-top: 22px;
+        font-size: 28px;
+        font-weight: 600;
+      }
+
+      .cluster {
+        position: absolute;
+        left: 1020px;
+        top: 250px;
+        width: 400px;
+        transform: translateY(-50%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="copy">
+      <p class="headline">I keep production Kubernetes running when nodes die.</p>
+      <p class="where muted">yashverma-cloud.github.io</p>
+    </div>
+    <div class="cluster" data-cluster></div>
+
+    <div class="guide safe" style="left: 40px; top: 70px; width: 1420px; height: 360px"></div>
+    <div class="guide covered" style="left: 0; bottom: 0; width: 400px; height: 200px"></div>
+
+    <script type="module" src="/brand/brand.js"></script>
+  </body>
+</html>

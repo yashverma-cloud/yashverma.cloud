@@ -1,0 +1,132 @@
+---
+import { getCollection } from 'astro:content';
+import { formatRange, isoRange } from '../utils/dates';
+
+/**
+ * One rail, left-aligned — design/notes.md §5.5. Not v1's alternating centre line.
+ * Ticks are plan-drawing squares: filled for the current role, hollow for past ones.
+ * No colour change (signal is reserved), no glow, no cards, no hover lift.
+ *
+ * Each entry carries 2–3 lines of scope and outcome, and the current role carries the
+ * most (design/notes.md §8). The intern entry carries none on purpose — the wireframe
+ * ends the rail there, and six months as an intern needs no paragraph.
+ */
+const roles = (await getCollection('experience')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<section class="section" id="experience">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Experience</h2>
+    </div>
+
+    <ol class="rail">
+      {
+        roles.map((role) => (
+          <li class:list={['entry', { current: !role.data.end }]}>
+            <time class="micro when" datetime={isoRange(role.data.start, role.data.end)}>
+              {formatRange(role.data.start, role.data.end)}
+            </time>
+            <div class="what">
+              <h3>{role.data.role}</h3>
+              <p class="org body-s">
+                {role.data.company} · {role.data.location}
+              </p>
+              {role.data.summary && <p class="summary">{role.data.summary}</p>}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .rail {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .entry {
+    position: relative;
+    padding-left: var(--s-8);
+    padding-bottom: var(--s-8);
+    /* The continuous rule: the tenure reads as one story, not five boxes. */
+    border-left: 1px solid var(--rule-faint);
+  }
+
+  .entry:last-child {
+    border-left-color: transparent;
+    padding-bottom: 0;
+  }
+
+  .entry::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: 0.45em;
+    width: 5px;
+    height: 5px;
+    border: 1px solid var(--line);
+    background: var(--blueprint);
+  }
+
+  .entry.current::before {
+    background: var(--line);
+  }
+
+  .when {
+    display: block;
+    margin-bottom: var(--s-1);
+  }
+
+  h3 {
+    font-size: var(--fs-body-l);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .org {
+    color: var(--muted);
+  }
+
+  .summary {
+    margin-top: var(--s-2);
+    max-width: var(--measure-prose);
+  }
+
+  /* Desktop: dates become a real column rather than a line above the role. */
+  @media (min-width: 48rem) {
+    .entry {
+      display: grid;
+      grid-template-columns: 11rem minmax(0, 1fr);
+      column-gap: var(--s-8);
+      padding-left: 0;
+      border-left: 0;
+    }
+
+    .entry::before {
+      left: 11rem;
+      margin-left: calc(var(--s-8) / -2 - 2px);
+    }
+
+    .what {
+      border-left: 1px solid var(--rule-faint);
+      padding-left: var(--s-8);
+      padding-bottom: var(--s-8);
+      margin-left: calc(var(--s-8) * -1);
+    }
+
+    .entry:last-child .what {
+      border-left-color: transparent;
+      padding-bottom: 0;
+    }
+
+    .when {
+      margin-top: 0.2em;
+    }
+  }
+</style>

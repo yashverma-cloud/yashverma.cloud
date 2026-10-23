@@ -1,0 +1,240 @@
+---
+/**
+ * Case-study figure frame — design/notes.md §5.4.
+ *
+ * A drawing sheet, not a card: a --rule hairline frame, the artwork inside, and a real
+ * title block in the bottom-right corner. Sentence case, because the site has no
+ * ALL-CAPS labels — a title block is the one place a drawing convention would push the
+ * other way, and the type rule wins.
+ *
+ * Motion (CLAUDE.md budget item 3): the drawing plots itself once, on scroll, and never
+ * again. Implemented with stroke-dash on `pathLength="1"` elements rather than GSAP
+ * DrawSVG, following the Phase 3 precedent recorded in design/notes.md — the effect is
+ * a dozen lines of CSS against ~40 KB gzip of library, on pages whose whole point is to
+ * load fast on a phone.
+ *
+ * The three states that matter:
+ *   - no JS, or reduced motion  → nothing is armed, the drawing renders complete.
+ *   - JS, below the fold        → armed (invisible), plots when scrolled to.
+ *   - JS, already in view       → armed, plots straight away.
+ *
+ * Arming happens in an inline script directly after the markup, so the drawing is never
+ * painted complete and then blanked. A deferred module would flash.
+ */
+interface Props {
+  /** Drawing number. Matches the case study's `order`, so figures number in site order. */
+  fig: number;
+  /** What the drawing is of, in the title block's second line. */
+  caption: string;
+  rev?: string;
+}
+
+const { fig, caption, rev = 'A' } = Astro.props;
+---
+
+<figure class="figure" data-diagram>
+  <div class="band">
+    <slot />
+  </div>
+  <div class="titleblock micro">
+    <span>Fig. {fig} · rev {rev}</span>
+    <span class="what">{caption}</span>
+  </div>
+</figure>
+
+<script is:inline>
+  (function () {
+    if (window.__diagramsArmed) return;
+    window.__diagramsArmed = true;
+
+    var reduce =
+      window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window)) return;
+
+    var plates = document.querySelectorAll('[data-diagram]');
+    if (!plates.length) return;
+
+    // Armed synchronously: the drawing is hidden before it has ever been painted.
+    for (var i = 0; i < plates.length; i++) plates[i].setAttribute('data-draw', 'armed');
+
+    var run = function (el) {
+      el.setAttribute('data-draw', 'run');
+    };
+
+    var io = new IntersectionObserver(
+      function (entries) {
+        for (var j = 0; j < entries.length; j++) {
+          if (!entries[j].isIntersecting) continue;
+          run(entries[j].target);
+          io.unobserve(entries[j].target);
+        }
+      },
+      { threshold: 0.2 },
+    );
+
+    for (var k = 0; k < plates.length; k++) io.observe(plates[k]);
+  })();
+</script>
+
+<style is:global>
+  /* --- Drawing frame --------------------------------------------------- */
+
+  .figure {
+    /* Capped so the drawing fills its sheet. Left to the full content column the
+       artwork floated in the middle of a large empty frame. */
+    max-width: 44rem;
+    margin: 0 0 var(--s-16);
+    border: 1px solid var(--rule-faint);
+  }
+
+  .figure .band {
+    /* Safety valve only. Every figure is drawn to fit 350px; this catches the widths
+       where a long label would otherwise be clipped. */
+    overflow-x: auto;
+    /* Side padding is kept thin on a phone: every pixel of it comes straight off the
+       drawing's scale, and so off the size of its labels. */
+    padding: var(--s-6) var(--s-2) var(--s-4);
+  }
+
+  @media (min-width: 30rem) {
+    .figure .band {
+      padding-inline: var(--s-4);
+    }
+  }
+
+  .figure svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .figure .titleblock {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: max-content;
+    max-width: 100%;
+    margin-left: auto;
+    padding: var(--s-2) var(--s-4);
+    border-top: 1px solid var(--rule-faint);
+    border-left: 1px solid var(--rule-faint);
+  }
+
+  .figure .titleblock .what {
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* --- Drawing conventions --------------------------------------------- */
+  /* `d` plots itself; `f` fades in behind it. `--i` is the plotting order. */
+
+  .figure svg .d {
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .figure svg .thin {
+    stroke: var(--rule);
+    stroke-width: 1;
+  }
+
+  /* Ghosted strokes carry `pathLength` nowhere — it rescales the dash pattern to the
+     whole path, which turns every dash solid. They are not plotted anyway. */
+  .figure svg .ghost {
+    stroke: var(--muted);
+    stroke-dasharray: 6 5;
+  }
+
+  .figure svg text {
+    fill: var(--line);
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 23px;
+  }
+
+  .figure svg text.sub {
+    fill: var(--muted);
+    font-weight: 400;
+  }
+
+  .figure svg text.num {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Labels are sized in user units, so their rendered size follows how far the drawing
+     is scaled. Keyed to the drawing's own width, not the viewport's — the same fix the
+     hero poster needed. Every viewBox is 640 wide, so these steps keep the rendered
+     label between about 11px and 14px from a 350px phone up to the capped sheet. */
+  .figure .band {
+    container-type: inline-size;
+  }
+
+  @container (min-width: 22rem) {
+    .figure svg text {
+      font-size: 20px;
+    }
+  }
+
+  @container (min-width: 28rem) {
+    .figure svg text {
+      font-size: 16px;
+    }
+  }
+
+  @container (min-width: 33rem) {
+    .figure svg text {
+      font-size: 14px;
+    }
+  }
+
+  @container (min-width: 38rem) {
+    .figure svg text {
+      font-size: 12.5px;
+    }
+  }
+
+  /* --- Plot-on-scroll --------------------------------------------------- */
+  /* Only ever applied when the inline script has armed the figure, so a visitor with no
+     JS, or with reduced motion, gets the finished drawing and no hidden content. */
+
+  /* A dashed line cannot also be plotted, because plotting *is* a dash: the two would be
+     fighting over stroke-dasharray, and the dash loses. Ghosted strokes carry meaning
+     here — capacity removed, a lane not yet live — so they keep their dashes and fade in
+     with the labels instead. */
+  .figure[data-draw] .d:not(.ghost) {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+
+  .figure[data-draw] text,
+  .figure[data-draw] .ghost,
+  .figure[data-draw] .fade {
+    opacity: 0;
+  }
+
+  .figure[data-draw='run'] .d:not(.ghost) {
+    animation: diagram-plot 620ms ease-out forwards;
+    animation-delay: calc(var(--i, 0) * 150ms);
+  }
+
+  .figure[data-draw='run'] text,
+  .figure[data-draw='run'] .ghost,
+  .figure[data-draw='run'] .fade {
+    animation: diagram-ink 360ms ease-out forwards;
+    animation-delay: calc(var(--i, 0) * 150ms + 300ms);
+  }
+
+  @keyframes diagram-plot {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  @keyframes diagram-ink {
+    to {
+      opacity: 1;
+    }
+  }
+</style>

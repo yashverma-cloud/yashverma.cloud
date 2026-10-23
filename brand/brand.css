@@ -1,0 +1,123 @@
+/*
+ * Brand kit styles. The tokens and fonts are the site's own files, loaded by path, so a
+ * cover or card can never drift from the site: change tokens.css and re-render.
+ * Served from the repository root by render.mjs, hence the root-relative URLs.
+ */
+@import url('/src/styles/tokens.css');
+
+@font-face {
+  font-family: 'Overpass Variable';
+  font-weight: 100 900;
+  src: url('/public/fonts/overpass-latin-variable.woff2') format('woff2-variations');
+}
+
+@font-face {
+  font-family: 'Overpass Mono';
+  font-weight: 400;
+  src: url('/public/fonts/overpass-mono-latin-400.woff2') format('woff2');
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+}
+
+html,
+body {
+  width: var(--w);
+  height: var(--h);
+  overflow: hidden;
+}
+
+body {
+  position: relative;
+  background: var(--blueprint);
+  color: var(--line);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-wrap: balance;
+}
+
+/* --- Type, at fixed pixel sizes: these are images, not responsive pages --- */
+
+.headline {
+  font-weight: 700;
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+}
+
+.label {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* The section label device from the case-study pages: a label with a hairline under it. */
+.label-ruled {
+  font-weight: 600;
+  color: var(--muted);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule-faint);
+}
+
+/* --- The drawing sheet: frame and title block, as on every figure on the site --- */
+
+.sheet {
+  position: absolute;
+  inset: var(--sheet-inset, 40px);
+  border: 1px solid var(--rule-faint);
+}
+
+.titleblock {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 30px 20px;
+  border-top: 1px solid var(--rule-faint);
+  border-left: 1px solid var(--rule-faint);
+}
+
+.titleblock .who {
+  font-weight: 600;
+}
+
+.titleblock .where {
+  color: var(--muted);
+}
+
+/* The cluster drawing, injected from dist/og/cluster.svg by brand.js. */
+[data-cluster] svg,
+[data-field='diagram'] svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* --- Safe-zone guides: only in `npm run brand -- --guides` renders --- */
+
+.guide {
+  display: none;
+  position: absolute;
+  pointer-events: none;
+}
+
+html.guides .guide {
+  display: block;
+}
+
+.guide.safe {
+  outline: 2px dashed #40e0d0;
+}
+
+.guide.covered {
+  background: rgb(255 80 80 / 0.35);
+  outline: 2px solid rgb(255 80 80);
+}

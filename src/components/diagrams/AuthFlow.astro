@@ -1,0 +1,65 @@
+---
+/**
+ * Fig. 5 — Jarvis, drawn as its authorisation model (design/notes.md §7.6).
+ *
+ * The feature list is not the interesting part of this bot and does not get the drawing.
+ * The split does: reads open to everyone who ships, writes closed to admins, one path to
+ * the cluster and no credentials handed out at either end.
+ */
+import Diagram from '../Diagram.astro';
+
+interface Props {
+  fig: number;
+}
+const { fig } = Astro.props;
+
+const box = (x: number, w: number, y: number, h: number) =>
+  `M${x} ${y} H${x + w} V${y + h} H${x} Z`;
+---
+
+<Diagram fig={fig} caption="who may run what">
+  <svg
+    viewBox="0 0 640 368"
+    role="img"
+    aria-label="Flow drawing. A Slack command passes a signature and role check. Developers and QA may read pod, deployment and log state; rollout restarts and replica scaling are restricted to admins. Both paths reach the production cluster through the bot, not through credentials."
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <!-- the call -->
+    <path class="d" style="--i:0" pathLength="1" d={box(20, 240, 16, 56)} />
+    <text x="140" y="50" text-anchor="middle" style="--i:0">Slack command</text>
+
+    <path class="d thin" style="--i:0" pathLength="1" d="M260 44 H324 M316 38 L326 44 L316 50" />
+
+    <path class="d" style="--i:1" pathLength="1" d={box(340, 300, 16, 56)} />
+    <text x="490" y="50" text-anchor="middle" style="--i:1">signature + role check</text>
+
+    <!-- the split: one bus from the check, two branches off it -->
+    <path
+      class="d thin"
+      style="--i:2"
+      pathLength="1"
+      d="M490 72 V94 M150 94 H490 M150 94 V142 M144 134 L150 144 L156 134 M490 94 V142 M484 134 L490 144 L496 134"
+    />
+
+    <path class="d" style="--i:3" pathLength="1" d={box(20, 260, 150, 92)} />
+    <text x="150" y="186" text-anchor="middle" style="--i:3">developers and QA</text>
+    <text class="sub" x="150" y="212" text-anchor="middle" style="--i:3">read pod, deployment</text>
+    <text class="sub" x="150" y="234" text-anchor="middle" style="--i:3">and log state</text>
+
+    <path class="d" style="--i:3" pathLength="1" d={box(360, 260, 150, 92)} />
+    <text x="490" y="186" text-anchor="middle" style="--i:3">admins only</text>
+    <text class="sub" x="490" y="212" text-anchor="middle" style="--i:3">rollout restart and</text>
+    <text class="sub" x="490" y="234" text-anchor="middle" style="--i:3">replica scaling</text>
+
+    <!-- one way in -->
+    <path
+      class="d thin"
+      style="--i:4"
+      pathLength="1"
+      d="M150 242 V282 H320 V306 M314 298 L320 308 L326 298 M490 242 V282 H320"
+    />
+
+    <path class="d" style="--i:4" pathLength="1" d={box(190, 260, 312, 52)} />
+    <text x="320" y="344" text-anchor="middle" style="--i:4">production cluster</text>
+  </svg>
+</Diagram>

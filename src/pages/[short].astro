@@ -1,0 +1,84 @@
+---
+/**
+ * Bio short links: /in, /ig, /fb, /x, /threads. Each sends the visitor to the home page with
+ * UTM tags, so GA4 can tell which profile they came from.
+ *
+ * The site no longer links out to Instagram, Facebook, X or Threads, but their bios still point
+ * here, so their short links stay.
+ *
+ * Deliberately not built on Base: no analytics here (the landing page records the visit,
+ * with the tags), `noindex`, and nothing to render. The redirect is a meta refresh, which
+ * works in every in-app browser, plus location.replace so the stub is not left in the
+ * back history. The sitemap already excludes these paths (astro.config.mjs).
+ *
+ * The Open Graph tags are the home page's, so a short link pasted into a post still
+ * previews as the site rather than as a blank redirect.
+ */
+import type { GetStaticPaths } from 'astro';
+import '../styles/tokens.css';
+import { SITE } from '../consts';
+
+// getStaticPaths runs in its own scope, so the table lives inside it.
+export const getStaticPaths = (() => {
+  const links: Record<string, { source: string; content?: string }> = {
+    in: { source: 'linkedin', content: 'profile' },
+    ig: { source: 'instagram' },
+    fb: { source: 'facebook' },
+    x: { source: 'x' },
+    threads: { source: 'threads' },
+  };
+  return Object.entries(links).map(([short, link]) => ({ params: { short }, props: link }));
+}) satisfies GetStaticPaths;
+
+const { source, content } = Astro.props as { source: string; content?: string };
+const query = new URLSearchParams({ utm_source: source, utm_medium: 'social_bio' });
+if (content) query.set('utm_content', content);
+const target = `/?${query.toString()}`;
+
+const home = new URL('/', SITE.url).href;
+const ogImage = new URL('/og/default.png', SITE.url).href;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>{SITE.title}</title>
+    <link rel="canonical" href={home} />
+    <meta http-equiv="refresh" content={`0; url=${target}`} />
+    <script is:inline define:vars={{ target }}>
+      location.replace(target + location.hash);
+    </script>
+
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={home} />
+    <meta property="og:title" content={SITE.title} />
+    <meta property="og:description" content={SITE.description} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImage} />
+
+    <style>
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        background: var(--blueprint);
+        color: var(--line);
+        font: var(--fs-body) / 1.6 system-ui, sans-serif;
+      }
+      a {
+        color: inherit;
+        text-underline-offset: 0.2em;
+      }
+    </style>
+  </head>
+  <body>
+    <p><a href={target}>Continue to {SITE.name}’s site</a></p>
+  </body>
+</html>

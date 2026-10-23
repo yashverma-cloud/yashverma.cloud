@@ -1,0 +1,72 @@
+---
+import { getCollection } from 'astro:content';
+import { formatMonth } from '../utils/dates';
+
+/**
+ * Sits directly after Experience, because it validates exactly what Experience claims.
+ * Same rule-separated rows as everything else — no trophies, no badges, no emoji.
+ */
+const awards = await getCollection('recognition');
+---
+
+<section class="section" id="recognition">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Recognition</h2>
+    </div>
+
+    <ul class="rows">
+      {
+        awards.map((item) => (
+          <li>
+            <div class="row">
+              <div>
+                <h3>{item.data.award}</h3>
+                <p class="reason body-s">{item.data.reason}</p>
+              </div>
+              <p class="micro meta">
+                {item.data.issuer}
+                {item.data.date ? ` · ${formatMonth(item.data.date)}` : ''}
+              </p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .row {
+    display: grid;
+    gap: var(--s-2) var(--s-8);
+    padding-block: var(--s-4);
+  }
+
+  h3 {
+    font-size: var(--fs-body);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .reason {
+    color: var(--muted);
+    margin-top: var(--s-1);
+    max-width: var(--measure-prose);
+  }
+
+  .meta {
+    margin: 0;
+  }
+
+  @media (min-width: 48rem) {
+    .row {
+      grid-template-columns: minmax(0, 1fr) 16rem;
+      align-items: baseline;
+    }
+
+    .meta {
+      text-align: right;
+    }
+  }
+</style>
