@@ -1,0 +1,20 @@
+# Cloudflare Pages redirects. They run before static files, so they take precedence over the pages
+# that src/pages/[short].astro builds for the same paths (kept as the fallback). Keep the two in step.
+
+# Bio short links: 302, because they are entry points whose UTM tags may change.
+/in         /?utm_source=linkedin&utm_medium=social_bio&utm_content=profile  302
+/in/        /?utm_source=linkedin&utm_medium=social_bio&utm_content=profile  302
+/ig         /?utm_source=instagram&utm_medium=social_bio  302
+/ig/        /?utm_source=instagram&utm_medium=social_bio  302
+/fb         /?utm_source=facebook&utm_medium=social_bio  302
+/fb/        /?utm_source=facebook&utm_medium=social_bio  302
+/x          /?utm_source=x&utm_medium=social_bio  302
+/x/         /?utm_source=x&utm_medium=social_bio  302
+/threads    /?utm_source=threads&utm_medium=social_bio  302
+/threads/   /?utm_source=threads&utm_medium=social_bio  302
+
+# The cloud runbook lives on its own subdomain. Its old address was /yv-cloud-runbook/.
+/yv-cloud-runbook    https://runbook.yashverma.cloud/  301
+/yv-cloud-runbook/*  https://runbook.yashverma.cloud/:splat  301
+/runbook             https://runbook.yashverma.cloud/  301
+/runbook/*           https://runbook.yashverma.cloud/:splat  301

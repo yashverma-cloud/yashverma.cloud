@@ -45,12 +45,12 @@ Paste this into any task that drafts post images, as its brand section. It inclu
 font-install step a fresh sandbox needs.
 
 ```text
-Brand (identical on every image; matches https://yashverma-cloud.github.io)
+Brand (identical on every image; matches https://yashverma.cloud)
 - Colours: background #15345C. Text and all linework #EAF1F4. Secondary text, captions and labels #8FA9C4. Hairlines and borders #5580B0. Panels and code blocks #0C2442, edged with a 1px #5580B0 line.
 - #F5A524 is reserved for a failure state inside a diagram (a node down, an error). Never decoration, never a highlight; most images use none.
 - Typeface Overpass: 700 headlines, 600 labels, 400 body. Overpass Mono, 400, only for real code and terminal output. If they are not installed, download https://raw.githubusercontent.com/google/fonts/main/ofl/overpass/Overpass%5Bwght%5D.ttf and https://raw.githubusercontent.com/google/fonts/main/ofl/overpassmono/OverpassMono%5Bwght%5D.ttf, copy both into ~/.fonts/, and run "fc-cache -f" before rendering.
 - Sentence case (capitalize proper nouns like Karpenter, Terraform, AWS normally). No ALL-CAPS labels, emojis or hashtags in the image.
 - Style: blueprint line drawings, white linework, axonometric where it helps. No photos, stock art or icons. Flat colour: no gradients, glow, drop shadows or rounded boxes; 1px hairlines instead.
-- Footer, bottom-right, as a small title block: "Yash Verma" over "yashverma-cloud.github.io".
+- Footer, bottom-right, as a small title block: "Yash Verma" over "yashverma.cloud".
 - Phone-readable: nothing smaller than 36 px in the final 1080x1350 output (so render at device_scale_factor 1 with a 1080x1350 viewport, or scale CSS sizes accordingly if you use a different render pipeline); 35 words max on diagram and insight cards.
 ```

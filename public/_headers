@@ -1,0 +1,24 @@
+# Cloudflare Pages response headers. Script and style sources are in the CSP <meta> that Astro
+# writes on every page (astro.config.mjs); this header only adds what a <meta> can't carry.
+
+/*
+  Strict-Transport-Security: max-age=86400
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()
+  Content-Security-Policy: frame-ancestors 'none'; object-src 'none'; base-uri 'self'
+
+# Content-hashed build output never changes under the same name.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=2592000
+
+/og/*
+  Cache-Control: public, max-age=2592000
+
+# The production pages.dev address serves the same site; keep it out of search results.
+# Preview deployments get this header from Pages already.
+https://yashverma-cloud.pages.dev/*
+  X-Robots-Tag: noindex
