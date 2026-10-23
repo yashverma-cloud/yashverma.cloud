@@ -1,0 +1,66 @@
+---
+/**
+ * A brand image as a page: fixed pixel size, the system's tokens and faces, and a ready flag
+ * that brand/render.mjs waits for before it takes the screenshot. Sizes in these templates are
+ * pixels, not the site's fluid tokens: an image has one size.
+ */
+import '../tokens.css';
+import '../fonts.css';
+import '../system.css';
+
+interface Props {
+  w: number;
+  h: number;
+  title: string;
+}
+
+const { w, h, title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" style={`--w:${w}px;--h:${h}px`}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="viewport" content={`width=${w}`} />
+    <title>{title}</title>
+    <slot name="head" />
+  </head>
+  <body class="brand">
+    <slot />
+    <script is:inline>
+      // Ready once the faces and every image are in: the render waits for this.
+      Promise.all([document.fonts.ready, ...Array.from(document.images).map((i) => (i.complete ? null : i.decode().catch(() => null)))]).then(() => {
+        document.documentElement.dataset.ready = 'true';
+      });
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  html.brand-root,
+  body.brand {
+    width: var(--w);
+    height: var(--h);
+    overflow: hidden;
+  }
+
+  body.brand {
+    position: relative;
+    background: var(--night);
+    word-spacing: 0.04em;
+  }
+
+  /* Safe-zone overlays: npm run brand -- --altitude --guides */
+  .guide {
+    display: none;
+    position: absolute;
+    z-index: 10;
+    outline: 2px dashed rgb(255 80 80 / 0.8);
+    pointer-events: none;
+  }
+
+  .guides .guide {
+    display: block;
+  }
+</style>

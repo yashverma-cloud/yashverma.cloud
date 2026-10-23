@@ -1,13 +1,16 @@
 /**
  * Renders the brand kit to brand/export/ (not deployed, not committed).
  *
- *   npm run build                # once: writes dist/og/cluster.svg, which the covers use
- *   npm run brand                # every cover and every card in cards.json
- *   npm run brand -- --guides    # the same with safe-zone overlays, into export/guides/
- *   npm run brand -- --serve     # serve the templates on :4400 to edit them in a browser
+ *   npm run build                         # once: the templates and dist/og/cluster.svg
+ *   npm run brand -- --altitude           # the Altitude set: avatar, covers, post templates,
+ *                                         # from the built /lab/brand/<name>/ pages, into export/altitude/
+ *   npm run brand -- --altitude --guides  # the same with safe-zone overlays
+ *   npm run brand                         # the previous navy set: every cover and card in cards.json
+ *   npm run brand -- --guides             # the same with safe-zone overlays, into export/guides/
+ *   npm run brand -- --serve              # serve the previous set's templates on :4400
  *
- * Templates load the site's own tokens.css and font files, so a re-render after a token
- * change is all it takes to keep every image in step with the site.
+ * Templates load the site's own tokens and font files, so a re-render after a token change is
+ * all it takes to keep every image in step with the site.
  */
 import { createServer } from 'node:http';
 import { access, mkdir, readFile } from 'node:fs/promises';
@@ -20,6 +23,47 @@ const OUT = join(ROOT, 'brand', 'export');
 const args = new Set(process.argv.slice(2));
 const guides = args.has('--guides');
 const serveOnly = args.has('--serve');
+
+/** The Altitude set: pages in src/pages/lab/brand/, rendered from the build. */
+const ALTITUDE = [
+  { name: 'avatar-1080', page: 'avatar', w: 1080, h: 1080 },
+  { name: 'linkedin-profile-1584x396', page: 'linkedin-cover', w: 1584, h: 396 },
+  { name: 'x-header-1500x500', page: 'x-header', w: 1500, h: 500 },
+  { name: 'facebook-page-1640x924', page: 'facebook-cover', w: 1640, h: 924 },
+  { name: 'post-diagram-1080x1350', page: 'post-diagram', w: 1080, h: 1350 },
+  { name: 'post-insight-1080x1350', page: 'post-insight', w: 1080, h: 1350 },
+  { name: 'post-snippet-1080x1350', page: 'post-snippet', w: 1080, h: 1350 },
+];
+
+if (args.has('--altitude')) {
+  const { serveDist } = await import('../scripts/lab/serve.mjs');
+  try {
+    await access(join(ROOT, 'dist', 'lab', 'brand', 'avatar', 'index.html'));
+  } catch {
+    console.error('dist/lab/brand/ is missing. Run `npm run build` first.');
+    process.exit(1);
+  }
+  const dir = join(OUT, 'altitude', guides ? 'guides' : '');
+  await mkdir(dir, { recursive: true });
+  const server = await serveDist(4401, join(ROOT, 'dist'));
+  const browser = await chromium.launch();
+  try {
+    for (const job of ALTITUDE) {
+      const page = await browser.newPage({ viewport: { width: job.w, height: job.h }, deviceScaleFactor: 1 });
+      await page.goto(`http://127.0.0.1:4401/lab/brand/${job.page}/`);
+      if (guides) await page.evaluate(() => document.body.classList.add('guides'));
+      await page.waitForFunction(() => document.documentElement.dataset.ready === 'true');
+      const file = join(dir, `${job.name}.png`);
+      await page.screenshot({ path: file, clip: { x: 0, y: 0, width: job.w, height: job.h } });
+      await page.close();
+      console.log(`  ${job.w}×${job.h}  ${file.slice(ROOT.length + 1)}`);
+    }
+  } finally {
+    await browser.close();
+    server.close();
+  }
+  process.exit(0);
+}
 
 /** Sizes checked against each platform's help pages in Sep 2026; see brand/README.md. */
 const COVERS = [

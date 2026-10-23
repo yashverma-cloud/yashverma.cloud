@@ -336,7 +336,41 @@ const sizes = [
           <li><img src="/apple-touch-icon.png" alt="" width="90" height="90" /><span class="t-data ink-3">apple-touch-icon 180</span></li>
           <li><img src="/icon-512.png" alt="" width="128" height="128" loading="lazy" /><span class="t-data ink-3">icon-512</span></li>
         </ul>
-        <div class="brand" data-brand></div>
+        <div class="brand">
+          <h3 class="t-title">Open Graph cards, 1200 × 630</h3>
+          <div class="og">
+            <img src="/lab/og/home.png" alt="The home card: the name on the horizon of the cloud sea at dawn, the role below it." width="1200" height="630" loading="lazy" />
+            <img src="/lab/og/case-study.png" alt="A case study's card: its scene, the title and the mechanism, the lockup." width="1200" height="630" loading="lazy" />
+            <img src="/lab/og/post.png" alt="A post's card: the title and description on the night ground over the dawn horizon." width="1200" height="630" loading="lazy" />
+          </div>
+          <h3 class="t-title">Social: avatar and covers</h3>
+          <div class="covers">
+            {
+              [
+                ['avatar', 1080, 1080],
+                ['linkedin-cover', 1584, 396],
+                ['x-header', 1500, 500],
+                ['facebook-cover', 1640, 924],
+              ].map(([n, w, h]) => (
+                <div class="frame" style={`--w:${w};--h:${h}`} data-frame-w={w} data-frame-h={h}>
+                  <iframe src={`/lab/brand/${n}/`} width={w} height={h} loading="lazy" title={`${n}, ${w} by ${h}`} tabindex="-1" />
+                  <span class="t-data ink-3 size">{n} · {w} × {h}</span>
+                </div>
+              ))
+            }
+          </div>
+          <h3 class="t-title">LinkedIn post templates, 1080 × 1350</h3>
+          <div class="posts">
+            {
+              ['post-diagram', 'post-insight', 'post-snippet'].map((n) => (
+                <div class="frame" style="--w:1080;--h:1350" data-frame-w="1080" data-frame-h="1350">
+                  <iframe src={`/lab/brand/${n}/`} width="1080" height="1350" loading="lazy" title={`${n}, 1080 by 1350`} tabindex="-1" />
+                  <span class="t-data ink-3 size">{n}</span>
+                </div>
+              ))
+            }
+          </div>
+        </div>
       </div>
     </section>
   </article>
@@ -782,7 +816,46 @@ const sizes = [
     row-gap: var(--space-2xs);
   }
 
+  .brand {
+    display: grid;
+    row-gap: var(--space-m);
+  }
+
+  .og,
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--gap);
+  }
+
+  .og img {
+    width: 100%;
+    height: auto;
+    border: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .covers {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: var(--gap);
+    align-items: start;
+  }
+
+  .covers .frame:nth-child(n + 3) {
+    grid-column: 2;
+  }
+
   @media (max-width: 60rem) {
+    .og,
+    .posts,
+    .covers {
+      grid-template-columns: 1fr;
+    }
+
+    .covers .frame:nth-child(n + 3) {
+      grid-column: auto;
+    }
+
     .grounds {
       grid-template-columns: 1fr;
     }
