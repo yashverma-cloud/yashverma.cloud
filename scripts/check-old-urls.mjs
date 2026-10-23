@@ -52,8 +52,11 @@ const cases = [
     [`/${path}`, `${site}/?${query}`, 200, true],
     [`/${path}/`, `${site}/?${query}`, 200, true],
   ]),
-  ...['/sitemap-index.xml', '/sitemap-0.xml', '/robots.txt', '/favicon.svg', '/og/default.png',
-    '/googlebbb04337c1cba257.html'].map((path) => [path, `${site}${path}`, 200]),
+  ...['/sitemap-index.xml', '/sitemap-0.xml', '/robots.txt', '/favicon.svg', '/og/default.png'].map(
+    (path) => [path, `${site}${path}`, 200],
+  ),
+  // Cloudflare Pages serves .html files without the extension, after a 308.
+  ['/googlebbb04337c1cba257.html', `${site}/googlebbb04337c1cba257`, 200],
   ...runbook.map((path) => [`/yv-cloud-runbook/${path}`, `${RUNBOOK}/${path}`, 200]),
   ['/yv-cloud-runbook', `${RUNBOOK}/`, 200],
   ['/no-such-page/', `${site}/no-such-page/`, 404],
