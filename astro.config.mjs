@@ -64,11 +64,12 @@ export default defineConfig({
   },
   integrations: [
     sitemap({
-      // Bio short links redirect and must stay out of the index.
-      filter: (page) =>
-        !['/in', '/ig', '/fb', '/x', '/threads'].includes(
-          new URL(page).pathname.replace(/\/$/, ''),
-        ),
+      // Bio short links redirect and must stay out of the index; /lab/ holds design prototypes.
+      filter: (page) => {
+        const path = new URL(page).pathname;
+        if (path.startsWith('/lab/')) return false;
+        return !['/in', '/ig', '/fb', '/x', '/threads'].includes(path.replace(/\/$/, ''));
+      },
     }),
     hashInlineScripts,
   ],

@@ -1,0 +1,702 @@
+/*
+ * Altitude prototype. Full-bleed: the scene fills the viewport at every width, and the copy
+ * sits inside the composition on a fluid 12-column grid. Only paragraphs keep a measure.
+ * Type and margins keep scaling to 2560px so wide screens get a bigger picture, not wider gutters.
+ */
+
+:root {
+  --night: #040c1f;
+  --ink: #eef3f6;
+  --ink-2: #b8c7d7;
+  --sun: #f5a524;
+  --rule: rgba(214, 228, 240, 0.32);
+
+  --sans: 'Overpass Variable', 'Overpass', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'Overpass Mono', ui-monospace, 'SFMono-Regular', 'Cascadia Mono', monospace;
+
+  /* Four sizes, all fluid to 2560px. */
+  --t-name: clamp(4.25rem, 0.8rem + 10.6vw, 17.5rem);
+  --t-state: clamp(1.75rem, 0.9rem + 2.9vw, 5.6rem);
+  --t-body: clamp(1.0625rem, 0.86rem + 0.46vw, 1.7rem);
+  --t-data: clamp(0.75rem, 0.6rem + 0.3vw, 1.125rem);
+
+  --m: clamp(1.25rem, 0.5rem + 3.4vw, 7rem);
+  --gap: clamp(0.75rem, 0.3rem + 1.5vw, 2.75rem);
+  --measure: 34em;
+
+  /* Where the hero horizon sits; the live scene overwrites --horizon-px every frame. */
+  --horizon: 50lvh;
+  --flight-screens: 11;
+
+  color-scheme: dark;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  :root {
+    --horizon: 46lvh;
+    --t-name: clamp(4.25rem, 23.5vw, 9rem);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  background: var(--night);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  line-height: 1.55;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-kerning: normal;
+}
+
+img,
+picture,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--sun);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip {
+  position: fixed;
+  left: var(--m);
+  top: 1rem;
+  z-index: 50;
+  padding: 0.5rem 0.9rem;
+  background: var(--night);
+  color: var(--ink);
+  transform: translateY(-200%);
+}
+
+.skip:focus-visible {
+  transform: none;
+}
+
+/* --- Type -------------------------------------------------------------- */
+
+.name {
+  font-size: var(--t-name);
+  font-weight: 300;
+  line-height: 0.84;
+  letter-spacing: -0.035em;
+  font-variation-settings: 'wght' 300;
+}
+
+.role,
+.cue,
+.label,
+.tape,
+.stats,
+.end-links {
+  font-family: var(--mono);
+  font-size: var(--t-data);
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
+
+.role,
+.cue {
+  font-family: var(--sans);
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.role {
+  font-size: calc(var(--t-body) * 1.05);
+  letter-spacing: 0;
+}
+
+.cue {
+  font-size: calc(var(--t-data) * 1.1);
+}
+
+.line,
+.case-title {
+  font-size: var(--t-state);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.standfirst,
+.beat p,
+.end-note {
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.figure,
+.proof-figure {
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* --- Stage ------------------------------------------------------------- */
+
+.stage {
+  position: fixed;
+  inset: 0 0 auto 0;
+  /* The large viewport: in-app browsers show and hide their bars while scrolling, and a
+     stage that tracked them would resize, and reallocate, every time. */
+  height: 100lvh;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stage-poster,
+.stage-poster img,
+.plate-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stage-poster {
+  position: absolute;
+  inset: 0;
+}
+
+.stage-paint {
+  background:
+    linear-gradient(to bottom, #040c1f 0%, #0b1d3e 32%, #21455e 47%, #7a4b3c 50%, #1b2d4e 51%, #12233f 100%);
+}
+
+.stage-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 700ms ease;
+}
+
+[data-stage='on'] .stage-canvas {
+  opacity: 1;
+}
+
+.leaders,
+.labels {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.leaders line {
+  stroke: rgba(238, 243, 246, 0.6);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  color: var(--ink);
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.label[data-state='pending'] [data-label-text] {
+  color: var(--sun);
+}
+
+.tick {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Altimeter --------------------------------------------------------- */
+
+.tape {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--m) * 0.8 + 6rem);
+  z-index: 3;
+  pointer-events: none;
+  color: var(--ink-2);
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+[data-mode='live'] .tape {
+  opacity: 1;
+}
+
+.tape-scale {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: max(1.5rem, calc(var(--m) * 0.8));
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 22%, #000 78%, transparent 100%);
+}
+
+.tape-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  will-change: transform;
+}
+
+.tape-strip i {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  background: var(--rule);
+  width: 30%;
+}
+
+.tape-strip i.major {
+  width: 55%;
+  background: rgba(214, 228, 240, 0.55);
+}
+
+.tape-read {
+  position: absolute;
+  top: max(1.1rem, env(safe-area-inset-top));
+  left: var(--m);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Live mode: a tall scroller, the copy overlaid on the stage ---------- */
+
+[data-mode='live'] .flight {
+  position: relative;
+  height: calc(var(--flight-screens) * 100svh);
+}
+
+[data-mode='live'] .plate {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 100lvh;
+  z-index: 2;
+  pointer-events: none;
+}
+
+[data-mode='live'] .plate a {
+  pointer-events: auto;
+}
+
+[data-mode='live'] .plate-poster {
+  display: none;
+}
+
+/* Hidden until the choreography shows them; with JS off this rule never applies. */
+[data-mode='live'] .standfirst,
+[data-mode='live'] [data-proof-row],
+[data-mode='live'] [data-case-head],
+[data-mode='live'] .beat,
+[data-mode='live'] [data-end] > * {
+  opacity: 0;
+}
+
+/* Their own layers, so the blur and fade are the compositor's work, not repaints. */
+[data-mode='live'] .standfirst,
+[data-mode='live'] [data-proof-row] {
+  will-change: opacity, transform, filter;
+}
+
+.plate-copy {
+  position: relative;
+  height: 100%;
+  padding-inline: var(--m);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gap);
+}
+
+/* Hero: the name stands on the horizon. */
+.hero-copy {
+  grid-template-rows: 1fr auto auto 1fr auto;
+}
+
+.hero-copy .role {
+  grid-column: 1 / -1;
+  position: absolute;
+  left: var(--m);
+  bottom: calc(100% - var(--horizon-px, var(--horizon)) + var(--t-name) * 0.86 + 0.5rem);
+}
+
+.hero-copy .name {
+  position: absolute;
+  left: calc(var(--m) - 0.05em);
+  bottom: calc(100% - var(--horizon-px, var(--horizon)));
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.24em;
+  /* Glyph baselines on the horizon line, not the box. */
+  margin-bottom: -0.035em;
+}
+
+.name-mask {
+  display: block;
+  overflow: hidden;
+  padding-top: 0.08em;
+  margin-top: -0.08em;
+}
+
+.name-word {
+  display: block;
+  will-change: transform;
+}
+
+.hero-copy .line {
+  position: absolute;
+  top: calc(var(--horizon-px, var(--horizon)) + clamp(1.25rem, 5lvh, 4.5rem));
+  right: var(--m);
+  width: min(13.5em, 46vw);
+  text-align: left;
+}
+
+.hero-copy .cue {
+  position: absolute;
+  left: var(--m);
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .hero-copy .name {
+    flex-direction: column;
+    row-gap: 0;
+  }
+
+  .hero-copy .role {
+    bottom: calc(100% - var(--horizon-px, var(--horizon)) + var(--t-name) * 1.7 + 0.5rem);
+    max-width: 22em;
+  }
+
+  .hero-copy .line {
+    left: var(--m);
+    right: auto;
+    width: auto;
+    max-width: 13em;
+  }
+}
+
+/* The descent: one paragraph, set where the clouds open below it. */
+.descent-copy {
+  align-content: center;
+}
+
+.descent-copy .standfirst {
+  grid-column: 2 / span 6;
+  font-size: calc(var(--t-body) * 1.18);
+  line-height: 1.5;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .descent-copy .standfirst {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Between the layers: the proof, as sentences with their numbers. */
+.between-copy {
+  align-content: start;
+  padding-top: clamp(4.5rem, 13lvh, 12rem);
+}
+
+.proof {
+  grid-column: 1 / span 8;
+  list-style: none;
+  padding: 0;
+  display: grid;
+  row-gap: clamp(0.4rem, 1.4lvh, 1.4rem);
+}
+
+.proof-row a {
+  display: grid;
+  grid-template-columns: 3.3em minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 0.32em;
+  text-decoration: none;
+  font-size: var(--t-state);
+  line-height: 1.12;
+}
+
+.proof-figure {
+  font-weight: 300;
+}
+
+.proof-result {
+  font-size: 0.5em;
+  line-height: 1.3;
+  color: var(--ink-2);
+}
+
+.proof-row a:hover .proof-result,
+.proof-row a:focus-visible .proof-result {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .proof {
+    grid-column: 1 / -1;
+  }
+
+  .proof-row a {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The case study: title top left, beats low left, the drawing owns the rest. */
+.case-copy {
+  grid-template-rows: auto 1fr auto;
+  padding-block: clamp(4.5rem, 12lvh, 11rem) clamp(2rem, 9lvh, 8rem);
+}
+
+.case-head {
+  grid-column: 1 / span 7;
+  grid-row: 1;
+}
+
+.case-title {
+  max-width: 14em;
+}
+
+.beat {
+  grid-column: 1 / span 5;
+  grid-row: 3;
+  display: grid;
+  row-gap: 0.8em;
+}
+
+.beat-figure {
+  font-size: var(--t-body);
+  color: var(--ink-2);
+}
+
+.beat-figure .figure {
+  display: block;
+  font-size: var(--t-state);
+  color: var(--ink);
+  line-height: 1.05;
+  font-weight: 300;
+}
+
+.case-link {
+  font-weight: 600;
+}
+
+/* The last beat is the longest paragraph; keep it clear of the field beside it. */
+.beat[data-beat='tuned'] p {
+  max-width: min(29em, 33vw);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .beat[data-beat='tuned'] p {
+    max-width: none;
+  }
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .case-head,
+  .beat {
+    grid-column: 1 / -1;
+  }
+
+  .beat p {
+    max-width: none;
+  }
+}
+
+.end-copy {
+  align-content: end;
+  padding-bottom: clamp(2rem, 10lvh, 9rem);
+}
+
+.end-note {
+  grid-column: 1 / span 6;
+  font-size: calc(var(--t-body) * 1.1);
+}
+
+.end-links {
+  grid-column: 1 / -1;
+  list-style: none;
+  padding: 0;
+  margin-top: 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.6rem;
+}
+
+.end-links a {
+  color: var(--ink-2);
+}
+
+.end-links a[aria-current='true'] {
+  color: var(--ink);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .end-note {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --- Still mode (and no JS): composed stills in normal flow -------------- */
+
+:root:not([data-mode='live']) .stage-canvas,
+:root:not([data-mode='live']) .labels,
+:root:not([data-mode='live']) .leaders {
+  display: none;
+}
+
+:root:not([data-mode='live']) .stage {
+  display: none;
+}
+
+:root:not([data-mode='live']) .plate {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  isolation: isolate;
+}
+
+:root:not([data-mode='live']) .plate > * {
+  grid-area: 1 / 1;
+}
+
+:root:not([data-mode='live']) .plate-poster {
+  position: sticky;
+  top: 0;
+  height: 100lvh;
+  z-index: -1;
+}
+
+:root:not([data-mode='live']) .plate-copy {
+  min-height: 100svh;
+}
+
+/* In still mode the hero horizon is the poster's, a fixed fraction of the screen. */
+:root:not([data-mode='live']) .plate-hero {
+  min-height: 100svh;
+}
+
+/* Between two photographs, the standfirst is a caption on its own ground. */
+:root:not([data-mode='live']) .plate-descent {
+  min-height: 0;
+  background: linear-gradient(to bottom, #111f3d, #1b2c4c);
+}
+
+:root:not([data-mode='live']) .plate-descent .plate-copy {
+  min-height: 0;
+  padding-block: clamp(4rem, 16svh, 12rem);
+}
+
+:root:not([data-mode='live']) .plate-between .plate-copy,
+:root:not([data-mode='live']) .plate-case .plate-copy,
+:root:not([data-mode='live']) .plate-scale .plate-copy {
+  min-height: 100svh;
+}
+
+:root:not([data-mode='live']) .plate-case .plate-copy,
+:root:not([data-mode='live']) .plate-scale .plate-copy {
+  row-gap: 2.5rem;
+  grid-template-rows: auto 1fr auto auto;
+}
+
+:root:not([data-mode='live']) .plate-case .beat[data-beat='provision'],
+:root:not([data-mode='live']) .plate-scale .beat[data-beat='tuned'] {
+  grid-row: 4;
+}
+
+:root:not([data-mode='live']) .plate-scale .beat[data-beat='scale'] {
+  grid-row: 3;
+}
+
+:root:not([data-mode='live']) .plate-end {
+  min-height: 60svh;
+  background: linear-gradient(to bottom, #13284a, #0a1830);
+}
+
+:root:not([data-mode='live']) .plate-end .plate-copy {
+  min-height: 60svh;
+}
+
+/* Paint for the sections whose poster is missing (development only). */
+:root:not([data-mode='live']) .plate-hero:not(:has(.plate-poster)) {
+  background: linear-gradient(to bottom, #040c1f, #0b1d3e 40%, #21455e 50%, #12233f);
+}
+
+/* --- Motion ------------------------------------------------------------- */
+
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-mode='live'] .name-word {
+    animation: rise 1.6s cubic-bezier(0.2, 0.7, 0.1, 1) both;
+  }
+
+  [data-mode='live'] .name-mask + .name-mask .name-word {
+    animation-delay: 0.12s;
+  }
+}
+
+/* --- Stats -------------------------------------------------------------- */
+
+.stats {
+  position: fixed;
+  right: var(--m);
+  bottom: 1rem;
+  z-index: 10;
+  color: var(--ink);
+  background: rgba(4, 12, 31, 0.6);
+  padding: 0.4rem 0.6rem;
+  white-space: pre;
+  pointer-events: none;
+}

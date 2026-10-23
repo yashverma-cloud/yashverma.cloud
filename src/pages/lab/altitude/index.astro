@@ -1,0 +1,308 @@
+---
+/**
+ * Design prototype for concept A, "Altitude". Isolated route: noindex, out of the sitemap
+ * and the navigation, and it shares nothing with the live pages but the fonts and the
+ * content collections.
+ *
+ * Three ways in, one document:
+ *   live   WebGL2 and motion allowed. A fixed scene flies the descent; the copy is overlaid
+ *          and choreographed against it.
+ *   still  Reduced motion, no WebGL, Save-Data, or `?mode=still`. Each section is a
+ *          composed still with its copy, in normal flow.
+ *   no JS  The same as still.
+ */
+import { getCollection, getEntry } from 'astro:content';
+import { getImage } from 'astro:assets';
+import { SITE } from '../../../consts';
+import '../../../styles/fonts.css';
+import '../../../lab/altitude/altitude.css';
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const proof = work.filter((w) => w.data.figure && !w.data.draft).slice(0, 4);
+const karpenter = await getEntry('work', 'karpenter-autoscaling');
+if (!karpenter) throw new Error('karpenter-autoscaling case study is missing');
+
+// Posters are rendered from the live scene (scripts/lab/altitude-posters.mjs). Until they
+// exist the page falls back to a painted gradient, so the route never breaks the build.
+const posterFiles = import.meta.glob<{ default: ImageMetadata }>(
+  '../../../assets/lab/altitude/*.{png,jpg,webp}',
+  { eager: true },
+);
+type Shot = 'hero' | 'between' | 'close' | 'wide';
+async function poster(shot: Shot) {
+  const find = (o: string) =>
+    Object.entries(posterFiles).find(([k]) => k.includes(`/${shot}-${o}.`))?.[1].default;
+  const land = find('landscape');
+  const port = find('portrait');
+  if (!land || !port) return null;
+  const widths = { land: [1280, 1920, 2560], port: [640, 960, 1280] };
+  const make = async (src: ImageMetadata, ws: number[], format: 'avif' | 'webp') =>
+    (
+      await Promise.all(
+        ws.map(async (w) => {
+          const img = await getImage({ src, width: Math.min(w, src.width), format, quality: format === 'avif' ? 62 : 74 });
+          return `${img.src} ${Math.min(w, src.width)}w`;
+        }),
+      )
+    ).join(', ');
+  const fallback = await getImage({ src: land, width: 1600, format: 'webp', quality: 74 });
+  return {
+    landAvif: await make(land, widths.land, 'avif'),
+    landWebp: await make(land, widths.land, 'webp'),
+    portAvif: await make(port, widths.port, 'avif'),
+    portWebp: await make(port, widths.port, 'webp'),
+    fallback: fallback.src,
+  };
+}
+const posters = {
+  hero: await poster('hero'),
+  between: await poster('between'),
+  close: await poster('close'),
+  wide: await poster('wide'),
+};
+const role = `${SITE.jobTitle} at ${SITE.employer}, ${SITE.location.split(',')[0]}`;
+---
+
+<!doctype html>
+<html lang="en" data-clouds="raymarch">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#040c1f" />
+    <title>Altitude — design prototype</title>
+    <meta name="description" content="Design prototype for yashverma.cloud. Not linked from the site." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link
+      rel="preload"
+      href="/fonts/overpass-latin-variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    {
+      posters.hero && (
+        <link
+          rel="preload"
+          as="image"
+          fetchpriority="high"
+          imagesrcset={posters.hero.landAvif}
+          imagesizes="100vw"
+          type="image/avif"
+          media="(min-aspect-ratio: 1/1)"
+        />
+      )
+    }
+    {
+      posters.hero && (
+        <link
+          rel="preload"
+          as="image"
+          fetchpriority="high"
+          imagesrcset={posters.hero.portAvif}
+          imagesizes="100vw"
+          type="image/avif"
+          media="(max-aspect-ratio: 1/1)"
+        />
+      )
+    }
+    <script is:inline>
+      // Decide the mode before first paint, so the layout never jumps. A failed WebGL start
+      // later drops back to still (lab/altitude/live.ts).
+      (function () {
+        var d = document.documentElement;
+        var q = new URLSearchParams(location.search);
+        var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var save = navigator.connection && navigator.connection.saveData;
+        var gl = 'WebGL2RenderingContext' in window;
+        var forced = q.get('mode');
+        d.dataset.mode = forced === 'still' || forced === 'live' ? forced : !reduce && gl && !save ? 'live' : 'still';
+        var c = q.get('clouds');
+        if (c === 'billboard' || c === 'raymarch') d.dataset.clouds = c;
+        d.classList.add('js');
+      })();
+    </script>
+  </head>
+
+  <body>
+    <a class="skip" href="#karpenter">Skip to the case study</a>
+
+    <div class="stage" aria-hidden="true">
+      {
+        posters.hero ? (
+          <picture class="stage-poster">
+            <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset={posters.hero.portAvif} sizes="100vw" />
+            <source type="image/webp" media="(max-aspect-ratio: 1/1)" srcset={posters.hero.portWebp} sizes="100vw" />
+            <source type="image/avif" srcset={posters.hero.landAvif} sizes="100vw" />
+            <source type="image/webp" srcset={posters.hero.landWebp} sizes="100vw" />
+            <img src={posters.hero.fallback} alt="" decoding="async" fetchpriority="high" />
+          </picture>
+        ) : (
+          <div class="stage-poster stage-paint" />
+        )
+      }
+      <canvas class="stage-canvas" data-canvas></canvas>
+      <svg class="leaders" data-leaders></svg>
+      <div class="labels" data-labels>
+        <p class="label" data-label="pending"><span data-label-text>pod · pending</span></p>
+        <p class="label" data-label="node"><span data-label-text>NodeClaim</span> <span class="tick" data-label-clock></span></p>
+        <p class="label" data-label="field"><span data-label-text>nodes</span> <span class="tick" data-label-count></span></p>
+      </div>
+    </div>
+
+    <div class="tape" aria-hidden="true" data-tape>
+      <div class="tape-scale"><div class="tape-strip" data-tape-strip></div></div>
+      <p class="tape-read"><span data-tape-read>13,450</span> ft</p>
+    </div>
+
+    <main class="flight" id="main">
+      <section class="plate plate-hero" id="above" aria-labelledby="name">
+        {
+          posters.hero && (
+            <picture class="plate-poster">
+              <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset={posters.hero.portAvif} sizes="100vw" />
+              <source type="image/webp" media="(max-aspect-ratio: 1/1)" srcset={posters.hero.portWebp} sizes="100vw" />
+              <source type="image/avif" srcset={posters.hero.landAvif} sizes="100vw" />
+              <source type="image/webp" srcset={posters.hero.landWebp} sizes="100vw" />
+              <img src={posters.hero.fallback} alt="" decoding="async" />
+            </picture>
+          )
+        }
+        <div class="plate-copy hero-copy" data-hero>
+          <p class="role" data-hero-role>{role}</p>
+          <h1 class="name" id="name" data-hero-name>
+            <span class="name-mask"><span class="name-word">Yash</span></span>{' '}
+            <span class="name-mask"><span class="name-word">Verma</span></span>
+          </h1>
+          <p class="line" data-hero-line>I keep production Kubernetes running when nodes die.</p>
+          <p class="cue" data-hero-cue>Scroll to descend</p>
+        </div>
+      </section>
+
+      <section class="plate plate-descent" id="descent" aria-label="Summary">
+        <div class="plate-copy descent-copy" data-descent>
+          <p class="standfirst">
+            Now at Copado: autoscaling, cost and observability across multi-region production
+            infrastructure. Five years on AWS and GCP, before that at BLG and Treebo.
+          </p>
+        </div>
+      </section>
+
+      <section class="plate plate-between" id="proof" aria-labelledby="proof-head">
+        {
+          posters.between && (
+            <picture class="plate-poster">
+              <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset={posters.between.portAvif} sizes="100vw" />
+              <source type="image/webp" media="(max-aspect-ratio: 1/1)" srcset={posters.between.portWebp} sizes="100vw" />
+              <source type="image/avif" srcset={posters.between.landAvif} sizes="100vw" />
+              <source type="image/webp" srcset={posters.between.landWebp} sizes="100vw" />
+              <img src={posters.between.fallback} alt="" loading="lazy" decoding="async" />
+            </picture>
+          )
+        }
+        <div class="plate-copy between-copy" data-between>
+          <h2 class="visually-hidden" id="proof-head">Proof</h2>
+          <ul class="proof" role="list">
+            {
+              proof.map((w) => (
+                <li class="proof-row" data-proof-row data-slug={w.id}>
+                  <a href={`/work/${w.id}/`}>
+                    <span class="proof-figure">{w.data.figure?.replace(/^(\d+)s$/, '$1 s')}</span>
+                    <span class="proof-result">{w.data.result}</span>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+      </section>
+
+      <section class="plate plate-case" id="karpenter" aria-labelledby="case-title">
+        {
+          posters.close && (
+            <picture class="plate-poster">
+              <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset={posters.close.portAvif} sizes="100vw" />
+              <source type="image/webp" media="(max-aspect-ratio: 1/1)" srcset={posters.close.portWebp} sizes="100vw" />
+              <source type="image/avif" srcset={posters.close.landAvif} sizes="100vw" />
+              <source type="image/webp" srcset={posters.close.landWebp} sizes="100vw" />
+              <img src={posters.close.fallback} alt="A Kubernetes cluster drawn as white linework on a survey sheet at dawn: a pending pod, in amber, waits over an empty lot while a new node is drawn around it." loading="lazy" decoding="async" />
+            </picture>
+          )
+        }
+        <div class="plate-copy case-copy" data-case>
+          <header class="case-head" data-case-head>
+            <h2 class="case-title" id="case-title">{karpenter.data.title}</h2>
+          </header>
+          <div class="beat" data-beat="pending">
+            <p>
+              A pod that cannot be placed waits, and how long it waits is decided entirely by how
+              the cluster gets more capacity.
+            </p>
+          </div>
+          <div class="beat" data-beat="provision">
+            <p class="beat-figure"><span class="figure">{karpenter.data.figure?.replace('s', ' s')}</span> {karpenter.data.result}</p>
+            <p>
+              I took Karpenter from a proof of concept through to every production environment,
+              and retired the Cluster Autoscaler node groups it superseded.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="plate plate-scale" id="scale" aria-label="Under load">
+        {
+          posters.wide && (
+            <picture class="plate-poster">
+              <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset={posters.wide.portAvif} sizes="100vw" />
+              <source type="image/webp" media="(max-aspect-ratio: 1/1)" srcset={posters.wide.portWebp} sizes="100vw" />
+              <source type="image/avif" srcset={posters.wide.landAvif} sizes="100vw" />
+              <source type="image/webp" srcset={posters.wide.landWebp} sizes="100vw" />
+              <img src={posters.wide.fallback} alt="The same drawing at scale: more than a hundred nodes across the site, drawn from the middle outwards." loading="lazy" decoding="async" />
+            </picture>
+          )
+        }
+        <div class="plate-copy case-copy" data-scale>
+          <div class="beat" data-beat="scale">
+            <p class="beat-figure"><span class="figure">100+ nodes</span> in under 10 minutes</p>
+            <p>
+              Under load, the cluster scales past 100 nodes in under 10 minutes. Both measured on
+              the running system rather than read off the documentation.
+            </p>
+          </div>
+          <div class="beat" data-beat="tuned">
+            <p>
+              Tuned against observed behaviour: PodDisruptionBudgets per workload, do-not-disrupt
+              annotations on the pods that must not be moved mid-flight, and disruption timings on
+              the NodeClaims themselves. Autoscaling that is not tuned is just a faster way to move
+              workloads you did not want moved.
+            </p>
+            <p><a class="case-link" href="/work/karpenter-autoscaling/">Read the case study</a></p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="plate plate-end" id="end">
+        <div class="plate-copy end-copy" data-end>
+          <p class="end-note">
+            Design prototype for yashverma.cloud: concept A, Altitude. The descent continues to
+            the rest of the work, then to contact at ground level.
+          </p>
+          <ul class="end-links" role="list">
+            <li><a href="?clouds=raymarch" data-switch="raymarch">Clouds: raymarched</a></li>
+            <li><a href="?clouds=billboard" data-switch="billboard">Clouds: billboards</a></li>
+            <li><a href="?mode=still">Still version</a></li>
+            <li><a href="?stats=1">With frame stats</a></li>
+            <li><a href="/">The live site</a></li>
+          </ul>
+        </div>
+      </footer>
+    </main>
+
+    <p class="stats" data-stats hidden></p>
+
+    <script>
+      import { boot } from '../../../lab/altitude/main';
+      boot();
+    </script>
+  </body>
+</html>
