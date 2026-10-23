@@ -1,7 +1,7 @@
 /** Single source of truth for identity strings used in metadata and JSON-LD. */
 
 export const SITE = {
-  url: 'https://yashverma-cloud.github.io',
+  url: 'https://yashverma.cloud',
   name: 'Yash Verma',
   /** Official title, must match the resume (CLAUDE.md). */
   jobTitle: 'Infrastructure Engineer, Cloud Operations',
@@ -16,7 +16,7 @@ export const SITE = {
 } as const;
 
 /** Assembled in the browser so no raw address appears in the HTML (CLAUDE.md). */
-export const EMAIL_PARTS = ['yashverma.cloud', 'gmail.com'] as const;
+export const EMAIL_PARTS = ['yash', 'yashverma.cloud'] as const;
 
 /**
  * Every profile that is the same person, for JSON-LD `sameAs`. Not the site's visible links:

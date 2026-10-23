@@ -1,9 +1,9 @@
-# yashverma-cloud.github.io
+# yashverma.cloud
 
 Personal site of Yash Verma — cloud infrastructure engineer, Jaipur, India.
-Live at <https://yashverma-cloud.github.io/>.
+Live at <https://yashverma.cloud/>.
 
-Static site built with [Astro](https://astro.build), deployed to GitHub Pages.
+Static site built with [Astro](https://astro.build), deployed to Cloudflare Pages.
 No runtime services, no third-party CDNs: every dependency comes from npm and is
 bundled at build time.
 
@@ -42,8 +42,9 @@ src/
   styles/       tokens.css (design tokens), base.css, fonts.css
   pages/        index, work/[slug], [short] (bio short links), og/ (Open Graph images), 404
                 _writing/, og/_writing/ — the writing section, parked (see below)
-public/         fonts, favicon, robots.txt
-scripts/        make-icons.mjs — regenerates the raster icons from public/favicon.svg
+public/         fonts, favicon, robots.txt, _headers and _redirects (Cloudflare Pages)
+scripts/        check-old-urls.mjs — checks that every old address redirects to the right page
+                make-icons.mjs — regenerates the raster icons from public/favicon.svg
 ```
 
 Design tokens are defined once in `src/styles/tokens.css`. Colours are not added there
@@ -76,12 +77,20 @@ published post, `/writing` would build as an empty `noindex` page:
 
 ## Deploys
 
-- Push to `main` runs `.github/workflows/deploy.yml`, which builds with the official
-  Astro action and publishes to GitHub Pages.
-- Pull requests to `main` run `.github/workflows/ci.yml`: install, build, then Lighthouse
+- Cloudflare Pages builds the repository through its Git integration: a merge to `main`
+  deploys to production, and every pull request gets a preview deployment, linked from
+  the pull request's checks. Build command `npm run build`, output `dist`, Node 22.
+- Pull requests to `main` also run `.github/workflows/ci.yml`: install, build, then Lighthouse
   CI against `dist/`. Accessibility, best practices and SEO scores fail the build;
   performance is a warning only, because the CI runner renders WebGL in software —
   check performance on a real device.
+- `public/_headers` sets the security and caching headers; the script and style sources are
+  in the CSP `<meta>` that Astro writes from `security.csp` in `astro.config.mjs`.
+  `public/_redirects` answers the bio short links and the runbook's old paths at the edge.
 - Dependencies are updated monthly by Dependabot.
 
-To roll back, revert the offending commit on `main` and push; the deploy workflow republishes.
+To roll back, open the project's deployments in the Cloudflare dashboard and roll back to the
+previous production deployment, then revert the offending commit through a pull request.
+
+The site used to live at `yashverma-cloud.github.io`. That address now answers every path with
+a redirect to the same path here; `node scripts/check-old-urls.mjs` checks the whole list.

@@ -3,7 +3,7 @@
 # raw mailto: in the HTML.
 #
 # The site links out to LinkedIn, GitHub and email only, plus one line to the cloud runbook
-# (a project page on this same domain, rendered at the end of Stack). The other profiles are
+# (its own subdomain, rendered at the end of Stack). The other profiles are
 # identity, not links: they live in `SAME_AS` (src/consts.ts) and are never rendered.
 
 - id: linkedin
@@ -20,6 +20,6 @@
 
 - id: runbook
   label: 'cloud runbook'
-  url: 'https://yashverma-cloud.github.io/yv-cloud-runbook/'
+  url: 'https://runbook.yashverma.cloud/'
   kind: secondary
   order: 3

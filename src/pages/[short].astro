@@ -3,6 +3,10 @@
  * Bio short links: /in, /ig, /fb, /x, /threads. Each sends the visitor to the home page with
  * UTM tags, so GA4 can tell which profile they came from.
  *
+ * On Cloudflare Pages, public/_redirects answers these paths at the edge before this page is
+ * reached. The page stays as the fallback for any host that ignores _redirects; keep both
+ * tables in step.
+ *
  * The site no longer links out to Instagram, Facebook, X or Threads, but their bios still point
  * here, so their short links stay.
  *

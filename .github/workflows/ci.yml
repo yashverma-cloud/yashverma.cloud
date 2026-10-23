@@ -30,7 +30,7 @@ jobs:
       # whose transitive tree carries advisories that would otherwise sit in our
       # lockfile and `npm audit` forever, for no benefit to the shipped site.
       # lighthouserc.json lists its pages explicitly, because autodiscovery stops at the
-      # first five HTML files it finds. It also blocks GA4's collect endpoint, so audits
+      # first five HTML files it finds. It also blocks GA4's collect endpoints, so audits
       # never record visits in the site's analytics; gtag.js itself still loads and is measured.
       - name: Lighthouse CI
         run: npx --yes @lhci/cli@0.15.1 autorun
