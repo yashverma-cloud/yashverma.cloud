@@ -59,7 +59,7 @@ try {
       // would otherwise swamp it.
       e.clouds.render = () => {};
       e.composite.uniforms.uCloudsOn.value = 0;
-      const bp = e.blueprint;
+      const bp = e.scene;
       const parts = Object.fromEntries(
         bp.group.children.map((c) => [c.userData.part ?? c.name, c]),
       );
@@ -67,8 +67,8 @@ try {
       if (groundDepth === 'off') e.ground.group.children[0].material.depthWrite = false;
       let show = true;
       const update = bp.update.bind(bp);
-      bp.update = (t, y) => {
-        update(t, y);
+      bp.update = (t, c) => {
+        update(t, c);
         bp.group.visible = show;
       };
       const gl = e.renderer.getContext();

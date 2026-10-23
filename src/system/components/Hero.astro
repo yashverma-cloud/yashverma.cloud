@@ -119,11 +119,12 @@ const place = SITE.location.split(',')[0];
     text-wrap: balance;
   }
 
+  /* ink-2, not ink-3: the cue sits on the brightest cloud in the frame (4.3:1 in ink-3). */
   .cue {
     position: absolute;
     left: var(--margin);
     bottom: max(var(--space-m), env(safe-area-inset-bottom));
-    color: var(--ink-3);
+    color: var(--ink-2);
   }
 
   /* Tall screens: the name stacks above the horizon, the line drops under the role. */
