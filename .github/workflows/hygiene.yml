@@ -1,0 +1,74 @@
+name: hygiene
+
+# Keeps local assistant config, session links, AI attribution trailers and secret
+# files out of this public repository. Fails when a commit message, a changed path,
+# an added line, or the pull request title or body matches the patterns below.
+# The patterns use [x] brackets so this file never matches itself.
+
+on:
+  pull_request:
+    branches: ['main']
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches: ['main']
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check commits, paths and pull request text
+        shell: bash
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          text_patterns='claude\.ai/cod[e]|Claude-Sessio[n]:|Co-Authored-By: Claud[e]|Generated with \[Claude Cod[e]\]|noreply@anthropi[c]\.com'
+          path_pattern='(^|/)\.claud[e]/|(^|/)CLAUDE\.m[d]$|(^|/)CLAUDE\.local\.m[d]$|(^|/)AGENTS\.m[d]$|(^|/)\.mcp\.jso[n]$|(^|/)\.en[v]$|(^|/)\.env\.[^/]+$|\.pe[m]$|\.ke[y]$|(^|/)engagement[s]/'
+          path_allow='(^|/)\.env\.exampl[e]$'
+
+          # A new branch, or a base that is no longer in history, means checking everything.
+          if [[ -z "$BASE" || "$BASE" =~ ^0+$ ]] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            range=$HEAD
+          else
+            range=$BASE..$HEAD
+          fi
+          echo "Checking $(git rev-list --count $range) commit(s) in $range"
+
+          failed=0
+          report() {
+            failed=1
+            echo "::error title=hygiene::$1"
+            sed 's/^/    /'
+          }
+
+          for c in $(git rev-list $range); do
+            short=$(git rev-parse --short "$c")
+            hits=$(git log -1 --format=%B "$c" | grep -inE "$text_patterns" | cut -c1-200 || true)
+            if [[ -n "$hits" ]]; then report "Commit $short message has a session link or AI attribution" <<< "$hits"; fi
+            hits=$(git diff-tree --no-commit-id --name-only -r --root --diff-filter=ACMRT --no-renames "$c" \
+              | grep -E "$path_pattern" | grep -vE "$path_allow" || true)
+            if [[ -n "$hits" ]]; then report "Commit $short adds or changes a banned path" <<< "$hits"; fi
+            hits=$(git diff-tree -p --no-commit-id -r --root --no-color --no-ext-diff "$c" \
+              | grep -E '^\+' | grep -vE '^\+\+\+ (b/|/dev/null)' | grep -iE "$text_patterns" | cut -c1-200 || true)
+            if [[ -n "$hits" ]]; then report "Commit $short adds a line with a session link or AI attribution" <<< "$hits"; fi
+          done
+
+          hits=$(printf '%s\n%s\n' "$PR_TITLE" "$PR_BODY" | grep -inE "$text_patterns" | cut -c1-200 || true)
+          if [[ -n "$hits" ]]; then report "The pull request title or body has a session link or AI attribution" <<< "$hits"; fi
+
+          if [[ $failed = 1 ]]; then
+            echo "Remove the matches above (amend or rebase the commits, edit the pull request) and push again."
+            exit 1
+          fi
+          echo "No banned trailers, links or paths found."
