@@ -156,9 +156,12 @@ function startLive(): void {
   // Layout, read on resize only: where the flight ends and contact begins (for the readout).
   let flightEnd = 0;
   let contactTop = 1;
+  // From the document, not offsetTop: #contact sits inside the positioned ground.
+  const pageTop = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
   const measure = () => {
-    flightEnd = flight.offsetTop + flight.offsetHeight - window.innerHeight;
-    contactTop = ($('#contact')?.offsetTop ?? flightEnd + 1) - window.innerHeight * 0.4;
+    flightEnd = pageTop(flight) + flight.offsetHeight - window.innerHeight;
+    const contact = document.querySelector('#contact');
+    contactTop = (contact ? pageTop(contact) : flightEnd + 1) - window.innerHeight * 0.4;
   };
   measure();
   window.addEventListener('resize', () => {
@@ -169,7 +172,7 @@ function startLive(): void {
 
   const flyTo = (at: number) => {
     const max = flight.offsetHeight - window.innerHeight;
-    const y = flight.offsetTop + at * max;
+    const y = pageTop(flight) + at * max;
     if (lenis) lenis.scrollTo(y, { immediate: true });
     else window.scrollTo(0, y);
     target = at;
