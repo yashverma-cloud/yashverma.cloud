@@ -9,7 +9,7 @@
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-import { LabelLayer } from './labels';
+import { copyAreas, LabelLayer } from './labels';
 import { HorizonRig } from './horizon';
 import { homeFlight, PARTS, WINDOWS } from './flights/home';
 import { feet } from './world';
@@ -168,7 +168,20 @@ function startLive(): void {
     rig.measure();
     tape.rebuild();
     engine?.resize();
+    keptFor = null;
   });
+
+  // The drawing whose labels show keeps them off its copy, read once per hold. The plate is the
+  // base (fixed where the stage is), which cancels its parking offset.
+  let keptFor: string | null = null;
+  const keepClear = (at: number) => {
+    const w = WINDOWS.find((x) => at >= x.arrive - 0.03 && at <= x.leave + 0.01);
+    if (!w || w.slug === keptFor) return;
+    keptFor = w.slug;
+    const plate = $(`[data-plate='${w.slug}']`);
+    const dy = Number(gsap.getProperty($('[data-case-head]', plate), 'y')) || 0;
+    labels.setKeepOut(copyAreas(plate, $('.case-title', plate), $('.beats', plate), dy));
+  };
 
   const flyTo = (at: number) => {
     const max = flight.offsetHeight - window.innerHeight;
@@ -243,6 +256,7 @@ function startLive(): void {
     }
     if (p < 0.06) rig.set(engine ? engine.horizonY() : rig.forPitch(cam.pitch));
     if (engine && scene) {
+      keepClear(p);
       if (visible) labels.update(scene.labels(p), engine, small());
       else labels.hideAll();
     }
@@ -316,6 +330,7 @@ function startLive(): void {
             flyTo(at);
             e.renderAt(at, -1, frames, time);
             frame(0, false);
+            keepClear(at);
             labels.update(s.labels(at), e, small());
           },
         };

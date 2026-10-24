@@ -3,7 +3,7 @@
  * drift; rendering stops when the opening is off screen or the tab is hidden. The page decides
  * live or still in its head; a failed start or a lost context falls back to the still.
  */
-import { LabelLayer } from './labels';
+import { copyAreas, LabelLayer } from './labels';
 import { SCENES, VIEWS, type SceneSlug } from './scenes/catalogue';
 import { workFlight } from './flights/work';
 import type { AltitudeEngine, Tier } from './engine/engine';
@@ -51,7 +51,13 @@ async function run(stage: HTMLElement): Promise<void> {
   stage.dataset.stage = 'on';
   const labels = new LabelLayer(stage.querySelector<HTMLElement>('[data-labels]')!, stage.querySelector<SVGSVGElement>('[data-leaders]')!);
   const small = () => (Math.min(window.innerWidth, window.innerHeight) < 600 ? 0.7 : 1);
-  window.addEventListener('resize', () => engine.resize());
+  // The labels keep off the opening's title and beats.
+  const keepClear = () => labels.setKeepOut(copyAreas(stage, document.querySelector('[data-frame-title]'), document.querySelector('[data-frame-beats]')));
+  keepClear();
+  window.addEventListener('resize', () => {
+    engine.resize();
+    keepClear();
+  });
 
   if (capture) {
     // Stills: render a given moment of the opening on request (scripts/altitude/posters.mjs).
