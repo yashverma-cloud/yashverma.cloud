@@ -155,7 +155,10 @@ export class AltitudeEngine {
     const gl = this.renderer.getContext();
     const ext = gl.getExtension('WEBGL_debug_renderer_info');
     this.gpu = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? '');
-    this.camera = new PerspectiveCamera(FOV.landscape, 1, 2, 140000);
+    // Near 0.5 m: the home flight touches down at 1.2 m, and a portrait frame looks up to ~31°
+    // below level there, so a 2 m near plane cut the closest ground out of the frame's bottom.
+    // There is no depth buffer, so the near plane costs no precision.
+    this.camera = new PerspectiveCamera(FOV.landscape, 1, 0.5, 140000);
     // No depth buffer: the drawing is painted in order (kit.ts) and the ground lies beneath it.
     this.sceneRT = new WebGLRenderTarget(1, 1, { type: HalfFloatType, format: RGBAFormat, depthBuffer: false });
     this.ground = createGround(1);

@@ -28,6 +28,9 @@
 html {
   background: var(--night);
   color-scheme: dark;
+  /* Nothing scrolls sideways; and with the root's overflow set, a body's own overflow stays on
+     the body instead of passing to the viewport (the home page clips its end there). */
+  overflow-x: clip;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }

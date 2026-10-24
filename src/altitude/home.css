@@ -251,10 +251,45 @@ body.home {
 .landing::before {
   content: '';
   position: absolute;
-  inset: calc(var(--land-extra) + var(--horizon-at) * 100svh + 2svh) 0 0 0;
+  inset: calc(var(--land-extra) + var(--horizon-at) * 100svh + 2svh) 0 calc(-1 * var(--past-end)) 0;
   z-index: -1;
-  background: linear-gradient(to bottom, rgb(4 12 31 / 0), rgb(4 12 31 / 0.6) 12svh, rgb(4 12 31 / 0.72));
+  background: linear-gradient(
+    to bottom,
+    rgb(4 12 31 / 0),
+    rgb(4 12 31 / 0.6) 12svh,
+    rgb(4 12 31 / 0.72) calc(100% - var(--past-end))
+  );
   pointer-events: none;
+}
+
+/*
+ * The end of the page is one frame: the ground runs on behind the footer to the last pixel.
+ * The footer drops its panel, and contact's burn and still reach a screen past contact's
+ * bottom (--past-end); the body clips them at the page's end, so they never add scroll. The
+ * still's image keeps contact's size, so its crop and horizon don't move; the strip below it
+ * takes the colour of the image's bottom rows, which are one flat tone in both crops.
+ */
+body.home {
+  overflow-y: clip;
+}
+
+body.home .footer {
+  background: transparent;
+  border-top-color: transparent;
+}
+
+.landing {
+  --past-end: 100lvh;
+}
+
+.landing .landing-still.scene-poster {
+  height: auto;
+  bottom: calc(-1 * var(--past-end));
+  background: rgb(3 37 70);
+}
+
+body.home .landing .landing-still img {
+  height: calc(100% - var(--past-end));
 }
 
 /* Live: the sunrise is the scene's. Contact is taller, so the sun has the screen to itself
