@@ -10,7 +10,7 @@
 import type { Director, Weather } from '../engine/scene';
 import { VIEWS } from '../scenes/catalogue';
 import { FEATURED, type Featured } from './featured';
-import { aim, Flight, heroPitch, piecewise, type CameraState, type FlightKey, type Orientation, type Vec3 } from '../world';
+import { aim, Flight, heroPitch, piecewise, PORTRAIT_BACK, type CameraState, type FlightKey, type Orientation, type Vec3 } from '../world';
 
 /** Where each featured drawing stands on the sheet, in the order the descent visits them. */
 export const SITES: Record<Featured['slug'], Vec3> = {
@@ -61,7 +61,7 @@ const add = (a: Vec3, b: Vec3): Vec3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 function framing(w: SceneWindow, orientation: Orientation, closer = 1): { pos: Vec3; look: Vec3 } {
   const v = VIEWS[w.slug];
   const target = add(w.site, v.target);
-  const back = (orientation === 'portrait' ? 1.6 : 1) * closer;
+  const back = (orientation === 'portrait' ? PORTRAIT_BACK : 1) * closer;
   const pos: Vec3 = [
     target[0] + (v.to[0] - v.target[0]) * back,
     target[1] + (v.to[1] - v.target[1]) * back,

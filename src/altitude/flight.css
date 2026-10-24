@@ -103,6 +103,10 @@
   color: var(--ink);
   opacity: 0;
   will-change: transform, opacity;
+  /* A map label's knockout: the ground shows through under the words, so linework never crosses them. */
+  padding-inline: 0.25em;
+  margin-inline: -0.25em;
+  background: color-mix(in srgb, var(--night) 72%, transparent);
 }
 
 .label[data-state='pending'] [data-label-text] {

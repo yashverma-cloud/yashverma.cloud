@@ -9,6 +9,9 @@ import { light, sky } from '../system/tokens.mjs';
 export type Vec3 = [number, number, number];
 export type Orientation = 'landscape' | 'portrait';
 
+/** A tall screen sees a narrow slice of a drawing, so its camera stands this much further back. */
+export const PORTRAIT_BACK = 2;
+
 /** Vertical field of view per orientation. Portrait screens get a taller view of the sky. */
 export const FOV = { landscape: 40, portrait: 60 } as const;
 
