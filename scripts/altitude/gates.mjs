@@ -98,7 +98,10 @@ async function noWebGL(path) {
   await page.waitForTimeout(2500);
   const state = await page.evaluate(async () => {
     const imgs = [...document.querySelectorAll('picture img')];
-    await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => (i.onload = i.onerror = r)))));
+    // Lazy stills below the fold never start on their own here: ask for them all, and give up after 20 s.
+    for (const i of imgs) i.loading = 'eager';
+    const settled = Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => (i.onload = i.onerror = r)))));
+    await Promise.race([settled, new Promise((r) => setTimeout(r, 20000))]);
     return {
       mode: document.documentElement.dataset.mode,
       stage: document.querySelector('[data-stage]')?.getAttribute('data-stage') ?? document.documentElement.dataset.stage ?? 'off',
@@ -139,9 +142,10 @@ async function sides(browser, path, w) {
   const r = await page.evaluate(() => {
     const vw = document.documentElement.clientWidth;
     const boxes = [];
-    for (const el of document.querySelectorAll('main h1, main h2, main h3, main p, main li, main a, main button, main dl, main figure, main table, main pre, footer p')) {
+    // Text blocks only: a full-bleed still or rule would hide an empty column beside the words.
+    for (const el of document.querySelectorAll('main h1, main h2, main h3, main p, main li, main dl, main pre, footer p')) {
       const b = el.getBoundingClientRect();
-      if (b.width > 0 && b.height > 0 && getComputedStyle(el).visibility !== 'hidden') boxes.push([b.left, b.right]);
+      if (b.width > 0 && b.height > 0 && b.width < vw * 0.9 && getComputedStyle(el).visibility !== 'hidden') boxes.push([b.left, b.right]);
     }
     const left = Math.min(...boxes.map((b) => b[0]));
     const right = Math.max(...boxes.map((b) => b[1]));
