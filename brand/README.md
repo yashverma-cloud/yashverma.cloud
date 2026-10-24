@@ -1,14 +1,15 @@
 # Brand kit
 
-Social covers and LinkedIn post cards, rendered from the site's own tokens and fonts so
-they always match it. Nothing in `brand/` is deployed; rendered PNGs go to
-`brand/export/`, which is not committed.
+The social avatar, covers and LinkedIn post templates, rendered from the site's own tokens
+and fonts so they always match it. The templates are pages at `/lab/brand/<name>/`
+(`src/pages/lab/brand/[name].astro`); the identity files (monogram, wordmark, lockup) are in
+`brand/altitude/`, written by `scripts/system/identity.mjs`. Nothing in `brand/` is deployed;
+rendered PNGs go to `brand/export/altitude/`, which is not committed.
 
 ```bash
-npm run build                  # once: writes dist/og/cluster.svg, used by the covers
-npm run brand                  # renders every cover and card into brand/export/
-npm run brand -- --guides      # the same with safe-zone overlays, into brand/export/guides/
-npm run brand -- --serve       # serves the templates on http://127.0.0.1:4400 for editing
+npm run build                  # once: builds the template pages
+npm run brand                  # renders every image into brand/export/altitude/
+npm run brand -- --guides      # the same with safe-zone overlays, into brand/export/altitude/guides/
 ```
 
 ## Sizes
@@ -18,26 +19,27 @@ a while; these change.
 
 | File | Size | Safe zone used | Source |
 |---|---|---|---|
+| `avatar-1080.png` | 1080×1080 | The centred circle every platform crops to | — |
 | `linkedin-profile-1584x396.png` | 1584×396 | Centred 1350×220, ≥300px from the left (the profile photo covers the bottom-left, more on mobile) | [Linearity](https://www.linearity.io/blog/linkedin-size-guide/), [Snappa](https://snappa.com/blog/linkedin-banner-size/) |
 | `facebook-page-1640x924.png` | 1640×924 (16:9) | The 2.4:1 band a phone keeps, clear of the profile picture | [Facebook Help](https://www.facebook.com/help/125379114252045): 16:9 on computers, 2.4:1 on phones |
 | `x-header-1500x500.png` | 1500×500 (3:1) | Centred 1500×360 band (phones trim the top and bottom), clear of the profile picture at the bottom-left | [Snappa](https://snappa.com/blog/twitter-header-size/), [Krumzi](https://www.krumzi.com/size-guide/twitter-header-size) |
-| `card-*.png` | 1080×1350 (4:5) | Whole card; no text under 36px, since the feed shows it at a third to half size | — |
+| `post-*.png` | 1080×1350 (4:5) | Whole card; no text under 36px, since the feed shows it at a third to half size | — |
 
 After uploading the Facebook cover, check it on a phone: the new layout is recent and
 Facebook's help page is terse about how it crops.
 
-## Making a card
+## Post templates
 
-Add an entry to `cards.json` and run `npm run brand`. Every field is plain text; leave one
-out and its element is removed.
+`brand/altitude/cards.json` holds the words for the three sample posts, one per template;
+edit an entry and run `npm run brand`. Every field is plain text.
 
-| Template | Fields |
-|---|---|
-| `diagram` | `label`, `title`, `diagram` (`"cluster"`, or the path of an SVG file inside `brand/`), `caption` |
-| `insight` | `label`, `statement`, `source` |
-| `snippet` | `label`, `title`, `code` (newlines kept), `caption` |
+| Template | Entry | Fields |
+|---|---|---|
+| `post-diagram` | `sample-diagram` | `label`, `title`, `diagram`, `caption` |
+| `post-insight` | `sample-insight` | `label`, `statement`, `source` |
+| `post-snippet` | `sample-snippet` | `label`, `title`, `code` (newlines kept), `caption` |
 
-The three sample cards use lines from the site's own case studies.
+The samples use lines from the site's own case studies.
 
 ## Brand section for automated post drafting
 
@@ -45,12 +47,30 @@ Paste this into any task that drafts post images, as its brand section. It inclu
 font-install step a fresh sandbox needs.
 
 ```text
-Brand (identical on every image; matches https://yashverma.cloud)
-- Colours: background #15345C. Text and all linework #EAF1F4. Secondary text, captions and labels #8FA9C4. Hairlines and borders #5580B0. Panels and code blocks #0C2442, edged with a 1px #5580B0 line.
-- #F5A524 is reserved for a failure state inside a diagram (a node down, an error). Never decoration, never a highlight; most images use none.
-- Typeface Overpass: 700 headlines, 600 labels, 400 body. Overpass Mono, 400, only for real code and terminal output. If they are not installed, download https://raw.githubusercontent.com/google/fonts/main/ofl/overpass/Overpass%5Bwght%5D.ttf and https://raw.githubusercontent.com/google/fonts/main/ofl/overpassmono/OverpassMono%5Bwght%5D.ttf, copy both into ~/.fonts/, and run "fc-cache -f" before rendering.
-- Sentence case (capitalize proper nouns like Karpenter, Terraform, AWS normally). No ALL-CAPS labels, emojis or hashtags in the image.
-- Style: blueprint line drawings, white linework, axonometric where it helps. No photos, stock art or icons. Flat colour: no gradients, glow, drop shadows or rounded boxes; 1px hairlines instead.
-- Footer, bottom-right, as a small title block: "Yash Verma" over "yashverma.cloud".
-- Phone-readable: nothing smaller than 36 px in the final 1080x1350 output (so render at device_scale_factor 1 with a 1080x1350 viewport, or scale CSS sizes accordingly if you use a different render pipeline); 35 words max on diagram and insight cards.
+Brand: Altitude (matches https://yashverma.cloud). Every post image is 1080x1350 (4:5).
+FONTS (download once, then fc-cache -f):
+  Archivo variable: https://raw.githubusercontent.com/google/fonts/main/ofl/archivo/Archivo%5Bwdth,wght%5D.ttf
+  B612 Mono: https://raw.githubusercontent.com/google/fonts/main/ofl/b612mono/B612Mono-Regular.ttf
+  Render with Chromium (HTML/CSS) so the width axis works: font-stretch maps to Archivo's wdth.
+COLOURS: ground #040C1F everywhere. Text #EEF3F6. Secondary text #B8C7D7. Hairlines and edges #5F82AB.
+  Linework #EAF1F4. Code panel #0B1D3E. Amber #F5A524 ONLY for a failure or waste state the post itself
+  describes (a pod that cannot be placed, idle capacity); most images use none. No other colours.
+THE HORIZON (every image): a 2px #5F82AB line across the full width at y=1010; under it a dawn wash,
+  linear-gradient(#E29060 at 20% opacity, transparent) over 160px, on #040C1F.
+LAYOUT (px; margins 80 left and right):
+  Label: x80 y96, Archivo 36px weight 480, #B8C7D7, sentence case (e.g. "Autoscaling").
+  Title (diagram, snippet): 36px under the label, Archivo 72px (snippet 60px), weight 340, font-stretch 112%,
+    line-height 1.04, letter-spacing -0.02em, #EEF3F6, max-width 18ch, balanced lines.
+  Statement (insight): 132px under the label, Archivo 84px, weight 340, font-stretch 112%, line-height 1.06.
+  Diagram: white linework standing ON the horizon (bottom at y~1000), centred, between y430 and y1000.
+    Axonometric 30 degrees. Strokes 3px (2.2px for surrounding parts), round caps. Faces get a 4-7% white
+    wash. Something that does not exist yet: 2px amber dashed outline. The stuck thing: a small solid amber block.
+  Code (snippet): B612 Mono 36px, line-height 1.42, #EAF1F4 on #0B1D3E, 2px #5F82AB border, padding 36px 40px.
+  Caption or source: under the horizon at y1046, Archivo 36px, #B8C7D7, line-height 1.32.
+  Signature: bottom-left (x80, 72px from the bottom): the monogram 84x84 in #EEF3F6, 26px gap, then
+    "Yash Verma" (Archivo 40px weight 380, font-stretch 125%, #EEF3F6) over "yashverma.cloud" (36px #B8C7D7).
+MONOGRAM SVG: <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><g fill="none" stroke="#EEF3F6" stroke-width="2.75" stroke-linejoin="miter" stroke-linecap="butt" stroke-miterlimit="12"><polyline points="2.5,5 16,28.5 29.5,5"/><polyline points="11.2,5 16,13.2 20.8,5"/><polyline points="16,13.2 16,19.8"/></g></svg>
+RULES: nothing smaller than 36px; 35 words max on diagram and insight cards; sentence case; no ALL-CAPS,
+  emoji, hashtags, photos, stock art, icons, glow, drop shadows or rounded boxes; no gradient except the dawn
+  wash. Facts only from the post and https://yashverma.cloud; numbers exactly as published.
 ```
