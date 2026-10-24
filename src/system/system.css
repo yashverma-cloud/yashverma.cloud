@@ -86,6 +86,15 @@ textarea {
   word-spacing: 0.02em;
 }
 
+/* The wide roles fall back to faces matched at their own width (fonts.css). */
+.t-name {
+  font-family: var(--font-name);
+}
+
+.t-display {
+  font-family: var(--font-display);
+}
+
 .t-name {
   font-size: var(--t-name);
   line-height: var(--lh-name);

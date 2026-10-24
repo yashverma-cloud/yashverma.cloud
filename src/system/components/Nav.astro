@@ -167,6 +167,8 @@ const path = Astro.url.pathname;
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+    /* Right-aligned, so a fallback narrower than Archivo would slide the links on the swap. */
+    font-family: var(--font-nav);
     font-size: var(--t-small);
     font-weight: 480;
     color: var(--ink-2);

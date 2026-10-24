@@ -59,6 +59,92 @@
   line-gap-override: 0%;
 }
 
+/*
+ * The first screen's roles get fallbacks of their own, matched at that role's width and weight
+ * (scripts/system/fallback-metrics.mjs), so the swap to Archivo moves no line: the name at
+ * 125/300, the display line at 112/340, the hero's role at 108/380 and the nav at 100/480. The
+ * overrides are divided by size-adjust, which scales them, so every line box keeps Archivo's.
+ */
+@font-face {
+  font-family: 'Archivo Fallback Name';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 123.42%;
+  ascent-override: 71.14%;
+  descent-override: 17.01%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Archivo Fallback Name Android';
+  src: local('Roboto'), local('Roboto-Regular');
+  size-adjust: 122.47%;
+  ascent-override: 71.69%;
+  descent-override: 17.15%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Archivo Fallback Display';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 110.14%;
+  ascent-override: 79.72%;
+  descent-override: 19.07%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Archivo Fallback Display Android';
+  src: local('Roboto'), local('Roboto-Regular');
+  size-adjust: 109.28%;
+  ascent-override: 80.34%;
+  descent-override: 19.22%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Archivo Fallback Role';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 106.65%;
+  ascent-override: 82.33%;
+  descent-override: 19.69%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Archivo Fallback Role Android';
+  src: local('Roboto'), local('Roboto-Regular');
+  size-adjust: 105.82%;
+  ascent-override: 82.97%;
+  descent-override: 19.84%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Archivo Fallback Nav';
+  src: local('Arial'), local('ArialMT'), local('Liberation Sans'), local('Arimo');
+  size-adjust: 101.11%;
+  ascent-override: 86.83%;
+  descent-override: 20.77%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Archivo Fallback Nav Android';
+  src: local('Roboto'), local('Roboto-Regular');
+  size-adjust: 100.33%;
+  ascent-override: 87.51%;
+  descent-override: 20.93%;
+  line-gap-override: 0%;
+}
+
+:root {
+  --font-sans-tail: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-name: 'Archivo', 'Archivo Fallback Name', 'Archivo Fallback Name Android', var(--font-sans-tail);
+  --font-display: 'Archivo', 'Archivo Fallback Display', 'Archivo Fallback Display Android', var(--font-sans-tail);
+  --font-role: 'Archivo', 'Archivo Fallback Role', 'Archivo Fallback Role Android', var(--font-sans-tail);
+  --font-nav: 'Archivo', 'Archivo Fallback Nav', 'Archivo Fallback Nav Android', var(--font-sans-tail);
+}
+
 /* B612 Mono: 0.65 em advance, ascender 0.965, descender 0.25. */
 @font-face {
   font-family: 'B612 Mono Fallback';
