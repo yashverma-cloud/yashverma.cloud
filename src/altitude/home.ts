@@ -10,8 +10,9 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { LabelLayer } from './labels';
+import { HorizonRig } from './horizon';
 import { homeFlight, PARTS, WINDOWS } from './flights/home';
-import { feet, FOV } from './world';
+import { feet } from './world';
 import type { AltitudeEngine, Tier } from './engine/engine';
 import type { DescentScene } from './scenes/descent';
 
@@ -22,6 +23,8 @@ const $$ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = doc
 
 export function bootHome(): void {
   const root = document.documentElement;
+  // The page's head script falls back to still mode if this never runs (index.astro).
+  (window as unknown as Record<string, unknown>).__altBooted = true;
   if (root.dataset.mode !== 'live') return;
   try {
     startLive();
@@ -31,22 +34,15 @@ export function bootHome(): void {
   }
 }
 
-function orientation(): 'landscape' | 'portrait' {
-  return window.innerWidth / window.innerHeight < 1 ? 'portrait' : 'landscape';
-}
-
-/** Horizon height in CSS pixels for a camera pitch, matching the scene's projection. */
-function horizonFor(pitchDeg: number): number {
-  const half = (FOV[orientation()] / 2) * (Math.PI / 180);
-  const ndc = Math.tan((-pitchDeg * Math.PI) / 180) / Math.tan(half);
-  return ((1 - ndc) / 2) * window.innerHeight;
-}
+/** A plate and the stretch of the flight it is on screen for (it is parked off screen otherwise). */
+type Near = [HTMLElement, number, number];
 
 /** The scrubbed choreography: one timeline whose 0 to 1 is the flight's 0 to 1. */
-function choreography(): { tl: gsap.core.Timeline; showAt: [Element, number][] } {
+function choreography(): { tl: gsap.core.Timeline; showAt: [Element, number][]; near: Near[] } {
   const tl = gsap.timeline({ paused: true, defaults: { ease: 'none' } });
   tl.set({}, {}, 1);
   const showAt: [Element, number][] = [];
+  const near: Near[] = [];
 
   const hero = $('.plate-hero .plate-copy');
   tl.fromTo('[data-hero-cue]', { opacity: 1 }, { opacity: 0, duration: 0.008 }, 0.003);
@@ -57,15 +53,18 @@ function choreography(): { tl: gsap.core.Timeline; showAt: [Element, number][] }
   tl.fromTo(sf, { opacity: 0, filter: 'blur(10px)', y: 24 }, { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.016, ease: 'power2.out' }, 0.056);
   tl.to(sf, { opacity: 0, filter: 'blur(16px)', y: -12, duration: 0.016, ease: 'power1.in' }, 0.104);
   showAt.push([$('.plate-descent'), 0.08]);
+  near.push([$('.plate-descent'), 0.046, 0.13]);
 
   const rows = $$('[data-proof-row]');
   tl.fromTo(rows, { opacity: 0, filter: 'blur(12px)', y: 18 }, { opacity: 1, filter: 'blur(0px)', y: 0, duration: 0.012, stagger: 0.005, ease: 'power2.out' }, PARTS.proof[0] + 0.008);
   tl.to(rows, { opacity: 0, y: -80, duration: 0.012, stagger: 0.002, ease: 'power1.in' }, PARTS.proof[1] - 0.004);
   showAt.push([$('.plate-between'), PARTS.proof[1] - 0.025]);
+  near.push([$('.plate-between'), PARTS.proof[0] - 0.002, PARTS.proof[1] + 0.03]);
 
   for (const w of WINDOWS) {
     const plate = $(`[data-plate='${w.slug}']`);
     if (!plate) continue;
+    near.push([plate, w.arrive - 0.032, w.leave + 0.022]);
     const head = $('[data-case-head]', plate);
     tl.fromTo(head, { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.012, ease: 'power2.out' }, w.arrive - 0.02);
     tl.to(head, { opacity: 0, duration: 0.01 }, w.leave + 0.004);
@@ -86,7 +85,7 @@ function choreography(): { tl: gsap.core.Timeline; showAt: [Element, number][] }
     });
     showAt.push([head, w.arrive + 0.004]);
   }
-  return { tl, showAt };
+  return { tl, showAt, near };
 }
 
 /** The readout's tape: ticks every 250 ft, figures every 1,000 ft. */
@@ -133,10 +132,10 @@ function startLive(): void {
     gsap.ticker.lagSmoothing(0);
   }
 
-  const { tl, showAt } = choreography();
+  const { tl, showAt, near } = choreography();
   const tape = buildTape();
-  const heroCopy = $('.plate-hero .plate-copy');
   const stage = $('.stage');
+  const rig = new HorizonRig(stage, $('.plate-hero .plate-copy'));
   const labels = new LabelLayer($('[data-labels]'), $<SVGSVGElement>('[data-leaders]'));
   const small = () => (Math.min(window.innerWidth, window.innerHeight) < 600 ? 0.7 : 1);
 
@@ -166,6 +165,7 @@ function startLive(): void {
   measure();
   window.addEventListener('resize', () => {
     measure();
+    rig.measure();
     tape.rebuild();
     engine?.resize();
   });
@@ -208,7 +208,6 @@ function startLive(): void {
   let engine: AltitudeEngine | null = null;
   let scene: DescentScene | null = null;
   const interactive = $$('[data-proof-row], .sbeat-link');
-  let lastHorizon = -1;
 
   const frame = (dt: number, render = true) => {
     if (!capture) {
@@ -217,6 +216,10 @@ function startLive(): void {
       if (Math.abs(target - p) < 1e-5) p = target;
     }
     tl.progress(p);
+    for (const [plate, from, to] of near) {
+      const on = p >= from && p <= to;
+      if (on !== plate.hasAttribute('data-near')) plate.toggleAttribute('data-near', on);
+    }
     for (const el of interactive) {
       const shown = Number(el.style.opacity || '0') > 0.5;
       if (shown !== (el.dataset.live === 'on')) {
@@ -225,9 +228,9 @@ function startLive(): void {
       }
     }
     // The readout: the camera's altitude in the flight, then down to 0 ft at contact.
-    const cam = homeFlight.camera(p, orientation());
+    const cam = homeFlight.camera(p, rig.orientation);
     const y = window.scrollY;
-    const endFt = feet(homeFlight.camera(1, orientation()).pos[1]);
+    const endFt = feet(homeFlight.camera(1, rig.orientation).pos[1]);
     const ground = Math.min(1, Math.max(0, (y - flightEnd) / Math.max(1, contactTop - flightEnd)));
     tape.set(y > flightEnd ? endFt * (1 - ground) : feet(cam.pos[1]));
 
@@ -238,13 +241,7 @@ function startLive(): void {
       engine.setProgress(p, true);
       engine.tick(dt);
     }
-    if (p < 0.06) {
-      const horizon = Math.round((engine ? engine.horizonY() : horizonFor(cam.pitch)) * 2) / 2;
-      if (horizon !== lastHorizon) {
-        heroCopy.style.setProperty('--horizon-px', `${horizon}px`);
-        lastHorizon = horizon;
-      }
-    }
+    if (p < 0.06) rig.set(engine ? engine.horizonY() : rig.forPitch(cam.pitch));
     if (engine && scene) {
       if (visible) labels.update(scene.labels(p), engine, small());
       else labels.hideAll();
@@ -333,8 +330,11 @@ function startLive(): void {
     'requestIdleCallback' in window
       ? (window as Window & { requestIdleCallback: (f: () => void, o?: { timeout: number }) => void }).requestIdleCallback(fn, { timeout: 1200 })
       : setTimeout(fn, 200);
-  if (document.readyState === 'complete') idle(loadScene);
-  else window.addEventListener('load', () => idle(loadScene), { once: true });
+  // After the name's rise (index.astro's head script), so compiling the scene never stalls it.
+  const risen = (window as unknown as { __risen?: Promise<void> }).__risen ?? Promise.resolve();
+  const start = () => void risen.then(() => idle(loadScene));
+  if (document.readyState === 'complete') start();
+  else window.addEventListener('load', start, { once: true });
 }
 
 /**

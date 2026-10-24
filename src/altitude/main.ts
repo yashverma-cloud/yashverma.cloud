@@ -4,6 +4,8 @@
  */
 export function boot(): void {
   const root = document.documentElement;
+  // FlightHead falls back to still mode if this never runs.
+  (window as unknown as Record<string, unknown>).__altBooted = true;
   if (root.dataset.mode !== 'live') return;
   import('./live')
     .then((m) => m.startLive())

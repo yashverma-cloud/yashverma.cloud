@@ -13,6 +13,7 @@
 import { getCollection, getEntry } from 'astro:content';
 import Page from '../../../system/Page.astro';
 import Hero from '../../../system/components/Hero.astro';
+import FlightHead from '../../../system/components/FlightHead.astro';
 import ScenePoster from '../../../system/components/ScenePoster.astro';
 import { poster } from '../../../altitude/posters';
 import '../../../altitude/flight.css';
@@ -49,19 +50,7 @@ const posters = {
         <link rel="preload" as="image" fetchpriority="high" imagesrcset={posters.hero.portAvif} imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 1/1)" />
       )
     }
-    <script is:inline>
-      // Decide the mode before first paint, so the layout never jumps. A failed WebGL start
-      // later drops back to still (src/altitude/live.ts).
-      (function () {
-        var d = document.documentElement;
-        var q = new URLSearchParams(location.search);
-        var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var save = navigator.connection && navigator.connection.saveData;
-        var gl = 'WebGL2RenderingContext' in window;
-        var forced = q.get('mode');
-        d.dataset.mode = forced === 'still' || forced === 'live' ? forced : !reduce && gl && !save ? 'live' : 'still';
-      })();
-    </script>
+    <FlightHead />
   </Fragment>
 
   <div class="stage" aria-hidden="true">

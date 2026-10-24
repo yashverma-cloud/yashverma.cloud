@@ -5,15 +5,7 @@
  */
 
 :root {
-  /* Where the hero horizon sits until the live scene writes --horizon-px. */
-  --horizon: 50lvh;
   --flight-screens: 11;
-}
-
-@media (max-aspect-ratio: 1/1) {
-  :root {
-    --horizon: 46lvh;
-  }
 }
 
 .label,
@@ -47,6 +39,24 @@
   z-index: var(--z-stage);
   pointer-events: none;
   overflow: hidden;
+  /* The first frame: a tiny copy of the poster, inline in the page (--still-*, set where the
+     stage is), so the sky is there at first paint and the poster sharpens over it. */
+  background: var(--still-land, none) center / cover no-repeat var(--night);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .stage {
+    background-image: var(--still-port, none);
+  }
+}
+
+.stage-poster img {
+  transition: opacity var(--dur-base) var(--ease-settle);
+}
+
+/* Set by the page while the poster decodes; with no script the poster just appears. */
+.stage-poster img.decoding {
+  opacity: 0;
 }
 
 .stage-poster,
@@ -200,6 +210,13 @@
 
 [data-mode='live'] .plate a {
   pointer-events: auto;
+}
+
+/* Off screen until the flight nears them (data-near, set by src/altitude/home.ts). A waiting
+   plate's words are still laid out, and a web font arriving late would rewrap them in view, a
+   layout shift even at opacity 0. Moved by transform, so screen readers and focus still reach them. */
+[data-mode='live'] .home .plate:not(.plate-hero):not([data-near]) {
+  translate: 0 -200lvh;
 }
 
 [data-mode='live'] .plate-poster {
@@ -406,6 +423,17 @@
 
 :root:not([data-mode='live']) .plate > * {
   grid-area: 1 / 1;
+}
+
+/* The first screen's soft copy under its poster, as the stage has it in live mode. */
+:root:not([data-mode='live']) .plate-hero {
+  background: var(--still-land, none) center / cover no-repeat var(--night);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  :root:not([data-mode='live']) .plate-hero {
+    background-image: var(--still-port, none);
+  }
 }
 
 :root:not([data-mode='live']) .plate-poster {

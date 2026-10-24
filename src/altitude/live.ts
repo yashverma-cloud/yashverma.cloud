@@ -12,7 +12,8 @@ import Lenis from 'lenis';
 import { prototypeFlight } from './flights/prototype';
 import { BEATS } from './scenes/karpenter-plan';
 import type { KarpenterScene } from './scenes/karpenter';
-import { feet, FOV } from './world';
+import { feet } from './world';
+import { HorizonRig } from './horizon';
 import type { AltitudeEngine, Tier } from './engine/engine';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -24,17 +25,6 @@ const $$ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = doc
 
 const params = new URLSearchParams(location.search);
 const root = document.documentElement;
-
-function orientation(): 'landscape' | 'portrait' {
-  return window.innerWidth / window.innerHeight < 1 ? 'portrait' : 'landscape';
-}
-
-/** Horizon height in CSS pixels for a camera pitch, matching the scene's projection. */
-function horizonFor(pitchDeg: number): number {
-  const half = (FOV[orientation()] / 2) * (Math.PI / 180);
-  const ndc = Math.tan((-pitchDeg * Math.PI) / 180) / Math.tan(half);
-  return ((1 - ndc) / 2) * window.innerHeight;
-}
 
 /** Builds the scrubbed choreography: one timeline whose 0 to 1 is the flight's 0 to 1. */
 function choreography(): gsap.core.Timeline {
@@ -144,7 +134,7 @@ export async function startLive(): Promise<void> {
   const tl = choreography();
   const tape = buildTape();
   const labels = buildLabels();
-  const heroCopy = $('.plate-hero .plate-copy');
+  const rig = new HorizonRig($('.stage'), $('.plate-hero .plate-copy'));
 
   // Flight clock: scroll gives the target; one smoothing (none under Lenis, which already
   // eases) feeds both the copy and the camera.
@@ -230,7 +220,6 @@ export async function startLive(): Promise<void> {
     }
   });
 
-  let lastHorizon = -1;
   const frame = (dt: number, render = true) => {
     if (!capture) {
       const k = lenis ? 1 : 1 - Math.exp(-dt * 10);
@@ -247,20 +236,14 @@ export async function startLive(): Promise<void> {
         el.style.pointerEvents = shown ? 'auto' : 'none';
       }
     }
-    const cam = prototypeFlight.camera(p, orientation());
+    const cam = prototypeFlight.camera(p, rig.orientation);
     tape.set(feet(cam.pos[1]));
     if (engine && render) {
       engine.setProgress(p, true);
       engine.tick(dt);
     }
     // The name rides the horizon; only while the hero can be seen, and only when it moves.
-    if (p < 0.2) {
-      const horizon = Math.round((engine ? engine.horizonY() : horizonFor(cam.pitch)) * 2) / 2;
-      if (horizon !== lastHorizon) {
-        heroCopy.style.setProperty('--horizon-px', `${horizon}px`);
-        lastHorizon = horizon;
-      }
-    }
+    if (p < 0.2) rig.set(engine ? engine.horizonY() : rig.forPitch(cam.pitch));
 
     if (engine) {
       const t = prototypeFlight.clock(p);
@@ -311,6 +294,7 @@ export async function startLive(): Promise<void> {
   };
 
   window.addEventListener('resize', () => {
+    rig.measure();
     tape.rebuild();
     engine?.resize();
   });

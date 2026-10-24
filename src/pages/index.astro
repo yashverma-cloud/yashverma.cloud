@@ -20,7 +20,8 @@ import Stack from '../system/components/Stack.astro';
 import RunbookLink from '../system/components/RunbookLink.astro';
 import Credentials from '../system/components/Credentials.astro';
 import Contact from '../system/components/Contact.astro';
-import { poster } from '../altitude/posters';
+import FlightHead from '../system/components/FlightHead.astro';
+import { placeholder, poster } from '../altitude/posters';
 import { FEATURED } from '../altitude/flights/featured';
 import '../altitude/flight.css';
 import '../altitude/home.css';
@@ -39,6 +40,9 @@ const stills = {
   between: (await poster('scenes/home-between')) ?? (await poster('lab/altitude/between')),
   horizon: await poster('scenes/horizon'),
 };
+// The hero sky's soft copy, under its poster from the first paint (flight.css).
+const soft = await placeholder('scenes/home-hero');
+const softSky = soft ? `--still-land:url(${soft.land});--still-port:url(${soft.port})` : undefined;
 ---
 
 <Page nav="over" wordmark={false} bodyClass="home">
@@ -54,26 +58,27 @@ const stills = {
         <link rel="preload" as="image" imagesrcset={stills.hero.portAvif} imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 1/1)" />
       )
     }
-    <script is:inline>
-      // Live or still, decided before first paint so nothing jumps; src/altitude/home.ts may
-      // still fall back to still if WebGL fails to start.
-      (function () {
-        var d = document.documentElement;
-        var q = new URLSearchParams(location.search);
-        var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var save = navigator.connection && navigator.connection.saveData;
-        var forced = q.get('mode');
-        d.dataset.mode = forced === 'still' || forced === 'live' ? forced : !reduce && 'WebGL2RenderingContext' in window && !save ? 'live' : 'still';
-      })();
-    </script>
+    <FlightHead />
   </Fragment>
 
-  <div class="stage" aria-hidden="true">
+  <div class="stage" aria-hidden="true" style={softSky}>
     {stills.hero ? <ScenePoster set={stills.hero} eager class="stage-poster" /> : <div class="stage-poster stage-paint" />}
     <canvas class="stage-canvas" data-canvas></canvas>
     <svg class="leaders" data-leaders></svg>
     <div class="labels" data-labels></div>
   </div>
+  <script is:inline>
+    // The poster sharpens over its soft copy once it has decoded, instead of snapping in.
+    (function () {
+      var img = document.querySelector('.stage-poster img');
+      if (!img || img.complete || !img.decode) return;
+      img.classList.add('decoding');
+      var done = function () {
+        img.classList.remove('decoding');
+      };
+      img.decode().then(done, done);
+    })();
+  </script>
 
   <div class="tape" aria-hidden="true" data-tape>
     <div class="tape-scale"><div class="tape-strip" data-tape-strip></div></div>
@@ -81,7 +86,7 @@ const stills = {
   </div>
 
   <div class="flight" data-flight>
-    <section class="plate plate-hero" id="top" aria-labelledby="name" data-plate="hero">
+    <section class="plate plate-hero" id="top" aria-labelledby="name" data-plate="hero" style={softSky}>
       {stills.hero && <ScenePoster set={stills.hero} class="plate-poster" />}
       <div class="plate-copy">
         <Hero />

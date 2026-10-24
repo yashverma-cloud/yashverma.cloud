@@ -4,6 +4,8 @@
  * rendered from the live scene by scripts/altitude/posters.mjs. Astro makes the sizes.
  */
 import { getImage } from 'astro:assets';
+import { join } from 'node:path';
+import sharp from 'sharp';
 
 const files = import.meta.glob<{ default: ImageMetadata }>('../assets/**/*-{landscape,portrait}.webp', { eager: true });
 
@@ -39,4 +41,21 @@ export async function poster(name: string): Promise<PosterSet | null> {
     portWebp: await make(port, [640, 960, 1280], 'webp'),
     fallback: fallback.src,
   };
+}
+
+/**
+ * A poster's tiny, soft copy as data URIs, a few hundred bytes each, inlined in the page so the
+ * first paint already shows the sky; the poster sharpens over it once it has arrived and decoded.
+ */
+export async function placeholder(name: string): Promise<{ land: string; port: string } | null> {
+  const one = async (orientation: 'landscape' | 'portrait', width: number) => {
+    const file = join(process.cwd(), 'src/assets', `${name}-${orientation}.webp`);
+    const buf = await sharp(file).resize({ width }).blur(0.6).webp({ quality: 55 }).toBuffer();
+    return `data:image/webp;base64,${buf.toString('base64')}`;
+  };
+  try {
+    return { land: await one('landscape', 48), port: await one('portrait', 30) };
+  } catch {
+    return null;
+  }
 }
