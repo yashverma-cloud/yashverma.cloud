@@ -47,8 +47,9 @@ public/         fonts, favicon, robots.txt, _headers and _redirects (Cloudflare 
 brand/          social covers and post templates, rendered locally (see brand/README.md)
 scripts/        check-old-urls.mjs — checks that every old address redirects to the right page
                 make-icons.mjs — regenerates the raster icons from public/favicon.svg
-                system/ — token generator, contrast, focus, Lighthouse and screenshot checks
-                altitude/, lab/ — render, measure and record the scenes
+                system/ — token generator, contrast, focus, Lighthouse, screenshot and page-text checks,
+                fallback font metrics
+                altitude/, lab/ — render, measure and record the scenes and the page load
 ```
 
 Design tokens are defined once in `src/system/tokens.mjs`; `npm run build` regenerates
