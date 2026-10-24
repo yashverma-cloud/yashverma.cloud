@@ -45,7 +45,7 @@ const mark = (size: number) =>
  * A scene's still, cropped to the card so its horizon (or its drawing) lands where the
  * composition needs it. `focusY` is where, from 0 (top) to 1, the crop is centred.
  */
-async function backdrop(file: string, focusY: number): Promise<string> {
+async function backdrop(file: string, focusY: number, anchor: 'centre' | 'right' = 'centre'): Promise<string> {
   const src = sharp(join(process.cwd(), 'src/assets', file));
   const meta = await src.metadata();
   const sw = meta.width ?? OG.width;
@@ -54,7 +54,8 @@ async function backdrop(file: string, focusY: number): Promise<string> {
   const scale = Math.max(OG.width / sw, OG.height / sh);
   const w = Math.round(sw * scale);
   const h = Math.round(sh * scale);
-  const left = Math.round((w - OG.width) / 2);
+  // A case study's drawing reaches the right edge; the left is empty grid behind the copy.
+  const left = anchor === 'right' ? w - OG.width : Math.round((w - OG.width) / 2);
   const top = Math.max(0, Math.min(h - OG.height, Math.round(h * focusY - OG.height / 2)));
   const jpg = await src.resize(w, h).extract({ left, top, width: OG.width, height: OG.height }).jpeg({ quality: 88 }).toBuffer();
   return `data:image/jpeg;base64,${jpg.toString('base64')}`;
@@ -102,9 +103,10 @@ export interface CaseStudyCard {
 export async function caseStudyCard({ title, mechanism, still }: CaseStudyCard): Promise<El> {
   return div(
     { width: OG.width, height: OG.height, position: 'relative', backgroundColor: colour.sheet },
-    img(await backdrop(still, 0.5), { position: 'absolute', left: 0, top: 0, width: OG.width, height: OG.height }),
-    // The burn: a soft darkening behind the words, never a panel.
-    div({ position: 'absolute', left: 0, top: 0, width: 820, height: OG.height, backgroundImage: `linear-gradient(90deg, ${colour.night}e6 0%, ${colour.night}b3 55%, ${colour.night}00 100%)` }),
+    img(await backdrop(still, 0.5, 'right'), { position: 'absolute', left: 0, top: 0, width: OG.width, height: OG.height }),
+    // The burn: a soft darkening behind the words, never a panel. Deep enough under the title and
+    // the mechanism that the linework recedes behind them.
+    div({ position: 'absolute', left: 0, top: 0, width: 900, height: OG.height, backgroundImage: `linear-gradient(90deg, ${colour.night}f0 0%, ${colour.night}e0 58%, ${colour.night}00 100%)` }),
     div(
       { position: 'absolute', left: 64, top: 64, width: 720, flexDirection: 'column' },
       div({ fontFamily: 'Archivo', fontWeight: 600, fontSize: 22, color: colour.ink2, marginBottom: 22 }, 'Case study'),
@@ -143,5 +145,15 @@ export async function renderCard(card: El): Promise<Buffer> {
     fonts: FONTS.map((f) => ({ ...f, style: 'normal' as const })),
   });
   const png = new Resvg(svg, { fitTo: { mode: 'original' }, font: { loadSystemFonts: false } }).render().asPng();
-  return sharp(png).png({ palette: true, colours: 256, dither: 1, effort: 10, compressionLevel: 9 }).toBuffer();
+  // A dense drawing makes a large file: a lower quantizer quality (libimagequant's, the knob that
+  // changes the size) until it fits the image budget.
+  let out = Buffer.alloc(0);
+  for (const quality of [100, 90, 80, 70, 60]) {
+    out = await sharp(png).png({ palette: true, quality, dither: 1, effort: 10, compressionLevel: 9 }).toBuffer();
+    if (out.length <= MAX_BYTES) break;
+  }
+  return out;
 }
+
+/** Every card stays under the site's 200 KB image budget, with a margin. */
+const MAX_BYTES = 190 * 1024;

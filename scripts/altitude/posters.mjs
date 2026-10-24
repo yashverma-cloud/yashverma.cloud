@@ -14,7 +14,7 @@
  * Shots are taken at half size with deviceScaleFactor 2, so the labels keep their real size.
  */
 import { chromium } from 'playwright';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import sharp from 'sharp';
 import { serveDist } from '../lab/serve.mjs';
 
@@ -64,10 +64,22 @@ const bare = (page, css) =>
     el.textContent = css;
   }, css);
 
+/** The best quality from 90 down that keeps a still under the image budget, with a margin. */
+async function fit(input, out, max = 180 * 1024) {
+  let buf;
+  for (let quality = 90; quality >= 50; quality -= 5) {
+    buf = await sharp(input).webp({ quality, effort: 6 }).toBuffer();
+    if (buf.length <= max) break;
+  }
+  await writeFile(out, buf);
+  const { width, height } = await sharp(buf).metadata();
+  return { width, height, size: buf.length };
+}
+
 async function save(page, name, orientation) {
   const out = `${OUT}/${name}-${orientation}.webp`;
   const png = await page.screenshot({ timeout: 180000 });
-  const info = await sharp(png).webp({ quality: 90, effort: 6 }).toFile(out);
+  const info = await fit(png, out);
   console.log(out, `${info.width}x${info.height}`, `${Math.round(info.size / 1024)} KB`);
 }
 
