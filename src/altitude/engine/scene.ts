@@ -58,7 +58,7 @@ export interface Weather {
 }
 
 export interface Director {
-  /** The camera at progress `p` (0 to 1) for the screen's orientation. */
+  /** The camera at progress `p` (0 to `end`) for the screen's orientation. */
   camera(p: number, orientation: Orientation): CameraState;
   /** The drawing's clock at progress `p`, in scene seconds. */
   clock(p: number): number;
@@ -70,4 +70,6 @@ export interface Director {
   readonly clouds: boolean;
   /** Idle sway, 0 (none) to 1 (full), at progress `p`. */
   drift(p: number): number;
+  /** Where progress ends: 1 unless the page flies on (the home page's approach runs to 2). */
+  readonly end?: number;
 }

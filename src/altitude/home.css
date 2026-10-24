@@ -103,19 +103,38 @@ body.home {
   pointer-events: none;
 }
 
-/* --- The ground ----------------------------------------------------------------------- */
+/* --- The ground: the approach ----------------------------------------------------------- */
 
 .ground {
+  /* The sheet's colour as channels, for the veils. */
+  --veil: 14 34 64;
   position: relative;
   z-index: var(--z-copy);
   background: var(--sheet);
 }
 
-/* Live: the ground rises over the scene, which fades into it. */
+/*
+ * Live: the ground is the approach. The scene flies on under the sections (the camera glides
+ * out over the survey sheet toward the sunrise, src/altitude/flights/home.ts), seen through a
+ * veil of the sheet's own colour: dense behind the words, thin where one section hands over to
+ * the next, so the descent shows through between them. It runs edge to edge and has no edges of
+ * its own: a veil, never a panel. The camera keeps the horizon above the frame here, so what
+ * shows through is the dark sheet and the words keep their contrast.
+ */
 [data-mode='live'] .ground {
   margin-top: -40svh;
   padding-top: 40svh;
-  background: linear-gradient(to bottom, rgb(14 34 64 / 0), var(--sheet) 40svh);
+  background: linear-gradient(to bottom, rgb(var(--veil) / 0), rgb(var(--veil) / 0.34) 40svh, transparent 40svh);
+}
+
+[data-mode='live'] .ground-section:not(.landing) {
+  background: linear-gradient(
+    to bottom,
+    rgb(var(--veil) / 0.34),
+    rgb(var(--veil) / 0.7) min(28svh, 40%),
+    rgb(var(--veil) / 0.7) max(calc(100% - 18svh), 60%),
+    rgb(var(--veil) / 0.34)
+  );
 }
 
 .ground-section {
@@ -124,6 +143,66 @@ body.home {
 
 .ground-section + .ground-section {
   border-top: var(--w-hairline) solid var(--rule-faint);
+}
+
+/* Each section's horizon rule draws itself from the words to the margin as the section arrives
+   (src/altitude/home.ts sets data-drawn). */
+[data-mode='live'] .ground .sh .rule {
+  transform-origin: left center;
+  transition: transform var(--dur-epic) var(--ease-rise);
+}
+
+[data-mode='live'] .ground .sh .rule:not([data-drawn]) {
+  transform: scaleX(0);
+}
+
+/* Still mode (and no JS): the approach as a still, held behind the sections while they pass. */
+.ground-still {
+  display: none;
+}
+
+:root:not([data-mode='live']) .ground-still {
+  display: block;
+  position: sticky;
+  top: 0;
+  height: 100lvh;
+  margin-bottom: -100lvh;
+  z-index: -1;
+}
+
+:root:not([data-mode='live']) .ground {
+  isolation: isolate;
+  background: var(--sheet);
+}
+
+:root:not([data-mode='live']) .ground-section:not(.landing) {
+  background: linear-gradient(to bottom, rgb(var(--veil) / 0.5), rgb(var(--veil) / 0.78) 30svh, rgb(var(--veil) / 0.78));
+}
+
+/* Where motion is allowed (no WebGL, Save-Data), the still drifts as the ground scrolls past, a
+   slow glide; where the browser can't tie animations to scroll, or under reduced motion, it holds
+   still. The timeline is the ground's: the still itself doesn't move while it's stuck. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    :root:not([data-mode='live']) .ground {
+      view-timeline: --ground block;
+    }
+
+    :root:not([data-mode='live']) .ground-still img {
+      animation: glide linear both;
+      animation-timeline: --ground;
+      animation-range: contain 0% contain 100%;
+    }
+  }
+}
+
+@keyframes glide {
+  from {
+    transform: scale(1.12) translateY(-3%);
+  }
+  to {
+    transform: scale(1.02) translateY(2%);
+  }
 }
 
 /* --- Contact, on the horizon at sunrise --------------------------------------------------- */
@@ -139,19 +218,57 @@ body.home {
   background: var(--dawn);
 }
 
-.landing :global(.landing-still),
 .landing .landing-still {
   position: absolute;
   inset: 0;
   z-index: -1;
 }
 
-/* A burn under the words, so they read on the lit ground. */
+/* In still mode the approach's still dissolves into the horizon's, not a seam. */
+:root:not([data-mode='live']) .landing .landing-still {
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22svh);
+  mask-image: linear-gradient(to bottom, transparent, #000 22svh);
+}
+
+/*
+ * A burn under the words, from just below the horizon down, so they read on the lit ground and
+ * the sky above stays clear. --horizon-at is where the horizon stands, as a fraction of the
+ * screen: the still's (40% wide, 28% tall), or in live mode where the camera settled it, just
+ * above the heading (src/altitude/flights/home.ts settle()).
+ */
+.landing {
+  --horizon-at: 0.4;
+  --land-extra: 0svh;
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .landing {
+    --horizon-at: 0.28;
+  }
+}
+
 .landing::before {
   content: '';
   position: absolute;
-  inset: 40% 0 0 0;
+  inset: calc(var(--land-extra) + var(--horizon-at) * 100svh + 2svh) 0 0 0;
   z-index: -1;
-  background: linear-gradient(to bottom, rgb(4 12 31 / 0), rgb(4 12 31 / 0.55) 60%);
+  background: linear-gradient(to bottom, rgb(4 12 31 / 0), rgb(4 12 31 / 0.6) 12svh, rgb(4 12 31 / 0.72));
   pointer-events: none;
+}
+
+/* Live: the sunrise is the scene's. Contact is taller, so the sun has the screen to itself
+   before the words arrive (the camera flares and levels over the extra height), and its still
+   gives way once the scene is running. */
+[data-mode='live'] .landing {
+  --land-extra: 60svh;
+  min-height: calc(100svh + var(--land-extra));
+  background: transparent;
+}
+
+[data-mode='live'] .landing .landing-still {
+  transition: opacity var(--dur-slow) var(--ease-settle);
+}
+
+[data-mode='live'][data-scene='on'] .landing .landing-still {
+  opacity: 0;
 }

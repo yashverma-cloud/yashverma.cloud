@@ -159,9 +159,11 @@ export interface CameraState {
   pitch: number;
   /** 0 is pre-dawn, 1 is sunrise. */
   dawn: number;
+  /** Elevation of the visible sun disc in degrees, where a flight sets it apart from the dawn (sunElevation otherwise). */
+  sun?: number;
 }
 
-/** One camera key on a flight. `p` is progress through the page, 0 to 1. */
+/** One camera key on a flight. `p` is progress through the page, 0 to 1 (the home flight runs on to 2). */
 export interface FlightKey {
   p: number;
   pos: Vec3;
@@ -169,6 +171,8 @@ export interface FlightKey {
   /** `null` takes the hero pitch for the orientation, so the horizon sits under the name. */
   pitch: number | null;
   dawn: number;
+  /** The visible sun's elevation in degrees; follows the dawn when left out. */
+  sun?: number;
 }
 
 /** Yaw and pitch, in degrees, that look from one point at another. */
@@ -190,7 +194,7 @@ export function lookKey(p: number, pos: Vec3, target: Vec3, dawn: number): Fligh
 /** A smooth camera path through keys: every channel interpolated without overshoot. */
 export class Flight {
   private readonly xs: number[];
-  private readonly ch: Record<'x' | 'y' | 'z' | 'yaw' | 'dawn', number[]>;
+  private readonly ch: Record<'x' | 'y' | 'z' | 'yaw' | 'dawn' | 'sun', number[]>;
   private readonly pitch: Record<Orientation, number[]>;
 
   constructor(readonly keys: FlightKey[]) {
@@ -201,6 +205,9 @@ export class Flight {
       z: keys.map((k) => k.pos[2]),
       yaw: keys.map((k) => k.yaw),
       dawn: keys.map((k) => k.dawn),
+      // Interpolation is linear in the key values, so where no key sets the sun this is
+      // exactly sunElevation of the interpolated dawn.
+      sun: keys.map((k) => k.sun ?? sunElevation(k.dawn)),
     };
     this.pitch = {
       landscape: keys.map((k) => k.pitch ?? heroPitch('landscape')),
@@ -215,6 +222,7 @@ export class Flight {
       yaw: f(this.ch.yaw),
       pitch: f(this.pitch[orientation]),
       dawn: f(this.ch.dawn),
+      sun: f(this.ch.sun),
     };
   }
 }

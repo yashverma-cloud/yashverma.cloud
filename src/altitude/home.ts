@@ -11,7 +11,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
 import { copyAreas, LabelLayer } from './labels';
 import { HorizonRig } from './horizon';
-import { homeFlight, PARTS, WINDOWS } from './flights/home';
+import { APPROACH, homeFlight, PARTS, settle, WINDOWS } from './flights/home';
 import { feet } from './world';
 import type { AltitudeEngine, Tier } from './engine/engine';
 import type { DescentScene } from './scenes/descent';
@@ -152,17 +152,49 @@ function startLive(): void {
   target = trigger.progress;
   p = target;
 
-  // Layout, read on resize only: where the flight ends and contact begins (for the readout).
+  // Layout, read on resize only: where the flight ends, where contact reaches the top of the
+  // screen, and where it has come fully into view. Between them the camera flies the approach.
   let flightEnd = 0;
-  let contactTop = 1;
+  let landTop = 1;
+  let landEnd = 2;
+  let pageEnd = 3;
   // From the document, not offsetTop: #contact sits inside the positioned ground.
   const pageTop = (el: Element) => el.getBoundingClientRect().top + window.scrollY;
   const measure = () => {
     flightEnd = pageTop(flight) + flight.offsetHeight - window.innerHeight;
-    const contact = document.querySelector('#contact');
-    contactTop = (contact ? pageTop(contact) : flightEnd + 1) - window.innerHeight * 0.4;
+    const contact = document.querySelector<HTMLElement>('#contact');
+    landTop = Math.max(flightEnd + 1, contact ? pageTop(contact) : flightEnd + 1);
+    landEnd = Math.max(landTop + 1, contact ? pageTop(contact) + contact.offsetHeight - window.innerHeight : landTop + 1);
+    pageEnd = Math.max(landEnd + 1, document.documentElement.scrollHeight - window.innerHeight);
+    // The horizon lands just above contact's heading, wherever the layout puts it.
+    const head = contact?.querySelector('.sh');
+    if (contact && head) {
+      const top = pageTop(head);
+      const h = window.innerHeight;
+      contact.style.setProperty('--horizon-at', String(settle(rig.orientation, (top - landEnd) / h, (top - pageEnd) / h)));
+    }
   };
   measure();
+  const unit = (x: number) => Math.min(1, Math.max(0, x));
+  // The approach's stretches and the scroll each one takes: the glide under the ground
+  // sections, the flare as contact fills the screen, the touchdown over the footer.
+  const legs = () =>
+    [
+      [1, APPROACH.glideEnd, flightEnd, landTop],
+      [APPROACH.glideEnd, APPROACH.land, landTop, landEnd],
+      [APPROACH.land, APPROACH.end, landEnd, pageEnd],
+    ] as const;
+  /** Progress along the approach for a scroll position past the flight. */
+  const approachAt = (y: number) => {
+    for (const [p0, p1, y0, y1] of legs()) if (y <= y1) return p0 + (p1 - p0) * unit((y - y0) / (y1 - y0));
+    return APPROACH.end;
+  };
+  /** The scroll position for a progress, the inverse of the flight's trigger and approachAt. */
+  const scrollFor = (at: number) => {
+    if (at <= 1) return pageTop(flight) + at * (flight.offsetHeight - window.innerHeight);
+    for (const [p0, p1, y0, y1] of legs()) if (at <= p1) return y0 + ((at - p0) / (p1 - p0)) * (y1 - y0);
+    return pageEnd;
+  };
   window.addEventListener('resize', () => {
     measure();
     rig.measure();
@@ -184,11 +216,10 @@ function startLive(): void {
   };
 
   const flyTo = (at: number) => {
-    const max = flight.offsetHeight - window.innerHeight;
-    const y = pageTop(flight) + at * max;
+    const y = scrollFor(at);
     if (lenis) lenis.scrollTo(y, { immediate: true });
     else window.scrollTo(0, y);
-    target = at;
+    target = Math.min(1, at);
     p = at;
   };
   // Keyboard and screen-reader users reach copy before the flight shows it: focusing it flies there.
@@ -221,16 +252,35 @@ function startLive(): void {
   let engine: AltitudeEngine | null = null;
   let scene: DescentScene | null = null;
   const interactive = $$('[data-proof-row], .sbeat-link');
+  let labelsUp = true;
+
+  // Each ground section's horizon rule draws itself from the words to the margin as it arrives.
+  const rules = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        (e.target as HTMLElement).dataset.drawn = '';
+        rules.unobserve(e.target);
+      }
+    },
+    { rootMargin: '0px 0px -20% 0px' },
+  );
+  $$('.ground .sh .rule').forEach((r) => rules.observe(r));
 
   const frame = (dt: number, render = true) => {
+    // One clock from the top of the page to contact: the flight's trigger, then the approach.
+    const y = window.scrollY;
     if (!capture) {
+      const goal = y > flightEnd ? approachAt(y) : target;
       const k = lenis ? 1 : 1 - Math.exp(-dt * 10);
-      p += (target - p) * k;
-      if (Math.abs(target - p) < 1e-5) p = target;
+      p += (goal - p) * k;
+      if (Math.abs(goal - p) < 1e-5) p = goal;
     }
-    tl.progress(p);
+    // The copy's choreography is the flight's alone.
+    const f = Math.min(1, p);
+    tl.progress(f);
     for (const [plate, from, to] of near) {
-      const on = p >= from && p <= to;
+      const on = f >= from && f <= to;
       if (on !== plate.hasAttribute('data-near')) plate.toggleAttribute('data-near', on);
     }
     for (const el of interactive) {
@@ -240,25 +290,22 @@ function startLive(): void {
         el.style.pointerEvents = shown ? 'auto' : 'none';
       }
     }
-    // The readout: the camera's altitude in the flight, then down to 0 ft at contact.
+    // The readout is the camera's altitude, all the way down: 0 ft at eye height, at contact.
     const cam = homeFlight.camera(p, rig.orientation);
-    const y = window.scrollY;
-    const endFt = feet(homeFlight.camera(1, rig.orientation).pos[1]);
-    const ground = Math.min(1, Math.max(0, (y - flightEnd) / Math.max(1, contactTop - flightEnd)));
-    tape.set(y > flightEnd ? endFt * (1 - ground) : feet(cam.pos[1]));
+    tape.set(feet(cam.pos[1]));
 
-    // The stage only renders while it can be seen: the ground covers it after the flight.
-    const visible = y < flightEnd + window.innerHeight * 0.5;
-    if (engine) burnIn(engine, p);
-    if (engine && render && visible) {
+    // The stage renders under the whole page now: the ground sections fly the approach over it.
+    if (engine) burnIn(engine, f);
+    if (engine && render) {
       engine.setProgress(p, true);
       engine.tick(dt);
     }
     if (p < 0.06) rig.set(engine ? engine.horizonY() : rig.forPitch(cam.pitch));
     if (engine && scene) {
-      keepClear(p);
-      if (visible) labels.update(scene.labels(p), engine, small());
-      else labels.hideAll();
+      keepClear(f);
+      if (p <= 1) labels.update(scene.labels(f), engine, small());
+      else if (labelsUp) labels.hideAll();
+      labelsUp = p <= 1;
     }
   };
 
@@ -317,6 +364,8 @@ function startLive(): void {
       engine = e;
       scene = s;
       stage.dataset.stage = 'on';
+      // The live sunrise replaces contact's still (home.css).
+      root.dataset.scene = 'on';
       setTimeout(() => {
         const poster = $('.stage-poster');
         if (poster) poster.style.visibility = 'hidden';

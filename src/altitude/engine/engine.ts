@@ -185,9 +185,9 @@ export class AltitudeEngine {
     this.resize();
   }
 
-  /** Progress through the page, 0 to 1. */
+  /** Progress through the page, 0 to 1 (or to the director's `end`). */
   setProgress(p: number, immediate = false): void {
-    this.target = Math.min(1, Math.max(0, p));
+    this.target = Math.min(this.director.end ?? 1, Math.max(0, p));
     if (immediate || this.capture) this.progress = this.target;
   }
 
@@ -279,7 +279,7 @@ export class AltitudeEngine {
     shared.uViewProj.value.copy(this.viewProj);
     shared.uInvViewProj.value.copy(this.viewProj).invert();
     shared.uCamPos.value.copy(this.camera.position);
-    applyDawn(s.dawn);
+    applyDawn(s.dawn, s.sun);
     const w = this.director.weather(this.progress);
     shared.uBreak.value.set(...w.deck);
     shared.uWispClear.value.set(...w.wisps);

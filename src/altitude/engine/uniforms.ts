@@ -56,8 +56,8 @@ function setColor(c: Color, v: Vec3, scale = 1): void {
   c.setRGB(v[0] * scale, v[1] * scale, v[2] * scale);
 }
 
-/** Applies the dawn palette to the shared uniforms. */
-export function applyDawn(dawn: number): void {
+/** Applies the dawn palette to the shared uniforms; `sun` sets the visible disc's elevation apart from the dawn. */
+export function applyDawn(dawn: number, sun?: number): void {
   const p = palette(dawn);
   setColor(shared.uZenith.value, p.zenith);
   setColor(shared.uSkyCol.value, p.sky);
@@ -71,6 +71,6 @@ export function applyDawn(dawn: number): void {
   setColor(shared.uAmbBottom.value, p.ambBottom, p.ambI);
   shared.uGlowI.value = p.glowI;
   shared.uStarsI.value = p.starsI;
-  direction(SUN_AZIMUTH, sunElevation(dawn), shared.uSunDir.value);
+  direction(SUN_AZIMUTH, sun ?? sunElevation(dawn), shared.uSunDir.value);
   direction(SUN_AZIMUTH, keyElevation(dawn), shared.uKeyDir.value);
 }

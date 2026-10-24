@@ -2,8 +2,9 @@
 /**
  * The home page: the Altitude descent. Above the cloud with the name on the horizon; down
  * through the sea of cloud; the proof between the layers; four breaks in the cloud, each over
- * one case study's system drawn on the survey sheet; then the ground: experience, recognition,
- * stack, credentials, and contact on the horizon at sunrise.
+ * one case study's system drawn on the survey sheet; then the approach over the sheet under the
+ * ground sections (experience, recognition, stack, credentials), and contact on the horizon at
+ * sunrise.
  *
  * Two ways in, one document. Live (WebGL2, motion allowed, no Save-Data): a fixed scene flies
  * the descent and the copy is choreographed against it (src/altitude/home.ts). Still (reduced
@@ -39,6 +40,7 @@ const stills = {
   hero: (await poster('scenes/home-hero')) ?? (await poster('lab/altitude/hero')),
   between: (await poster('scenes/home-between')) ?? (await poster('lab/altitude/between')),
   horizon: await poster('scenes/horizon'),
+  approach: await poster('scenes/approach'),
 };
 // The hero sky's soft copy, under its poster from the first paint (flight.css).
 const soft = await placeholder('scenes/home-hero');
@@ -155,6 +157,7 @@ const softSky = soft ? `--still-land:url(${soft.land});--still-port:url(${soft.p
   </div>
 
   <div class="ground" data-ground>
+    {stills.approach && <ScenePoster set={stills.approach} class="ground-still" />}
     <section class="ground-section" id="experience" aria-labelledby="experience-title">
       <SectionHeader title="Experience" id="experience-title" />
       <FlightPath />
