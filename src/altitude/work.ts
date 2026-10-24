@@ -41,7 +41,7 @@ async function run(stage: HTMLElement): Promise<void> {
   probe.getExtension('WEBGL_lose_context')?.loseContext();
   const scene = mod.create();
   const capture = params.has('capture');
-  const engine: AltitudeEngine = new AltitudeEngine({ canvas, tier, scene, director: workFlight(VIEWS[slug], scene.site), capture });
+  const engine: AltitudeEngine = new AltitudeEngine({ canvas, tier, scene, director: workFlight(VIEWS[slug], scene.site), capture, dpr: Number(params.get('dpr')) || undefined });
   canvas.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
     document.documentElement.dataset.mode = 'still';
