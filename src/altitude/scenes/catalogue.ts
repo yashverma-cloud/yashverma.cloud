@@ -42,7 +42,7 @@ export const VIEWS = {
   'alert-payload-reduction': orbit([0, 8, 2], 320),
   'karpenter-autoscaling': orbit([0, 4, -12], 380),
   'jarvis-slack-ops': orbit([6, 6, 12], 350),
-  'sendmail-ses-cli': orbit([2, 6, 0], 330),
+  'sendmail-ses-cli': orbit([-28, 6, 0], 330),
 } satisfies Record<string, SceneView>;
 
 const alt = (slug: string) => FEATURED.find((f) => f.slug === slug)?.alt ?? '';

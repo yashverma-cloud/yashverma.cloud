@@ -43,14 +43,15 @@ const stills = {
 
 <Page nav="over" wordmark={false} bodyClass="home">
   <Fragment slot="head">
+    {/* Default priority: the LCP element is the name, so the display font must not queue behind the sky. */}
     {
       stills.hero && (
-        <link rel="preload" as="image" fetchpriority="high" imagesrcset={stills.hero.landAvif} imagesizes="100vw" type="image/avif" media="(min-aspect-ratio: 1/1)" />
+        <link rel="preload" as="image" imagesrcset={stills.hero.landAvif} imagesizes="100vw" type="image/avif" media="(min-aspect-ratio: 1/1)" />
       )
     }
     {
       stills.hero && (
-        <link rel="preload" as="image" fetchpriority="high" imagesrcset={stills.hero.portAvif} imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 1/1)" />
+        <link rel="preload" as="image" imagesrcset={stills.hero.portAvif} imagesizes="100vw" type="image/avif" media="(max-aspect-ratio: 1/1)" />
       )
     }
     <script is:inline>
