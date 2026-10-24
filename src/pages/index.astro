@@ -111,7 +111,7 @@ const softSky = soft ? `--still-land:url(${soft.land});--still-port:url(${soft.p
             work.map((w) => (
               <li class="proof-row" data-proof-row data-slug={w.id}>
                 <a href={`/work/${w.id}/`}>
-                  {w.data.figure ? <span class="proof-figure">{figure(w.data.figure)}</span> : <span class="proof-figure none" />}
+                  {w.data.figure ? <span class="proof-figure">{figure(w.data.figure)}</span> : <span class="proof-figure none" />}{' '}
                   <span class="proof-result">{w.data.figure ? w.data.result : w.data.title}</span>
                 </a>
               </li>

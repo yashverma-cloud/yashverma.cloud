@@ -33,7 +33,7 @@ const { id, title, figure, result, href, poster, alt = '', eager = false, as: He
       {
         figure && (
           <p class="fig" data-beat="figure">
-            <span class="num t-display figure">{figure}</span>
+            <span class="num t-display figure">{figure}</span>{' '}
             {result && <span class="res t-lead">{result}</span>}
           </p>
         )

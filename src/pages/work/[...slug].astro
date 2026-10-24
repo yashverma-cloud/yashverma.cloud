@@ -79,7 +79,7 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
     {
       next && next.id !== entry.id && (
         <p class="next bleed">
-          <span class="t-small">Next</span>
+          <span class="t-small">Next</span>{' '}
           <a class="t-title" href={`/work/${next.id}/`}>
             {next.data.title}
           </a>

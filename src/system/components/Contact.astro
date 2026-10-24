@@ -36,8 +36,8 @@ const github = links.find((l) => l.data.id === 'github');
           Message me on LinkedIn
         </a>
       )
-    }
-    <button class="btn js-only" type="button" id="copy-email" data-idle="Copy email">Copy email</button>
+    }{' '}
+    <button class="btn js-only" type="button" id="copy-email" data-idle="Copy email">Copy email</button>{' '}
     {
       github && (
         <a class="btn" href={github.data.url} rel="me">
