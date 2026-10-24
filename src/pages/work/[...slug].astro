@@ -172,8 +172,9 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
     top: calc(env(safe-area-inset-top) + var(--nav-h) + var(--space-s));
   }
 
+  /* Full ink: it sits on the brightest part of the sky; the small size keeps it quiet. */
   .back a {
-    color: var(--ink-2);
+    color: var(--ink);
   }
 
   .mechanism {

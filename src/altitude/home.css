@@ -89,7 +89,18 @@ body.home {
 }
 
 :root:not([data-mode='live']) .plate-scene .beats {
+  position: relative;
   row-gap: var(--space-s);
+}
+
+/* The still's burn under the beats, as the live scene burns it in: a soft darkening, never a panel. */
+:root:not([data-mode='live']) .plate-scene .beats::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--space-3xl) * -1) calc(var(--margin) * -1);
+  z-index: -1;
+  background: radial-gradient(ellipse 90% 60% at 35% 50%, rgb(4 12 31 / 0.88) 45%, rgb(4 12 31 / 0) 100%);
+  pointer-events: none;
 }
 
 /* --- The ground ----------------------------------------------------------------------- */
