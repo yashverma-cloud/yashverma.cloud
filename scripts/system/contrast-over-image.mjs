@@ -4,7 +4,9 @@
  * hidden, and the element's colour is compared against the brightest and the median pixel
  * behind its box.
  *
- *   npm run build:fast && PLAYWRIGHT_BROWSERS_PATH=0 node scripts/system/contrast-over-image.mjs <path> <selector>[,<selector>...] [--sizes=1440x900,390x844] [--scroll=<y>] [--goto=<p>,<p>...]
+ *   npm run build:fast && PLAYWRIGHT_BROWSERS_PATH=0 node scripts/system/contrast-over-image.mjs <path> <selector>[,<selector>...] [--sizes=1440x900,390x844] [--scroll=<y>] [--scrollto=<selector>,...] [--goto=<p>,<p>...]
+ *
+ * --scrollto measures with each matching element at the top of the screen in turn, at every size.
  *
  * --goto measures the live scene itself: the page opens in capture mode and the home flight is
  * set to each progress in turn (2 is where the approach lands at contact), the copy, veils and
@@ -22,6 +24,7 @@ const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || `--$
 const sizes = arg('sizes', '1440x900,390x844').split(',').map((s) => s.split('x').map(Number));
 const scrollY = Number(arg('scroll', '0'));
 const gotos = arg('goto', '') ? arg('goto', '').split(',').map(Number) : null;
+const scrolltos = arg('scrollto', '') ? arg('scrollto', '').split(',') : null;
 
 const lum = ([r, g, b]) => {
   const f = (v) => {
@@ -49,11 +52,12 @@ try {
       // The canvas fades in over the hero's poster after the scene starts.
       await page.waitForTimeout(1200);
     }
-    for (const at of gotos ?? [null]) {
-      if (at !== null) await page.evaluate((at) => window.__alt.goto(at, 3), at);
+    for (const at of gotos ?? scrolltos ?? [null]) {
+      if (typeof at === 'number') await page.evaluate((at) => window.__alt.goto(at, 3), at);
+      else if (typeof at === 'string') await page.evaluate((sel) => document.querySelector(sel)?.scrollIntoView({ block: 'start' }), at);
       else if (scrollY) await page.evaluate((y) => window.scrollTo(0, y), scrollY);
-      await page.waitForTimeout(400);
-      const where = at !== null ? ` p=${at}` : '';
+      await page.waitForTimeout(at === null ? 400 : 700);
+      const where = typeof at === 'number' ? ` p=${at}` : typeof at === 'string' ? ` at ${at}` : '';
       const items = await page.evaluate((sel) => {
         const out = [];
         for (const s of sel.split(',')) {
