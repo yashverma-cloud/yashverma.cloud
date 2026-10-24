@@ -28,15 +28,17 @@ const { title, id, lead, as: Heading = 'h2' } = Astro.props;
     margin-bottom: var(--space-xl);
   }
 
+  /* A title too long for one line wraps, and the rule stands on the feet of its last line. */
   .line {
     display: flex;
     align-items: baseline;
+    align-items: last baseline;
     gap: var(--space-s);
   }
 
   .title {
-    flex: none;
-    max-width: 100%;
+    flex: 0 1 auto;
+    min-width: 0;
   }
 
   /* An empty box aligns its bottom edge to the baseline: the rule sits on the words' feet. */
