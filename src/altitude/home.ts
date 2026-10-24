@@ -203,7 +203,10 @@ function startLive(): void {
     keptFor = null;
   });
   // The page's height moves when the web font arrives (the sections rewrap), and contact with it.
-  new ResizeObserver(() => measure()).observe(document.body);
+  new ResizeObserver(() => {
+    measure();
+    arrive();
+  }).observe(document.body);
 
   // The drawing whose labels show keeps them off its copy, read once per hold. The plate is the
   // base (fixed where the stage is), which cancels its parking offset.
@@ -217,13 +220,15 @@ function startLive(): void {
     labels.setKeepOut(copyAreas(plate, $('.case-title', plate), $('.beats', plate), dy));
   };
 
-  const flyTo = (at: number) => {
-    const y = scrollFor(at);
+  /** Jumps to a scroll position, the flight with it (no smoothing through what lies between). */
+  const jumpTo = (y: number) => {
     if (lenis) lenis.scrollTo(y, { immediate: true });
     else window.scrollTo(0, y);
-    target = Math.min(1, at);
-    p = at;
+    const span = flight.offsetHeight - window.innerHeight;
+    target = unit((y - pageTop(flight)) / span);
+    p = y > flightEnd ? approachAt(y) : target;
   };
+  const flyTo = (at: number) => jumpTo(scrollFor(at));
   // Keyboard and screen-reader users reach copy before the flight shows it: focusing it flies there.
   document.addEventListener('focusin', (e) => {
     const el = e.target as Element;
@@ -231,25 +236,51 @@ function startLive(): void {
     for (const [owner, at] of showAt) if (owner.contains(el)) best = at;
     if (best !== null && Math.abs(p - best) > 0.01) flyTo(best);
   });
-  // "Work" is the proof, which lives inside the flight: fly to it rather than jump.
-  const toWork = () => flyTo(PARTS.proof[1] - 0.025);
+  // Where a link to a section lands, from the layout as it is now: "Work" is the proof, which
+  // lives inside the flight; contact once it has come to fill the screen (its upper part is the
+  // sunrise's empty sky, so its top edge would land above the words); any other section at its top.
+  const sectionAt = (hash: string): { el: HTMLElement; y: number } | null => {
+    const el = hash.length > 1 ? document.getElementById(decodeURIComponent(hash.slice(1))) : null;
+    if (!el || el.tagName !== 'SECTION') return null;
+    measure();
+    if (el.id === 'work') return { el, y: scrollFor(PARTS.proof[1] - 0.025) };
+    if (el.id === 'contact') return { el, y: landEnd };
+    return { el, y: pageTop(el) };
+  };
+  // Focus follows, as a native jump would move it, without scrolling a second time.
+  const focusSection = (el: HTMLElement) => {
+    if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+    el.focus({ preventScroll: true });
+  };
   document.addEventListener('click', (e) => {
     const a = (e.target as Element).closest?.('a[href]') as HTMLAnchorElement | null;
     if (!a || a.pathname !== '/' || a.origin !== location.origin) return;
-    if (a.hash === '#work') {
-      e.preventDefault();
-      history.pushState(null, '', '/#work');
-      toWork();
-    } else if (a.hash && lenis) {
-      const el = document.querySelector(a.hash);
-      if (el) {
-        e.preventDefault();
-        history.pushState(null, '', `/${a.hash}`);
-        lenis.scrollTo(el as HTMLElement, { offset: 0 });
-      }
-    }
+    const to = sectionAt(a.hash);
+    if (!to) return;
+    e.preventDefault();
+    arriving = '';
+    if (location.hash !== a.hash) history.pushState(null, '', `/${a.hash}`);
+    if (lenis) lenis.scrollTo(to.y);
+    else window.scrollTo({ top: to.y, behavior: 'smooth' });
+    focusSection(to.el);
   });
-  if (location.hash === '#work') requestAnimationFrame(toWork);
+  // Arriving with a section in the address (/#contact from another page) lands there at once,
+  // and holds it, until the visitor scrolls, while the web font rewraps the sections above.
+  let arriving = sectionAt(location.hash) ? location.hash : '';
+  const arrive = () => {
+    const to = arriving ? sectionAt(arriving) : null;
+    if (to) jumpTo(to.y);
+  };
+  if (arriving) {
+    requestAnimationFrame(() => {
+      arrive();
+      const to = sectionAt(arriving);
+      if (to) focusSection(to.el);
+    });
+    const done = () => (arriving = '');
+    for (const ev of ['wheel', 'touchstart', 'keydown', 'pointerdown']) window.addEventListener(ev, done, { once: true, passive: true });
+    window.setTimeout(done, 4000);
+  }
 
   let engine: AltitudeEngine | null = null;
   let scene: DescentScene | null = null;

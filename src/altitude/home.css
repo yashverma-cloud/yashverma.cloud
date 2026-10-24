@@ -273,6 +273,12 @@ body.home {
   overflow-y: clip;
 }
 
+/* What an iOS bounce shows past either end: a blue between the hero sky's top row (0 20 55)
+   and the ground at the page's end (3 19 41 live, 3 37 70 still), not the night. */
+:root:has(> body.home) {
+  background: rgb(2 24 54);
+}
+
 body.home .footer {
   background: transparent;
   border-top-color: transparent;

@@ -229,6 +229,12 @@ a:hover {
   box-shadow: 0 0 0 2px var(--night);
 }
 
+/* A section an in-page link moved focus to: the next Tab starts there; it isn't a control. */
+section[tabindex='-1']:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 .skip {
   position: fixed;
   left: var(--margin);
