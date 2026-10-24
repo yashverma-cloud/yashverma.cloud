@@ -212,12 +212,23 @@ export const homeFlight: Director = {
     const w = windowAt(p);
     const c = FLIGHTS.landscape.at(p, 'landscape').pos;
     const first = WINDOWS[0].site;
+    const site: [number, number, number, number] = [w.site[0] - 175, w.site[2] - 115, w.site[0] + 175, w.site[2] + 115];
+    // On the approach the survey grid runs on under the sections: it grows out of the last
+    // drawing's site into a square riding ahead of the camera, so the sheet streams past beneath
+    // the words, and fades as the camera flares, so contact stands on the open sheet.
+    if (p > 1) {
+      const ahead = [c[0] + SUNWARD[0] * 450, c[2] + SUNWARD[1] * 450];
+      const roam = [ahead[0] - 800, ahead[1] - 800, ahead[0] + 800, ahead[1] + 800];
+      const k = smoothstepRange(1, 1.08, p);
+      for (let i = 0; i < 4; i++) site[i] += (roam[i] - site[i]) * k;
+    }
     return {
       // The one break in the deck: over the dive to the first drawing.
       deck: [first[0] + 30, first[2] + 520, 820, 600],
       // The low wisps always part around the camera, so they never stand between it and a drawing.
       wisps: [c[0], c[2] - 120, 420, 420],
-      site: [w.site[0] - 175, w.site[2] - 115, w.site[0] + 175, w.site[2] + 115],
+      site,
+      grid: 1 - smoothstepRange(APPROACH.glideEnd, 1.93, p),
     };
   },
   groundVisible: (c) => c.pos[1] < 1950,

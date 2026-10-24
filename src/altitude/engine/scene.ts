@@ -55,6 +55,8 @@ export interface Weather {
   wisps: Clearing;
   /** The survey grid under the drawing: x0, z0, x1, z1. */
   site: [number, number, number, number];
+  /** How strongly the survey grid is drawn, 0 to 1 (1 when left out). */
+  grid?: number;
 }
 
 export interface Director {

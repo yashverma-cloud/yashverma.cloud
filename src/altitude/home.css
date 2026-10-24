@@ -124,16 +124,17 @@ body.home {
 [data-mode='live'] .ground {
   margin-top: -40svh;
   padding-top: 40svh;
-  background: linear-gradient(to bottom, rgb(var(--veil) / 0), rgb(var(--veil) / 0.34) 40svh, transparent 40svh);
+  background: linear-gradient(to bottom, rgb(var(--veil) / 0), rgb(var(--veil) / 0.3) 40svh, transparent 40svh);
 }
 
+/* 0.62 keeps the faintest text (ink-3) above 5.5:1 over the moving sheet (contrast-over-image --goto). */
 [data-mode='live'] .ground-section:not(.landing) {
   background: linear-gradient(
     to bottom,
-    rgb(var(--veil) / 0.34),
-    rgb(var(--veil) / 0.7) min(28svh, 40%),
-    rgb(var(--veil) / 0.7) max(calc(100% - 18svh), 60%),
-    rgb(var(--veil) / 0.34)
+    rgb(var(--veil) / 0.3),
+    rgb(var(--veil) / 0.62) min(28svh, 40%),
+    rgb(var(--veil) / 0.62) max(calc(100% - 18svh), 60%),
+    rgb(var(--veil) / 0.3)
   );
 }
 
@@ -224,10 +225,10 @@ body.home {
   z-index: -1;
 }
 
-/* In still mode the approach's still dissolves into the horizon's, not a seam. */
+/* In still mode the approach's still dissolves into the horizon's, not a seam; a narrow band, so the sky stays. */
 :root:not([data-mode='live']) .landing .landing-still {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 22svh);
-  mask-image: linear-gradient(to bottom, transparent, #000 22svh);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 8svh);
+  mask-image: linear-gradient(to bottom, transparent, #000 8svh);
 }
 
 /*

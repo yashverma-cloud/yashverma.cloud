@@ -42,6 +42,8 @@ export const shared = {
   uBreak: { value: new Vector4(0, 0, 0, 1) },
   uWispClear: { value: new Vector4(0, 0, 0, 1) },
   uSite: { value: new Vector4(0, 0, 0, 0) },
+  /** How strongly the survey grid is drawn, 0 to 1 (the director's weather). */
+  uGridI: { value: 1 },
 };
 
 export type SharedUniforms = typeof shared;

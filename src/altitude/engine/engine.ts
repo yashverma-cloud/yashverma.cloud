@@ -284,6 +284,7 @@ export class AltitudeEngine {
     shared.uBreak.value.set(...w.deck);
     shared.uWispClear.value.set(...w.wisps);
     shared.uSite.value.set(...w.site);
+    shared.uGridI.value = w.grid ?? 1;
     // Below the deck the light is brighter; the exposure keeps it from blowing out.
     this.exposure = 1.05 - s.dawn * 0.22;
   }

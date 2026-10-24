@@ -6,7 +6,8 @@
  *   <slug>          each case study's drawing, finished, as its /work/ page frames it
  *   home-hero, home-between, home-<slug>
  *                   the home descent's plates (the four featured drawings at the end of their hold)
- *   horizon         ground level at sunrise, the sun disc up (contact)
+ *   approach        the glide over the survey sheet under the ground sections (progress 1.5)
+ *   horizon         contact's sunrise, where the approach lands (progress 2): the sun on the horizon
  *   in-cloud        inside the deck (the 404)
  *
  *   npm run build:fast && PLAYWRIGHT_BROWSERS_PATH=0 node scripts/altitude/posters.mjs [name ...]
@@ -28,7 +29,8 @@ const WORK = [
   'jarvis-slack-ops',
   'sendmail-ses-cli',
 ];
-// Flight progress for the home plates: HOLDS in src/altitude/flights/home.ts, just before each leave.
+// Progress on the home flight: HOLDS in src/altitude/flights/home.ts, just before each leave,
+// then the approach (APPROACH): mid-glide, and where it lands at contact.
 const HOME = {
   'home-hero': 0,
   'home-between': 0.16,
@@ -36,11 +38,11 @@ const HOME = {
   'home-live-migration-to-kubernetes': 0.58,
   'home-alert-payload-reduction': 0.77,
   'home-karpenter-autoscaling': 0.96,
+  approach: 1.5,
+  horizon: 2,
 };
-// Cameras off the flight, set on the home director for one shot each. The sun's azimuth is 38°
-// (world.ts); the horizon looks a little left of it so the disc stands right of the copy.
+// Cameras off the flight, set on the home director for one shot each.
 const OFF_FLIGHT = {
-  horizon: { pos: [-900, 28, 1400], yaw: 26, pitch: 2.2, dawn: 1 },
   'in-cloud': { pos: [-5200, 1160, 6400], yaw: -8, pitch: -1, dawn: 0.6 },
 };
 

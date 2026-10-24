@@ -202,6 +202,8 @@ function startLive(): void {
     engine?.resize();
     keptFor = null;
   });
+  // The page's height moves when the web font arrives (the sections rewrap), and contact with it.
+  new ResizeObserver(() => measure()).observe(document.body);
 
   // The drawing whose labels show keeps them off its copy, read once per hold. The plate is the
   // base (fixed where the stage is), which cancels its parking offset.

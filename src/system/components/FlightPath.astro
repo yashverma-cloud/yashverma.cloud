@@ -152,8 +152,9 @@ const roles = (await getCollection('experience')).sort((a, b) => a.data.order - 
   }
 
   .leg {
-    /* How far this fix is plotted, 0 to 1: the route reaches it a little before its centre. */
-    --k: clamp(0, (var(--flown, 1.2) - var(--at, 0) + 0.03) * 14, 1);
+    /* How far this fix is plotted, 0 to 1: drawn over the last stretch of route before it, and
+       complete when the route reaches it, so the whole route flown means every fix drawn. */
+    --k: clamp(0, (var(--flown, 1) - var(--at, 0)) * 14 + 1, 1);
     position: relative;
     display: grid;
     grid-template-columns: subgrid;

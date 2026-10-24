@@ -33,6 +33,7 @@ uniform vec3 uSunDir;
 uniform float uFogDensity;
 uniform float uMapOn;
 uniform vec4 uSite;
+uniform float uGridI;
 uniform mat4 uInvViewProj;
 uniform vec2 uResolution;
 ${HAZE}
@@ -107,10 +108,10 @@ void main() {
   vec2 hi = uSite.zw + 70.0;
   vec2 inside = smoothstep(lo, lo + 60.0, vWorld.xz) * (1.0 - smoothstep(hi - 60.0, hi, vWorld.xz));
   float site = inside.x * inside.y;
-  if (site > 0.0 && dist < 2200.0) {
+  if (site > 0.0 && dist < 2200.0 && uGridI > 0.0) {
     float ink = 0.72 + 0.28 * (gnoise(vWorld.xz / 31.0 + 5.5) * 0.5 + 0.5);
     float g = (grid(vWorld.xz, 8.0) * 0.03 + grid(vWorld.xz, 40.0) * 0.1) * ink;
-    col = mix(col, vec3(0.62, 0.72, 0.84), g * site * uMapOn * (1.0 - smoothstep(600.0, 2200.0, dist)));
+    col = mix(col, vec3(0.62, 0.72, 0.84), g * site * uMapOn * uGridI * (1.0 - smoothstep(600.0, 2200.0, dist)));
   }
 
   float fog = 1.0 - exp(-dist * uFogDensity * 1.6);
@@ -161,6 +162,7 @@ export function createGround(dpr: number): { group: Group; setDpr(v: number): vo
       uFogDensity: shared.uFogDensity,
       uMapOn: { value: 1 },
       uSite: shared.uSite,
+      uGridI: shared.uGridI,
       uInvViewProj: shared.uInvViewProj,
       uResolution: shared.uResolution,
     },
