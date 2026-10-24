@@ -41,9 +41,9 @@ const hashInlineScripts = {
  * begins: whitespace at a block's edge is never rendered, so the page looks the same, and the
  * words come apart. Inline elements carry their own spaces in the components ({' '}). Script,
  * style, pre and textarea contents are left alone (and the CSP hashes stay valid).
- * @type {import('astro').AstroIntegration}
  */
 const BLOCK = 'address|article|aside|blockquote|dd|details|dialog|div|dl|dt|fieldset|figcaption|figure|footer|form|h[1-6]|header|hgroup|hr|li|main|nav|ol|p|section|summary|table|tbody|td|tfoot|th|thead|tr|ul';
+/** @type {import('astro').AstroIntegration} */
 const spaceBlocks = {
   name: 'space-blocks',
   hooks: {
