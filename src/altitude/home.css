@@ -3,6 +3,12 @@
  * featured case study), the ground sections, and contact landing on the horizon at sunrise.
  */
 
+/* The descent's length, in screens of scroll (flights/home.ts FLIGHT_SCREENS): set in CSS, not
+   by script, so the page never changes height after it paints. */
+body.home {
+  --flight-screens: 18;
+}
+
 /* --- The breaks: title top left, beats low left, the drawing owns the rest ------------- */
 
 .plate-scene .case-copy {

@@ -12,7 +12,6 @@
  *   3.6-5.4  the same jobs, the same pipes, mail out through SES
  */
 import type { LabelState } from '../engine/scene';
-import { orbit, type SceneView } from './catalogue';
 import { BUILD, FIELD, GUIDE, LINE, PlotScene, win } from './plot';
 import type { Vec3 } from '../world';
 
@@ -91,5 +90,4 @@ export class SendmailScene extends PlotScene {
   }
 }
 
-export const view: SceneView = orbit([2, 6, 0], 330);
 export const create = (origin?: Vec3) => new SendmailScene(origin);

@@ -4,7 +4,7 @@
  * live or still in its head; a failed start or a lost context falls back to the still.
  */
 import { LabelLayer } from './labels';
-import { SCENES, type SceneSlug } from './scenes/catalogue';
+import { SCENES, VIEWS, type SceneSlug } from './scenes/catalogue';
 import { workFlight } from './flights/work';
 import type { AltitudeEngine, Tier } from './engine/engine';
 
@@ -41,7 +41,7 @@ async function run(stage: HTMLElement): Promise<void> {
   probe.getExtension('WEBGL_lose_context')?.loseContext();
   const scene = mod.create();
   const capture = params.has('capture');
-  const engine: AltitudeEngine = new AltitudeEngine({ canvas, tier, scene, director: workFlight(mod.view, scene.site), capture });
+  const engine: AltitudeEngine = new AltitudeEngine({ canvas, tier, scene, director: workFlight(VIEWS[slug], scene.site), capture });
   canvas.addEventListener('webglcontextlost', (e) => {
     e.preventDefault();
     document.documentElement.dataset.mode = 'still';

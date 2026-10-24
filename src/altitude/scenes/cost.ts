@@ -11,7 +11,6 @@
  *   4.6-5.6  the bill meter falls by 40%
  */
 import type { LabelState } from '../engine/scene';
-import { orbit, type SceneView } from './catalogue';
 import { AMBER, BUILD, FIELD, GUIDE, LINE, PlotScene, win } from './plot';
 import type { Vec3 } from '../world';
 
@@ -121,5 +120,4 @@ export class CostScene extends PlotScene {
   }
 }
 
-export const view: SceneView = orbit([4, 6, -10], 340);
 export const create = (origin?: Vec3) => new CostScene(origin);

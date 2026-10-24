@@ -33,8 +33,17 @@ export function orbit(target: Vec3, distance: number, { elevation = 35, azimuth 
 
 export interface SceneModule {
   create(origin?: Vec3): DrawingScene;
-  view: SceneView;
 }
+
+/** How each scene is framed: around its drawing's centre, in the scene's own coordinates. */
+export const VIEWS = {
+  'cloud-cost-optimisation': orbit([4, 6, -10], 340),
+  'live-migration-to-kubernetes': orbit([2, 4, 14], 350),
+  'alert-payload-reduction': orbit([0, 8, 2], 320),
+  'karpenter-autoscaling': orbit([0, 4, -12], 380),
+  'jarvis-slack-ops': orbit([6, 6, 12], 350),
+  'sendmail-ses-cli': orbit([2, 6, 0], 330),
+} satisfies Record<string, SceneView>;
 
 const alt = (slug: string) => FEATURED.find((f) => f.slug === slug)?.alt ?? '';
 

@@ -14,7 +14,6 @@
  *   4.4-5.2  another read
  */
 import type { LabelState } from '../engine/scene';
-import { orbit, type SceneView } from './catalogue';
 import { BUILD, FIELD, GUIDE, LINE, PlotScene, win } from './plot';
 import type { Vec3 } from '../world';
 
@@ -127,5 +126,4 @@ export class JarvisScene extends PlotScene {
   }
 }
 
-export const view: SceneView = orbit([6, 6, 12], 350);
 export const create = (origin?: Vec3) => new JarvisScene(origin);

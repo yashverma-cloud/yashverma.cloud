@@ -12,7 +12,6 @@
  *   2.8-5.4  Coralogix's lane, later
  */
 import type { LabelState } from '../engine/scene';
-import { orbit, type SceneView } from './catalogue';
 import { AMBER, BUILD, FIELD, LINE, PlotScene, win } from './plot';
 import type { Vec3 } from '../world';
 
@@ -103,5 +102,4 @@ export class AlertsScene extends PlotScene {
   }
 }
 
-export const view: SceneView = orbit([0, 8, 2], 320);
 export const create = (origin?: Vec3) => new AlertsScene(origin);
