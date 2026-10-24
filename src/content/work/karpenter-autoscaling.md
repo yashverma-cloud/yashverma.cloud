@@ -42,8 +42,3 @@ that is not tuned is just a faster way to move workloads you did not want moved.
 A pending pod gets a ready node in about 80 seconds. Under load, the cluster scales past
 100 nodes in under 10 minutes. Both measured on the running system rather than read off the
 documentation.
-
-The scene at the top of this site is the same idea, drawn: take a node away, its pods are
-rescheduled onto capacity that already exists, and a replacement is provisioned behind
-them. The difference is that the drawing recovers in eight seconds, because you are
-standing there watching it.

@@ -1,0 +1,66 @@
+---
+/**
+ * The note page's body: a short dated post, set larger than an article's text because it is
+ * read in one go. The date leads; the title is small, the words are the point.
+ */
+import { formatDay } from '../../utils/dates';
+
+interface Props {
+  title: string;
+  published: string;
+  back?: { href: string; label: string };
+}
+
+const { title, published, back = { href: '/writing/', label: 'Writing' } } = Astro.props;
+---
+
+<article class="note bleed">
+  <p class="back t-small"><a href={back.href}>← {back.label}</a></p>
+  <header class="head">
+    <time class="when t-data" datetime={published}>{formatDay(published)}</time>
+    <h1 class="title t-title">{title}</h1>
+  </header>
+  <div class="words t-lead">
+    <slot />
+  </div>
+</article>
+
+<style>
+  .note {
+    padding-block: calc(var(--space-3xl) + var(--space-l)) var(--space-3xl);
+    row-gap: var(--space-l);
+  }
+
+  .back a {
+    color: var(--ink-2);
+  }
+
+  .head {
+    grid-column: 3 / span 8;
+    display: grid;
+    row-gap: var(--space-xs);
+    padding-bottom: var(--space-m);
+    border-bottom: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .when {
+    color: var(--ink-2);
+  }
+
+  .words {
+    grid-column: 3 / span 8;
+    display: grid;
+    row-gap: var(--space-s);
+  }
+
+  .words > :global(*) {
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 60rem) {
+    .head,
+    .words {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

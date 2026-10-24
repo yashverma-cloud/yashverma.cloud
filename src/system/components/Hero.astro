@@ -1,0 +1,194 @@
+---
+/**
+ * The hero: the name first, standing on the horizon; the role directly below the horizon; the
+ * one line to the right. Plain HTML, and the LCP element: never rendered by script.
+ *
+ * It lays itself out once, against `--horizon-y`: the poster's horizon, a fixed fraction of its
+ * box (the defaults below). The live scene's horizon moves with the camera, and the difference
+ * arrives as `--horizon-shift`, a transform (src/altitude/horizon.ts), so the name stays on the
+ * rendered horizon without ever moving the layout.
+ */
+import { SITE } from '../../consts';
+
+interface Props {
+  /** The line beside the name. */
+  line?: string;
+  /** The cue at the foot of the hero; false for none. */
+  cue?: string | false;
+  /** Heading level of the name: h1 on the home page, a plain paragraph in demos. */
+  as?: 'h1' | 'p';
+}
+
+const {
+  line = 'I keep production Kubernetes running when nodes die.',
+  cue = 'Scroll to descend',
+  as: Name = 'h1',
+} = Astro.props;
+const place = SITE.location.split(',')[0];
+// The title's phrases ("Infrastructure Engineer," and "Cloud Operations") are whole lines on tall
+// screens, so the role's height never depends on where a font happens to wrap it.
+const phrases = SITE.jobTitle.split(/(?<=,)\s+/);
+---
+
+<div class="hero" data-hero>
+  <Name class="name t-name" id="name" data-hero-name>
+    <span class="mask"><span class="word">Yash</span></span>{' '}
+    <span class="mask"><span class="word">Verma</span></span>
+  </Name>
+  <div class="below">
+    <p class="role" data-hero-role>
+      <span class="title">
+        {
+          phrases.map((phrase, i) => (
+            <Fragment>
+              {i > 0 && ' '}
+              <span class="phrase">{phrase}</span>
+            </Fragment>
+          ))
+        }
+      </span>{' '}
+      <span class="at">at {SITE.employer}, {place}</span>
+    </p>
+    <p class="line t-display" data-hero-line>{line}</p>
+  </div>
+  {cue && <p class="cue t-small" data-hero-cue>{cue}</p>}
+</div>
+
+<style>
+  /* The poster's horizon, from the top (HERO_HORIZON in src/altitude/world.ts). */
+  .hero {
+    --horizon-y: 50%;
+    position: relative;
+    height: 100%;
+    min-height: inherit;
+  }
+
+  @media (max-aspect-ratio: 1/1) {
+    .hero {
+      --horizon-y: 46%;
+    }
+  }
+
+  /* The live horizon's offset from the poster's: a transform, so following it never moves the layout. */
+  .name,
+  .below {
+    translate: 0 var(--horizon-shift, 0px);
+  }
+
+  .name {
+    position: absolute;
+    left: calc(var(--margin) - 0.045em);
+    bottom: calc(100% - var(--horizon-y));
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 0.22em;
+    /* Glyph baselines on the horizon, not the line box. */
+    margin-bottom: calc(var(--t-name) * -0.035);
+  }
+
+  .mask {
+    display: block;
+    overflow: hidden;
+    padding-top: 0.08em;
+    margin-top: -0.08em;
+  }
+
+  .word {
+    display: block;
+  }
+
+  /* Under the horizon: the role, and the line beside it (under it on tall screens). */
+  .below {
+    position: absolute;
+    top: calc(var(--horizon-y) + var(--space-s));
+    left: var(--margin);
+    right: var(--margin);
+    display: grid;
+    grid-template-columns: repeat(var(--columns), minmax(0, 1fr));
+    column-gap: var(--gap);
+    align-items: start;
+  }
+
+  .role {
+    grid-column: 1 / span 6;
+    max-width: 30em;
+    font-family: var(--font-role);
+    font-size: var(--t-lead);
+    line-height: 1.35;
+    font-weight: 380;
+    font-stretch: 108%;
+    color: var(--ink);
+  }
+
+  .role .title,
+  .role .at {
+    display: block;
+  }
+
+  .role .at {
+    color: var(--ink-2);
+  }
+
+  .line {
+    grid-column: 7 / -1;
+    max-width: 12.5em;
+    text-wrap: balance;
+  }
+
+  /* ink-2, not ink-3: the cue sits on the brightest cloud in the frame (4.3:1 in ink-3). */
+  .cue {
+    position: absolute;
+    left: var(--margin);
+    bottom: max(var(--space-m), env(safe-area-inset-bottom));
+    color: var(--ink-2);
+  }
+
+  /* Tall screens: the name stacks above the horizon, the line drops under the role. */
+  @media (max-aspect-ratio: 1/1) {
+    .name {
+      flex-direction: column;
+      font-size: clamp(4rem, 24vw, 10rem);
+    }
+
+    .below {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-l);
+    }
+
+    .line {
+      max-width: 11.5em;
+      font-size: clamp(1.75rem, 8.4vw, 3.4rem);
+    }
+
+    .role .phrase {
+      display: block;
+    }
+  }
+
+  /*
+   * The rise. FlightHead's script holds the name under the horizon from the first paint
+   * (data-rise="wait") and lets it go once its face has loaded, or after a short wait, so the
+   * motion is one eased stroke that never swaps glyphs mid-flight. With no script, under reduced
+   * motion and in still mode, the name simply stands there.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    :global([data-mode='live'][data-rise='wait']) .word {
+      transform: translateY(105%);
+    }
+
+    :global([data-mode='live'][data-rise='go']) .word {
+      animation: rise var(--dur-epic) var(--ease-rise) both;
+    }
+
+    :global([data-mode='live'][data-rise='go']) .mask + .mask .word {
+      animation-delay: 120ms;
+    }
+  }
+
+  @keyframes rise {
+    from {
+      transform: translateY(105%);
+    }
+  }
+</style>

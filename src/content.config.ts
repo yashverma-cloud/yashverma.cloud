@@ -79,8 +79,8 @@ const links = defineCollection({
 });
 
 /**
- * The section is parked (README.md, "Parked: /writing"), so nothing here reaches the site. When
- * it is restored, nothing published still means no page, no card and no nav item.
+ * Only published entries reach the site. With none, /writing/ shows its empty state, carries
+ * noindex and stays out of the sitemap and the nav (README.md, "/writing").
  * `_`-prefixed files are excluded because the content-layer loader, unlike
  * page routing, does not skip them on its own — `_contract.md` lives in that folder as the brief
  * for whoever writes the posts, and without this it would be read as a post and fail the schema.
@@ -99,6 +99,8 @@ const writing = defineCollection({
      * publishes as soon as it is saved, which is why the writing contract always states it.
      */
     draft: z.boolean().default(false),
+    /** A note is short and dated, read in one go; an article is long form with headings. */
+    kind: z.enum(['note', 'article']).default('article'),
   }),
 });
 

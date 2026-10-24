@@ -1,0 +1,47 @@
+---
+/**
+ * The footer. Its last line is साम्ब सदाशिव, in Devanagari: small, the quiet ink (AA on every
+ * ground), lang="sa", and never linked, highlighted or explained.
+ */
+const year = new Date().getFullYear();
+---
+
+<footer class="footer bleed">
+  <p class="who t-small">© {year} Yash Verma</p>
+  <p class="built t-small ink-3">Built with Astro. Hosted on Cloudflare Pages.</p>
+  <p class="sa last" lang="sa">साम्ब सदाशिव</p>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    z-index: var(--z-copy);
+    background: var(--night);
+    border-top: var(--w-hairline) solid var(--rule-faint);
+    padding-block: var(--space-l) max(var(--space-l), env(safe-area-inset-bottom));
+    row-gap: var(--space-2xs);
+  }
+
+  .who {
+    grid-column: 1 / span 6;
+    color: var(--ink-2);
+  }
+
+  .built {
+    grid-column: 7 / -1;
+    text-align: right;
+  }
+
+  .last {
+    grid-column: 1 / -1;
+    margin-top: var(--space-xs);
+  }
+
+  @media (max-width: 40rem) {
+    .who,
+    .built {
+      grid-column: 1 / -1;
+      text-align: left;
+    }
+  }
+</style>

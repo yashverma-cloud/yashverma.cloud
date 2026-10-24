@@ -1,0 +1,497 @@
+/*
+ * The flight: a fixed scene behind the page, the copy overlaid and choreographed against it
+ * (live), or each section as a composed still in normal flow (still mode and no JS). Shared by
+ * the home page and the /lab/altitude/ prototype. Tokens and type roles come from the system.
+ */
+
+:root {
+  --flight-screens: 11;
+}
+
+.label,
+.stats {
+  font-family: var(--font-mono);
+  font-size: var(--t-data);
+  letter-spacing: var(--tr-data);
+  line-height: var(--lh-data);
+}
+
+.standfirst,
+.beat p,
+.end-note {
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.figure,
+.proof-figure {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Stage ------------------------------------------------------------- */
+
+.stage {
+  position: fixed;
+  inset: 0 0 auto 0;
+  /* The large viewport: in-app browsers show and hide their bars while scrolling, and a
+     stage that tracked them would resize, and reallocate, every time. */
+  height: 100lvh;
+  z-index: var(--z-stage);
+  pointer-events: none;
+  overflow: hidden;
+  /* The first frame: a tiny copy of the poster, inline in the page (--still-*, set where the
+     stage is), so the sky is there at first paint and the poster sharpens over it. */
+  background: var(--still-land, none) center / cover no-repeat var(--night);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .stage {
+    background-image: var(--still-port, none);
+  }
+}
+
+.stage-poster img {
+  transition: opacity var(--dur-base) var(--ease-settle);
+}
+
+/* Set by the page while the poster decodes; with no script the poster just appears. */
+.stage-poster img.decoding {
+  opacity: 0;
+}
+
+.stage-poster,
+.stage-poster img,
+.plate-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stage-poster {
+  position: absolute;
+  inset: 0;
+}
+
+/* Until the posters exist (development only): the sky's keys as a plain wash. */
+.stage-paint {
+  background: linear-gradient(to bottom, var(--night) 0%, var(--deck) 32%, #21455e 47%, #7a4b3c 50%, #1b2d4e 51%, var(--dawn) 100%);
+}
+
+.stage-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-settle);
+}
+
+[data-stage='on'] .stage-canvas {
+  opacity: 1;
+}
+
+.leaders,
+.labels {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.leaders line {
+  stroke: var(--ink-2);
+  stroke-width: var(--w-hairline);
+  vector-effect: non-scaling-stroke;
+}
+
+.label {
+  position: absolute;
+  z-index: var(--z-labels);
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  color: var(--ink);
+  opacity: 0;
+  will-change: transform, opacity;
+  /* A map label's knockout: the ground shows through under the words, so linework never crosses them. */
+  padding-inline: 0.25em;
+  margin-inline: -0.25em;
+  background: color-mix(in srgb, var(--night) 72%, transparent);
+}
+
+.label[data-state='pending'] [data-label-text] {
+  color: var(--sun);
+}
+
+.tick {
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- The altitude readout ------------------------------------------------ */
+
+/* An instrument, kept faint: graduations down the left edge, the reading under the monogram. */
+.tape {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--margin) * 0.8 + 6rem);
+  z-index: var(--z-instruments);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-slow) var(--ease-settle);
+}
+
+[data-mode='live'] .tape {
+  opacity: 1;
+}
+
+.tape-scale {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: max(1.25rem, calc(var(--margin) * 0.7));
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 24%, #000 76%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 24%, #000 76%, transparent 100%);
+}
+
+.tape-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  will-change: transform;
+}
+
+.tape-strip i {
+  position: absolute;
+  left: 0;
+  height: 1px;
+  width: 30%;
+  background: var(--rule-faint);
+}
+
+.tape-strip i.major {
+  width: 55%;
+  background: var(--rule);
+}
+
+.tape-read {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + var(--nav-h) + var(--space-3xs));
+  left: var(--margin);
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: var(--t-data);
+  letter-spacing: var(--tr-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+
+.tape-read .unit {
+  color: var(--ink-3);
+}
+
+/* --- Live mode: a tall scroller, the copy overlaid on the stage ----------------- */
+
+[data-mode='live'] .flight {
+  position: relative;
+  height: calc(var(--flight-screens) * 100svh);
+}
+
+[data-mode='live'] .plate {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 100lvh;
+  z-index: var(--z-copy);
+  pointer-events: none;
+}
+
+[data-mode='live'] .plate a {
+  pointer-events: auto;
+}
+
+/* Off screen until the flight nears them (data-near, set by src/altitude/home.ts). A waiting
+   plate's words are still laid out, and a web font arriving late would rewrap them in view, a
+   layout shift even at opacity 0. Moved by transform, so screen readers and focus still reach them. */
+[data-mode='live'] .home .plate:not(.plate-hero):not([data-near]) {
+  translate: 0 -200lvh;
+}
+
+[data-mode='live'] .plate-poster {
+  display: none;
+}
+
+/* Hidden until the choreography shows them; with JS off this rule never applies. */
+[data-mode='live'] .standfirst,
+[data-mode='live'] [data-proof-row],
+[data-mode='live'] [data-case-head],
+[data-mode='live'] .beat,
+[data-mode='live'] [data-end] > * {
+  opacity: 0;
+}
+
+/* Their own layers, so the blur and fade are the compositor's work, not repaints. */
+[data-mode='live'] .standfirst,
+[data-mode='live'] [data-proof-row] {
+  will-change: opacity, transform, filter;
+}
+
+.plate-copy {
+  position: relative;
+  height: 100%;
+}
+
+/* The descent: one paragraph, set where the clouds open below it. */
+.descent-copy {
+  align-content: center;
+}
+
+.descent-copy .standfirst {
+  grid-column: 2 / span 6;
+  font-size: var(--t-lead);
+  line-height: var(--lh-lead);
+  font-weight: var(--wght-lead);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .descent-copy .standfirst {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Between the layers: the proof, as sentences with their numbers. */
+.between-copy {
+  align-content: start;
+  padding-top: calc(var(--nav-h) + var(--space-2xl));
+}
+
+.proof {
+  grid-column: 1 / span 9;
+  list-style: none;
+  padding: 0;
+  display: grid;
+  row-gap: clamp(0.4rem, 1.4lvh, 1.4rem);
+}
+
+.proof-row a {
+  display: grid;
+  grid-template-columns: 3.3em minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 0.32em;
+  text-decoration: none;
+  font-size: var(--t-display);
+  line-height: 1.12;
+  font-stretch: var(--wdth-display);
+}
+
+.proof-figure {
+  font-weight: 300;
+  letter-spacing: var(--tr-display);
+}
+
+.proof-result {
+  font-size: 0.42em;
+  line-height: 1.3;
+  font-stretch: 100%;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.proof-row a:hover .proof-result,
+.proof-row a:focus-visible .proof-result {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-thickness: var(--w-hairline);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .proof {
+    grid-column: 1 / -1;
+  }
+
+  .proof-row a {
+    grid-template-columns: 1fr;
+  }
+
+  .proof-result {
+    font-size: var(--t-small);
+  }
+}
+
+/* The case study: title top left, beats low left, the drawing owns the rest. */
+.case-copy {
+  grid-template-rows: auto 1fr auto;
+  padding-block: calc(var(--nav-h) + var(--space-xl)) var(--space-xl);
+}
+
+.case-head {
+  grid-column: 1 / span 7;
+  grid-row: 1;
+}
+
+.case-title {
+  max-width: 13em;
+}
+
+.beat {
+  grid-column: 1 / span 5;
+  grid-row: 3;
+  display: grid;
+  row-gap: 0.8em;
+}
+
+.beat-figure {
+  color: var(--ink-2);
+}
+
+.beat-figure .figure {
+  display: block;
+  font-size: var(--t-display);
+  line-height: var(--lh-display);
+  font-weight: 300;
+  font-stretch: var(--wdth-display);
+  letter-spacing: var(--tr-display);
+  color: var(--ink);
+}
+
+.case-link {
+  font-weight: 560;
+}
+
+/* The last beat is the longest paragraph; keep it clear of the field beside it. */
+.beat[data-beat='tuned'] p {
+  max-width: min(29em, 33vw);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .case-head,
+  .beat {
+    grid-column: 1 / -1;
+  }
+
+  .beat p,
+  .beat[data-beat='tuned'] p {
+    max-width: none;
+  }
+}
+
+.end-copy {
+  align-content: end;
+  padding-bottom: var(--space-2xl);
+}
+
+.end-note {
+  grid-column: 1 / span 6;
+  font-size: var(--t-lead);
+}
+
+.end-links {
+  grid-column: 1 / -1;
+  list-style: none;
+  padding: 0;
+  margin-top: var(--space-m);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs) var(--space-m);
+  font-size: var(--t-small);
+}
+
+.end-links a {
+  color: var(--ink-2);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  .end-note {
+    grid-column: 1 / -1;
+  }
+}
+
+/* --- Still mode (and no JS): composed stills in normal flow ------------------------ */
+
+:root:not([data-mode='live']) .stage {
+  display: none;
+}
+
+:root:not([data-mode='live']) .plate {
+  position: relative;
+  display: grid;
+  min-height: 100svh;
+  isolation: isolate;
+}
+
+:root:not([data-mode='live']) .plate > * {
+  grid-area: 1 / 1;
+}
+
+/* The first screen's soft copy under its poster, as the stage has it in live mode. */
+:root:not([data-mode='live']) .plate-hero {
+  background: var(--still-land, none) center / cover no-repeat var(--night);
+}
+
+@media (max-aspect-ratio: 1/1) {
+  :root:not([data-mode='live']) .plate-hero {
+    background-image: var(--still-port, none);
+  }
+}
+
+:root:not([data-mode='live']) .plate-poster {
+  position: sticky;
+  top: 0;
+  height: 100lvh;
+  z-index: -1;
+}
+
+:root:not([data-mode='live']) .plate-copy {
+  min-height: 100svh;
+}
+
+/* Between two photographs, the standfirst is a caption on its own ground. */
+:root:not([data-mode='live']) .plate-descent {
+  min-height: 0;
+  background: var(--deck);
+}
+
+:root:not([data-mode='live']) .plate-descent .plate-copy {
+  min-height: 0;
+  padding-block: var(--space-3xl);
+}
+
+:root:not([data-mode='live']) .plate-case .plate-copy,
+:root:not([data-mode='live']) .plate-scale .plate-copy {
+  row-gap: var(--space-l);
+  grid-template-rows: auto 1fr auto auto;
+}
+
+:root:not([data-mode='live']) .plate-case .beat[data-beat='provision'],
+:root:not([data-mode='live']) .plate-scale .beat[data-beat='tuned'] {
+  grid-row: 4;
+}
+
+:root:not([data-mode='live']) .plate-scale .beat[data-beat='scale'] {
+  grid-row: 3;
+}
+
+:root:not([data-mode='live']) .plate-end {
+  min-height: 60svh;
+  background: var(--sheet);
+}
+
+:root:not([data-mode='live']) .plate-end .plate-copy {
+  min-height: 60svh;
+}
+
+/* --- Stats (?stats=1) ---------------------------------------------------------- */
+
+.stats {
+  position: fixed;
+  right: var(--margin);
+  bottom: var(--space-s);
+  z-index: var(--z-stats);
+  color: var(--ink);
+  background: rgb(4 12 31 / 0.6);
+  padding: 0.4rem 0.6rem;
+  white-space: pre;
+  pointer-events: none;
+}

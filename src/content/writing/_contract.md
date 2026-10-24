@@ -1,24 +1,26 @@
 # Writing — what a post file must contain
 
 Underscore-prefixed, so the collection loader ignores this file. It is the contract for whoever
-writes the posts; the section's code is in `src/pages/_writing/` and `src/og/card.ts`.
+writes the posts; the section's code is in `src/pages/writing/`, `src/pages/og/writing/`,
+`src/system/templates/` (Note, Article) and `postCard` in `src/og/altitude.ts`.
 
-**Status: parked.** The section is switched off — nothing in this folder appears on the site,
-whatever its `draft` value. Posts can still be drafted here. Bringing the section back is
-covered in README.md, "Parked: /writing".
+**Status: routed, nothing published.** `/writing/` shows "No posts yet.", carries `noindex`, and
+stays out of the sitemap and the nav until the first post is published (README.md, "/writing").
 
 ## Frontmatter
 
 ```yaml
 ---
 title: ''        # sentence case. Becomes the <h1>, the <title>, and the OG card's headline.
-                 # Over 52 characters the card drops to a smaller size; under that it is 62px.
+                 # Over 52 characters the card drops to a smaller size; under that it is 60px.
 description: ''  # one or two lines. Becomes the meta description, the listing line, the
                  # standfirst under the title, and the OG card's second line.
 published: ''    # full YYYY-MM-DD, required. BlogPosting datePublished needs a real date, and
                  # the listing prints the day.
 updated: ''      # optional, YYYY-MM-DD. Only for a material revision; becomes dateModified.
 draft: true      # state it every time.
+kind: article    # note (short, dated, read in one go) or article (long form with headings).
+                 # Defaults to article.
 ---
 ```
 

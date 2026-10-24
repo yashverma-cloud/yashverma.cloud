@@ -18,6 +18,10 @@
 /og/*
   Cache-Control: public, max-age=2592000
 
+# Design prototypes: never indexed, wherever they are served from.
+/lab/*
+  X-Robots-Tag: noindex, nofollow
+
 # The production pages.dev address serves the same site; keep it out of search results.
 # Preview deployments get this header from Pages already.
 https://yashverma-cloud.pages.dev/*

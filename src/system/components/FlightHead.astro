@@ -1,0 +1,59 @@
+---
+/**
+ * The head script of a page with a flight (the home page, /lab/altitude/). Before first paint it
+ * decides the mode, so nothing jumps, and holds the hero's name under the horizon until its face
+ * has loaded. Goes in Page's `head` slot.
+ *
+ *   live   WebGL2, motion allowed, no Save-Data (?mode=live|still forces one). The page's
+ *          controller may still drop to still if WebGL fails to start.
+ *   still  everything else, and JS off (no script, no data-mode).
+ *
+ * The rise waits on document.fonts.load() for the name's face, not on document.fonts.ready:
+ * .ready resolves as soon as nothing is loading, which on a cold load is before the preloaded
+ * face has even been asked for. A short timeout lets the name rise anyway on a slow connection
+ * (its fallback is metric-matched, so the late swap moves nothing). `window.__risen` resolves
+ * when the rise is over; the scene loads after it, so compiling shaders never stalls the motion.
+ */
+---
+
+<script is:inline>
+  (function () {
+    var d = document.documentElement;
+    var q = new URLSearchParams(location.search);
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var save = navigator.connection && navigator.connection.saveData;
+    var forced = q.get('mode');
+    var live = forced === 'still' || forced === 'live' ? forced === 'live' : !reduce && 'WebGL2RenderingContext' in window && !save;
+    d.dataset.mode = live ? 'live' : 'still';
+
+    // A live page whose controller never ran (its script failed to load) would keep its copy
+    // waiting to be revealed: show the stills instead.
+    if (live)
+      addEventListener('load', function () {
+        setTimeout(function () {
+          if (!window.__altBooted && d.dataset.mode === 'live') d.dataset.mode = 'still';
+        }, 1000);
+      });
+
+    var risen;
+    window.__risen = new Promise(function (ok) {
+      risen = ok;
+    });
+    if (!live || reduce || q.has('capture')) return risen();
+    d.dataset.rise = 'wait';
+    var go = function () {
+      if (d.dataset.rise !== 'wait') return;
+      d.dataset.rise = 'go';
+      // The rise is 1600 ms plus the second word's 120 ms delay (Hero.astro).
+      setTimeout(function () {
+        d.dataset.rise = 'done';
+        risen();
+      }, 1800);
+    };
+    setTimeout(go, 900);
+    if (document.fonts && document.fonts.load)
+      document.fonts.load('300 1em Archivo', 'Yash Verma').then(function () {
+        requestAnimationFrame(go);
+      }, go);
+  })();
+</script>

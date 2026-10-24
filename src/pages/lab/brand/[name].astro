@@ -1,0 +1,306 @@
+---
+/**
+ * The brand images, as pages: the social avatar, the LinkedIn, X and Facebook covers, and the
+ * LinkedIn post templates (1080×1350). `npm run brand` screenshots them from the
+ * build into brand/export/altitude/; the style guide shows them in frames. Safe zones as in
+ * brand/README.md (checked Sep 2026).
+ *
+ * Covers are composed like the hero: the line stands on the horizon of the real scene.
+ */
+import type { GetStaticPaths } from 'astro';
+import Frame from '../../../system/brand/Frame.astro';
+import Monogram from '../../../system/components/Monogram.astro';
+import { isoDrawing, KARPENTER_SKETCH } from '../../../system/brand/linework';
+import hero from '../../../assets/lab/altitude/hero-landscape.webp';
+import cards from '../../../../brand/altitude/cards.json';
+
+const SIZES = {
+  avatar: [1080, 1080],
+  'linkedin-cover': [1584, 396],
+  'x-header': [1500, 500],
+  'facebook-cover': [1640, 924],
+  'post-diagram': [1080, 1350],
+  'post-insight': [1080, 1350],
+  'post-snippet': [1080, 1350],
+} as const;
+
+// getStaticPaths runs in its own scope, so it lists the names itself.
+export const getStaticPaths = (() =>
+  ['avatar', 'linkedin-cover', 'x-header', 'facebook-cover', 'post-diagram', 'post-insight', 'post-snippet'].map((name) => ({
+    params: { name },
+  }))) satisfies GetStaticPaths;
+
+const { name } = Astro.params as { name: keyof typeof SIZES };
+const [w, h] = SIZES[name];
+const LINE = ['I keep production Kubernetes', 'running when nodes die.'];
+const card = (id: string) => cards.find((c) => c.id === id);
+const diagram = card('sample-diagram');
+const insight = card('sample-insight');
+const snippet = card('sample-snippet');
+
+/** Cover layouts: where the horizon falls, where the copy starts, and its size. */
+const COVERS = {
+  'linkedin-cover': { horizon: 232, x: 420, size: 46, pos: '50% 41%', guides: [{ l: 117, t: 88, w: 1350, h: 220, kind: 'safe' }, { l: 0, t: 166, w: 300, h: 230, kind: 'covered' }] },
+  'x-header': { horizon: 290, x: 470, size: 54, pos: '50% 44%', guides: [{ l: 0, t: 70, w: 1500, h: 360, kind: 'safe' }, { l: 0, t: 300, w: 400, h: 200, kind: 'covered' }] },
+  'facebook-cover': { horizon: 520, x: 430, size: 70, pos: '50% 48%', guides: [{ l: 0, t: 121, w: 1640, h: 683, kind: 'safe' }, { l: 0, t: 640, w: 380, h: 284, kind: 'covered' }] },
+} as const;
+const cover = name in COVERS ? COVERS[name as keyof typeof COVERS] : null;
+const sketch = isoDrawing({ ...KARPENTER_SKETCH, scale: 30, stroke: 3 });
+---
+
+<Frame w={w} h={h} title={`${name} — brand`}>
+  {
+    cover && (
+      <div class="cover" style={`--horizon:${cover.horizon}px;--x:${cover.x}px;--size:${cover.size}px`}>
+        <img class="sky" src={hero.src} alt="" style={`object-position:${cover.pos}`} />
+        <p class="cover-line">
+          <span>{LINE[0]}</span>
+          <span>{LINE[1]}</span>
+        </p>
+        <p class="cover-site">yashverma.cloud</p>
+        {cover.guides.map((g) => (
+          <div class="guide" style={`left:${g.l}px;top:${g.t}px;width:${g.w}px;height:${g.h}px`} />
+        ))}
+      </div>
+    )
+  }
+
+  {
+    name === 'avatar' && (
+      <div class="avatar">
+        <Monogram class="avatar-mark" />
+        <div class="guide" style="left:0;top:0;width:1080px;height:1080px;border-radius:50%" />
+      </div>
+    )
+  }
+
+  {
+    name.startsWith('post-') && (
+      <div class="post">
+        <div class="horizon" aria-hidden="true" />
+        {name === 'post-diagram' && diagram && (
+          <>
+            <p class="label">{diagram.label}</p>
+            <p class="title">{diagram.title}</p>
+            <svg class="drawing" viewBox={sketch.box.join(' ')} preserveAspectRatio="xMidYMax meet" aria-hidden="true" set:html={sketch.svg} />
+            <p class="caption">{diagram.caption}</p>
+          </>
+        )}
+        {name === 'post-insight' && insight && (
+          <>
+            <p class="label">{insight.label}</p>
+            <p class="statement">{insight.statement}</p>
+            <p class="source">{insight.source}</p>
+          </>
+        )}
+        {name === 'post-snippet' && snippet && (
+          <>
+            <p class="label">{snippet.label}</p>
+            <p class="title small">{snippet.title}</p>
+            <pre class="code">{snippet.code}</pre>
+            <p class="caption under">{snippet.caption}</p>
+          </>
+        )}
+        <div class="sign">
+          <Monogram class="sign-mark" />
+          <div>
+            <p class="sign-name">Yash Verma</p>
+            <p class="sign-site">yashverma.cloud</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+</Frame>
+
+<style>
+  /* --- Covers: the hero's composition at one size ------------------------- */
+
+  .cover {
+    position: absolute;
+    inset: 0;
+  }
+
+  .sky {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .cover-line {
+    position: absolute;
+    left: var(--x);
+    bottom: calc(var(--h) - var(--horizon));
+    margin-bottom: calc(var(--size) * -0.2);
+    font-size: var(--size);
+    line-height: 1.08;
+    font-weight: 340;
+    font-stretch: 112%;
+    letter-spacing: -0.02em;
+    word-spacing: normal;
+    color: var(--ink);
+  }
+
+  .cover-line span {
+    display: block;
+  }
+
+  .cover-site {
+    position: absolute;
+    left: var(--x);
+    top: calc(var(--horizon) + var(--size) * 0.5);
+    font-size: calc(var(--size) * 0.46);
+    font-weight: 420;
+    color: var(--ink-2);
+  }
+
+  /* --- Avatar ---------------------------------------------------------------- */
+
+  .avatar {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background:
+      radial-gradient(120% 60% at 50% 118%, rgb(226 144 96 / 0.32), rgb(226 144 96 / 0) 62%),
+      linear-gradient(var(--night), var(--deck));
+    color: var(--ink);
+  }
+
+  /* Inside the circle every platform crops an avatar to. */
+  .avatar :global(.avatar-mark) {
+    width: 430px;
+    height: 430px;
+  }
+
+  /* --- Post templates, 1080×1350: nothing under 36 px ------------------------ */
+
+  .post {
+    position: absolute;
+    inset: 0;
+    padding: 96px 80px;
+    background: var(--night);
+    color: var(--ink);
+  }
+
+  /* The horizon every post stands on, with the dawn under it. */
+  .horizon {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 1010px;
+    height: 220px;
+    border-top: 2px solid var(--rule);
+    background: linear-gradient(rgb(226 144 96 / 0.2), rgb(226 144 96 / 0) 160px);
+  }
+
+  .label {
+    font-size: 36px;
+    font-weight: 480;
+    color: var(--ink-2);
+  }
+
+  .title {
+    margin-top: 36px;
+    max-width: 18ch;
+    font-size: 72px;
+    line-height: 1.04;
+    font-weight: 340;
+    font-stretch: 112%;
+    letter-spacing: -0.02em;
+    word-spacing: normal;
+    text-wrap: balance;
+  }
+
+  .title.small {
+    font-size: 60px;
+    max-width: 22ch;
+  }
+
+  /* The drawing stands on the horizon, centred. */
+  .drawing {
+    position: absolute;
+    left: 80px;
+    top: 430px;
+    width: calc(100% - 160px);
+    height: 568px;
+  }
+
+  .caption {
+    position: absolute;
+    left: 80px;
+    right: 80px;
+    top: 1046px;
+    font-size: 36px;
+    line-height: 1.32;
+    color: var(--ink-2);
+    text-wrap: balance;
+  }
+
+  .caption.under {
+    top: 1046px;
+  }
+
+  .statement {
+    margin-top: 132px;
+    font-size: 84px;
+    line-height: 1.06;
+    font-weight: 340;
+    font-stretch: 112%;
+    letter-spacing: -0.02em;
+    word-spacing: normal;
+    text-wrap: balance;
+  }
+
+  .source {
+    position: absolute;
+    left: 80px;
+    right: 80px;
+    top: 1046px;
+    font-size: 36px;
+    line-height: 1.32;
+    color: var(--ink-2);
+  }
+
+  .code {
+    margin-top: 56px;
+    padding: 36px 40px;
+    background: var(--deck);
+    border: 2px solid var(--rule);
+    font-size: 36px;
+    line-height: 1.42;
+    letter-spacing: 0;
+    white-space: pre-wrap;
+    color: var(--line);
+  }
+
+  .sign {
+    position: absolute;
+    left: 80px;
+    bottom: 72px;
+    display: flex;
+    align-items: center;
+    gap: 26px;
+  }
+
+  .sign :global(.sign-mark) {
+    width: 84px;
+    height: 84px;
+  }
+
+  .sign-name {
+    font-size: 40px;
+    line-height: 1.1;
+    font-weight: 380;
+    font-stretch: 125%;
+    letter-spacing: -0.01em;
+  }
+
+  .sign-site {
+    font-size: 36px;
+    line-height: 1.2;
+    color: var(--ink-2);
+  }
+</style>

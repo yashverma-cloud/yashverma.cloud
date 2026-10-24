@@ -1,0 +1,39 @@
+---
+/**
+ * One quiet line, never a button: the runbook is a reference Yash keeps, not a tool he ran.
+ * "Over 250" rather than the exact count, so the line stays true as it grows.
+ */
+import { getEntry } from 'astro:content';
+
+const runbook = await getEntry('links', 'runbook');
+---
+
+{
+  runbook && (
+    <p class="runbook">
+      <span class="text t-small">
+        The commands I reach for are public too: my <a href={runbook.data.url}>{runbook.data.label}</a>, over 250 of
+        them, searchable.
+      </span>
+    </p>
+  )
+}
+
+<style>
+  .runbook {
+    margin-inline: var(--margin);
+    padding-block: var(--space-m);
+    border-top: var(--w-hairline) solid var(--rule-faint);
+    border-bottom: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .text {
+    display: block;
+    max-width: var(--measure);
+    color: var(--ink-2);
+  }
+
+  .text a {
+    color: var(--ink);
+  }
+</style>

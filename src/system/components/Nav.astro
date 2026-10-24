@@ -1,0 +1,198 @@
+---
+/**
+ * The nav: the monogram and the name (home), and the sections. It hides while the visitor
+ * scrolls down and comes back when they scroll up or tab into it.
+ *
+ * `over`: the nav sits on a live scene, with a burn behind it (a soft darkening of the image,
+ * never a panel). Otherwise it takes the night ground once the page has scrolled.
+ *
+ * Writing appears only when the section is routed and has a published post, so the nav never
+ * links to a page that isn't there.
+ */
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { getCollection } from 'astro:content';
+import Monogram from './Monogram.astro';
+
+interface Props {
+  over?: boolean;
+  /** The name beside the monogram. Off on the home hero until the visitor scrolls. */
+  wordmark?: boolean;
+}
+
+const { over = false, wordmark = true } = Astro.props;
+const routed = existsSync(join(process.cwd(), 'src/pages/writing'));
+const published = routed ? await getCollection('writing', ({ data }) => !data.draft) : [];
+const items = [
+  { label: 'Work', href: '/#work', narrow: true },
+  { label: 'Experience', href: '/#experience', narrow: false },
+  ...(published.length > 0 ? [{ label: 'Writing', href: '/writing/', narrow: false }] : []),
+  { label: 'Contact', href: '/#contact', narrow: true },
+];
+const path = Astro.url.pathname;
+---
+
+<header class="nav" data-nav data-over={over ? '' : undefined} data-wordmark={wordmark ? 'on' : 'off'}>
+  <div class="bar bleed">
+    <a class="home" href="/" aria-label="Yash Verma, home">
+      <Monogram class="mark" />
+      <span class="word">Yash Verma</span>
+    </a>
+    <nav aria-label="Sections">
+      <ul role="list">
+        {
+          items.map((item) => (
+            <li class:list={{ wide: !item.narrow }}>
+              <a href={item.href} aria-current={path.startsWith(item.href) && item.href !== '/' ? 'page' : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('[data-nav]');
+  if (nav) {
+    let last = window.scrollY;
+    let queued = false;
+    const update = () => {
+      queued = false;
+      const y = window.scrollY;
+      nav.toggleAttribute('data-scrolled', y > 8);
+      if (Math.abs(y - last) > 6) {
+        const down = y > last && y > 160;
+        nav.toggleAttribute('data-hidden', down && !nav.contains(document.activeElement));
+        last = y;
+      }
+    };
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (!queued) {
+          queued = true;
+          requestAnimationFrame(update);
+        }
+      },
+      { passive: true },
+    );
+    nav.addEventListener('focusin', () => nav.removeAttribute('data-hidden'));
+    update();
+  }
+</script>
+
+<style>
+  .nav {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: var(--z-nav);
+    padding-top: env(safe-area-inset-top);
+    transition:
+      transform var(--dur-base) var(--ease-settle),
+      background-color var(--dur-quick) var(--ease-settle);
+  }
+
+  .nav[data-hidden] {
+    transform: translateY(-110%);
+  }
+
+  /* On the page ground: transparent at the top, night once scrolled, with a hairline. */
+  .nav:not([data-over])[data-scrolled] {
+    background: var(--night);
+    box-shadow: 0 var(--w-hairline) 0 var(--rule-faint);
+  }
+
+  /* On a scene: a burn behind the bar, so the links read over cloud as well as sky. */
+  .nav[data-over]::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 -80% 0;
+    background: linear-gradient(to bottom, rgb(4 12 31 / 0.62), rgb(4 12 31 / 0.34) 55%, rgb(4 12 31 / 0));
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity var(--dur-base) var(--ease-settle);
+  }
+
+  .nav[data-over][data-scrolled]::before {
+    opacity: 1;
+  }
+
+  .bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-s);
+    padding-block: var(--space-xs);
+  }
+
+  .home {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6em;
+    font-size: var(--t-small);
+    font-weight: 380;
+    font-stretch: 125%;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    color: var(--ink);
+    min-height: 44px;
+  }
+
+  .home :global(.mark) {
+    width: 1.55em;
+    height: 1.55em;
+  }
+
+  .word {
+    transition: opacity var(--dur-base) var(--ease-settle);
+  }
+
+  /* The home hero is the name; the nav repeats it only once the hero has gone. */
+  [data-wordmark='off']:not([data-scrolled]) .word {
+    opacity: 0;
+  }
+
+  ul {
+    display: flex;
+    gap: var(--space-m);
+    list-style: none;
+    padding: 0;
+  }
+
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    /* Right-aligned, so a fallback narrower than Archivo would slide the links on the swap. */
+    font-family: var(--font-nav);
+    font-size: var(--t-small);
+    font-weight: 480;
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+
+  nav a:hover,
+  nav a[aria-current='page'] {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--ink);
+  }
+
+  @media (max-width: 34rem) {
+    ul {
+      gap: var(--space-s);
+    }
+
+    li.wide {
+      display: none;
+    }
+
+    .word {
+      display: none;
+    }
+  }
+</style>

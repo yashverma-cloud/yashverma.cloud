@@ -1,27 +1,31 @@
 ---
-import Base from '../layouts/Base.astro';
+import Page from '../system/Page.astro';
+import NotFound from '../system/components/NotFound.astro';
+import ScenePoster from '../system/components/ScenePoster.astro';
+import { poster } from '../altitude/posters';
 import { SITE } from '../consts';
+
+/** Lost in the cloud: the page sits inside the deck, where there is nothing to see but the way home. */
+const cloud = await poster('scenes/in-cloud');
 ---
 
-<Base title={`Page not found — ${SITE.name}`} noindex>
-  <section class="section">
-    <div class="wrap">
-      <p class="micro">404</p>
-      <h1>This page doesn't exist.</h1>
-      <p class="standfirst">
-        The address is wrong, or the page has moved. Nothing is on fire.
-      </p>
-      <p class="back"><a href="/">Back to the home page</a></p>
-    </div>
-  </section>
-</Base>
+<Page title={`Page not found — ${SITE.name}`} noindex>
+  <div class="lost">
+    {cloud && <ScenePoster set={cloud} eager class="lost-still" />}
+    <NotFound />
+  </div>
+</Page>
 
 <style>
-  h1 {
-    margin-block: var(--s-4) var(--s-6);
+  .lost {
+    position: relative;
+    isolation: isolate;
+    background: var(--deck);
   }
 
-  .back {
-    margin-top: var(--s-8);
+  .lost :global(.lost-still) {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
   }
 </style>

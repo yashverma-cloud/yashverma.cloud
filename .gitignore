@@ -35,3 +35,6 @@ pnpm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
+
+# Downloaded font sources and tool venvs (scripts/system/fonts.py)
+.cache/

@@ -19,7 +19,7 @@
  * previews as the site rather than as a blank redirect.
  */
 import type { GetStaticPaths } from 'astro';
-import '../styles/tokens.css';
+import '../system/tokens.css';
 import { SITE } from '../consts';
 
 // getStaticPaths runs in its own scope, so the table lives inside it.
@@ -72,9 +72,9 @@ const ogImage = new URL('/og/default.png', SITE.url).href;
         min-height: 100svh;
         display: grid;
         place-items: center;
-        background: var(--blueprint);
-        color: var(--line);
-        font: var(--fs-body) / 1.6 system-ui, sans-serif;
+        background: var(--night);
+        color: var(--ink);
+        font: var(--t-body) / 1.6 system-ui, sans-serif;
       }
       a {
         color: inherit;

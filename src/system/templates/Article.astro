@@ -1,0 +1,146 @@
+---
+/**
+ * The article page's body: the title over the full width, a standfirst, then the text at its
+ * measure with the dates in the margin beside it. Long form: h2, h3, lists, quotes, code.
+ * The page (src/pages/writing) wraps it in Page with the metadata.
+ */
+import { formatDay } from '../../utils/dates';
+
+interface Props {
+  title: string;
+  description: string;
+  published: string;
+  updated?: string;
+  /** Where "back" goes. */
+  back?: { href: string; label: string };
+}
+
+const { title, description, published, updated, back = { href: '/writing/', label: 'Writing' } } = Astro.props;
+---
+
+<article class="article">
+  <header class="head bleed">
+    <p class="back t-small"><a href={back.href}>← {back.label}</a></p>
+    <h1 class="title t-display">{title}</h1>
+    <p class="standfirst t-lead">{description}</p>
+  </header>
+  <div class="body bleed">
+    <aside class="meta t-data">
+      <time datetime={published}>{formatDay(published)}</time>
+      {updated && <time class="updated" datetime={updated}>Updated {formatDay(updated)}</time>}
+    </aside>
+    <div class="prose">
+      <slot />
+    </div>
+  </div>
+</article>
+
+<style>
+  .article {
+    padding-block: calc(var(--space-3xl) + var(--space-l)) var(--space-3xl);
+  }
+
+  .head {
+    row-gap: var(--space-m);
+    margin-bottom: var(--space-xl);
+  }
+
+  /* The header's rule, between the margins like every rule. */
+  .head::after {
+    content: '';
+    grid-column: 1 / -1;
+    margin-top: var(--space-l);
+    border-bottom: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .back a {
+    color: var(--ink-2);
+  }
+
+  .title {
+    grid-column: 1 / span 10;
+    max-width: 22em;
+  }
+
+  .standfirst {
+    grid-column: 3 / span 7;
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+
+  .meta {
+    grid-column: 1 / span 2;
+    display: grid;
+    align-content: start;
+    row-gap: var(--space-3xs);
+    color: var(--ink-2);
+    padding-top: 0.4em;
+  }
+
+  .updated {
+    color: var(--ink-3);
+  }
+
+  .prose {
+    grid-column: 3 / span 7;
+    display: grid;
+    row-gap: var(--space-s);
+  }
+
+  .prose > :global(*) {
+    max-width: var(--measure);
+  }
+
+  .prose > :global(h2) {
+    font-size: var(--t-title);
+    line-height: var(--lh-title);
+    font-weight: var(--wght-title);
+    font-stretch: var(--wdth-title);
+    margin-top: var(--space-l);
+  }
+
+  .prose > :global(h3) {
+    font-size: var(--t-lead);
+    line-height: var(--lh-lead);
+    font-weight: 480;
+    margin-top: var(--space-m);
+  }
+
+  .prose > :global(h2:first-child),
+  .prose > :global(h3:first-child) {
+    margin-top: 0;
+  }
+
+  .prose > :global(ul),
+  .prose > :global(ol) {
+    padding-left: 1.2em;
+    display: grid;
+    row-gap: var(--space-2xs);
+  }
+
+  .prose > :global(blockquote) {
+    padding-left: var(--space-s);
+    border-left: var(--w-hairline) solid var(--rule);
+    color: var(--ink-2);
+  }
+
+  .prose > :global(pre) {
+    max-width: min(100%, 52rem);
+  }
+
+  @media (max-width: 60rem) {
+    .title,
+    .standfirst,
+    .meta,
+    .prose {
+      grid-column: 1 / -1;
+    }
+
+    .meta {
+      grid-auto-flow: column;
+      justify-content: start;
+      column-gap: var(--space-s);
+      margin-bottom: var(--space-m);
+    }
+  }
+</style>

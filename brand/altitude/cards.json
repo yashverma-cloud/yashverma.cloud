@@ -1,0 +1,25 @@
+[
+  {
+    "id": "sample-diagram",
+    "template": "diagram",
+    "label": "Autoscaling",
+    "title": "Node autoscaling that keeps up with load",
+    "diagram": "karpenter",
+    "caption": "A pending pod gets a ready node in about 80 seconds."
+  },
+  {
+    "id": "sample-insight",
+    "template": "insight",
+    "label": "Autoscaling",
+    "statement": "Autoscaling that is not tuned is just a faster way to move workloads you did not want moved.",
+    "source": "From “Node autoscaling that keeps up with load”"
+  },
+  {
+    "id": "sample-snippet",
+    "template": "snippet",
+    "label": "Migrations",
+    "title": "Replacing sendmail without touching a single job",
+    "code": "echo \"To: ${EMAIL_RECIPIENT}\nSubject: Nightly report\nFrom: reports@example.com\n\nBody goes here.\" | sendmail",
+    "caption": "A job that piped into the old binary pipes into this one and does not know the difference."
+  }
+]

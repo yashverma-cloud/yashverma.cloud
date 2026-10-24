@@ -1,0 +1,106 @@
+---
+/**
+ * The writing list: newest first, date in the margin, title and one line. Notes and articles
+ * share the list; an article's row is marked as one. With nothing published, one quiet line.
+ */
+import { formatDay } from '../../utils/dates';
+
+export interface PostRow {
+  id: string;
+  title: string;
+  description: string;
+  published: string;
+  kind?: 'note' | 'article';
+}
+
+interface Props {
+  posts: PostRow[];
+}
+
+const { posts } = Astro.props;
+---
+
+{
+  posts.length === 0 ? (
+    <p class="empty bleed">
+      <span class="t-lead">No posts yet.</span>
+    </p>
+  ) : (
+    <ul class="rows" role="list">
+      {posts.map((p) => (
+        <li>
+          <a class="row row-grid" href={`/writing/${p.id}/`}>
+            <time class="when t-data" datetime={p.published}>
+              {formatDay(p.published)}
+            </time>
+            <span class="what">
+              <span class="title t-title">{p.title}</span>
+              <span class="desc">{p.description}</span>
+            </span>
+            {p.kind === 'article' && <span class="kind t-small">Article</span>}
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style>
+  .empty {
+    color: var(--ink-2);
+    padding-block: var(--space-m) var(--space-xl);
+  }
+
+  .empty span {
+    grid-column: 1 / span 8;
+  }
+
+  .row {
+    align-items: baseline;
+    padding-block: var(--space-m);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .when {
+    grid-column: 1 / span 2;
+    color: var(--ink-2);
+  }
+
+  .what {
+    grid-column: 3 / span 7;
+    display: grid;
+    row-gap: var(--space-2xs);
+  }
+
+  .desc {
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+
+  .kind {
+    grid-column: 11 / -1;
+    justify-self: end;
+    color: var(--ink-3);
+  }
+
+  .row:hover .title,
+  .row:focus-visible .title {
+    text-decoration: underline;
+    text-decoration-thickness: var(--w-hairline);
+    text-underline-offset: 0.18em;
+  }
+
+  @media (max-width: 48rem) {
+    .when,
+    .what,
+    .kind {
+      grid-column: 1 / -1;
+      justify-self: start;
+    }
+
+    .what {
+      margin-top: var(--space-2xs);
+    }
+  }
+</style>

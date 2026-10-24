@@ -1,0 +1,40 @@
+---
+/**
+ * A rendered still of a scene: a portrait crop for tall screens, a landscape one for the rest,
+ * AVIF first. Decorative unless it has `alt`.
+ */
+import type { PosterSet } from '../../altitude/posters';
+
+interface Props {
+  set: PosterSet;
+  alt?: string;
+  /** The first screen's poster loads eagerly and at high priority; the rest lazily. */
+  eager?: boolean;
+  class?: string;
+}
+
+const { set, alt = '', eager = false, class: className } = Astro.props;
+---
+
+<picture class:list={['scene-poster', className]}>
+  <source type="image/avif" media="(max-aspect-ratio: 1/1)" srcset={set.portAvif} sizes="100vw" />
+  <source type="image/webp" media="(max-aspect-ratio: 1/1)" srcset={set.portWebp} sizes="100vw" />
+  <source type="image/avif" srcset={set.landAvif} sizes="100vw" />
+  <source type="image/webp" srcset={set.landWebp} sizes="100vw" />
+  <img
+    src={set.fallback}
+    alt={alt}
+    decoding="async"
+    loading={eager ? 'eager' : 'lazy'}
+    fetchpriority={eager ? 'high' : undefined}
+  />
+</picture>
+
+<style>
+  .scene-poster,
+  .scene-poster img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+</style>

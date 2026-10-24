@@ -1,0 +1,257 @@
+---
+/**
+ * Experience as a flight path: one route line down the page, the roles as fixes on it, newest
+ * first, with their dates as the altitude markers beside the line. A filled triangle (a fix on
+ * an approach chart) marks the current role, hollow ones the past. The route is dashed where
+ * it is planned and solid where it has been flown: with a script, the flown part follows the
+ * scroll (--flown, 0 to 1), a chevron rides its tip, and each fix, its date and the altimeter's
+ * graduations are plotted as the route reaches them; without one, the whole route is flown and
+ * drawn. Dates are revealed by a clip from the route outward, never faded, so no text is ever
+ * shown at low contrast.
+ */
+import { getCollection } from 'astro:content';
+import { formatMonth, isoRange } from '../../utils/dates';
+
+const roles = (await getCollection('experience')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<div class="fp bleed" data-flightpath>
+  <ol class="legs" role="list">
+    {
+      roles.map((r) => (
+        <li class:list={['leg', { current: !r.data.end }]}>
+          <time class="when t-data" datetime={isoRange(r.data.start, r.data.end)}>
+            <span>{formatMonth(r.data.start)} –</span> <span>{r.data.end ? formatMonth(r.data.end) : 'present'}</span>
+          </time>
+          <svg class="fix" viewBox="0 0 14 12" aria-hidden="true" focusable="false">
+            <path d="M7 1.2 L12.8 11 L1.2 11 Z" pathLength="1" />
+          </svg>
+          <div class="what">
+            <h3 class="role t-title">{r.data.role}</h3>
+            <p class="org t-small">
+              {r.data.company} · {r.data.location}
+            </p>
+          </div>
+          {r.data.summary && <p class="sum">{r.data.summary}</p>}
+        </li>
+      ))
+    }
+    <svg class="ownship" viewBox="0 0 14 10" aria-hidden="true" focusable="false">
+      <path d="M1.5 1.5 L7 8.5 L12.5 1.5" />
+    </svg>
+  </ol>
+</div>
+
+<script>
+  // The flown part of the route follows the scroll, and each fix is plotted as the route reaches
+  // it: --at is the fix's place along the route, read on resize only. Without a script, or under
+  // reduced motion, the route is all flown and every fix drawn.
+  const fp = document.querySelector<HTMLElement>('[data-flightpath]');
+  const legs = fp?.querySelector<HTMLElement>('.legs');
+  if (fp && legs && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const place = () => {
+      const top = fp.getBoundingClientRect().top;
+      const height = Math.max(1, fp.offsetHeight);
+      for (const leg of fp.querySelectorAll<HTMLElement>('.leg')) {
+        const fix = leg.querySelector('.fix')?.getBoundingClientRect();
+        if (fix) leg.style.setProperty('--at', ((fix.top + fix.height / 2 - top) / height).toFixed(4));
+      }
+      legs.style.setProperty('--route-h', `${legs.offsetHeight}px`);
+    };
+    place();
+    window.addEventListener('resize', () => {
+      place();
+      update();
+    });
+    fp.classList.add('flying');
+    fp.style.setProperty('--flown', '0');
+    let queued = false;
+    const update = () => {
+      queued = false;
+      const r = fp.getBoundingClientRect();
+      const t = (window.innerHeight * 0.62 - r.top) / Math.max(1, r.height);
+      fp.style.setProperty('--flown', String(Math.min(1, Math.max(0, t))));
+    };
+    const on = () => {
+      if (!queued) {
+        queued = true;
+        requestAnimationFrame(update);
+      }
+    };
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) window.addEventListener('scroll', on, { passive: true });
+      else window.removeEventListener('scroll', on);
+      update();
+    }).observe(fp);
+  }
+</script>
+
+<style>
+  .legs {
+    /* The route's distance from the list's left edge: the middle of the gap after column 2. */
+    --route: calc((100% - var(--gap) * 11) / 12 * 2 + var(--gap) * 1.5);
+    position: relative;
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    row-gap: var(--space-xl);
+  }
+
+  /* The route: flown (solid) over planned (dashed). */
+  .legs::before {
+    content: '';
+    position: absolute;
+    top: 0.4em;
+    bottom: 0;
+    left: var(--route);
+    width: var(--w-hairline);
+    background:
+      linear-gradient(var(--ink-2), var(--ink-2)) top / 100% calc(var(--flown, 1) * 100%) no-repeat,
+      repeating-linear-gradient(to bottom, var(--rule) 0 6px, transparent 6px 12px);
+  }
+
+  /* An altimeter's graduations beside it, drawn down with the flown route. */
+  .legs::after {
+    content: '';
+    position: absolute;
+    top: 0.4em;
+    bottom: 0;
+    left: calc(var(--route) - 7px);
+    width: 5px;
+    background: repeating-linear-gradient(to bottom, var(--rule-faint) 0 1px, transparent 1px 24px);
+    -webkit-mask-image: linear-gradient(#000 calc(var(--flown, 1) * 100%), transparent calc(var(--flown, 1) * 100%));
+    mask-image: linear-gradient(#000 calc(var(--flown, 1) * 100%), transparent calc(var(--flown, 1) * 100%));
+  }
+
+  /* The ownship: the descent chevron at the tip of the flown route, only while it is flown. */
+  .ownship {
+    display: none;
+    position: absolute;
+    left: var(--route);
+    top: 0.4em;
+    width: 0.85rem;
+    height: 0.62rem;
+    translate: -50% -50%;
+    transform: translateY(calc(var(--flown, 1) * var(--route-h, 0px)));
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .flying .ownship {
+    display: block;
+  }
+
+  .ownship path {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .leg {
+    /* How far this fix is plotted, 0 to 1: drawn over the last stretch of route before it, and
+       complete when the route reaches it, so the whole route flown means every fix drawn. */
+    --k: clamp(0, (var(--flown, 1) - var(--at, 0)) * 14 + 1, 1);
+    position: relative;
+    display: grid;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
+    align-items: baseline;
+  }
+
+  /* The date is drawn on from the route outward. */
+  .when {
+    grid-column: 1 / span 2;
+    justify-self: end;
+    text-align: right;
+    color: var(--ink-2);
+    padding-right: var(--space-2xs);
+    clip-path: inset(0 0 0 calc((1 - var(--k)) * 100%));
+  }
+
+  /* A range breaks after its dash or not at all. */
+  .when span {
+    white-space: nowrap;
+  }
+
+  .what {
+    grid-column: 3 / span 4;
+    padding-left: var(--space-2xs);
+  }
+
+  .org {
+    margin-top: var(--space-3xs);
+    color: var(--ink-2);
+  }
+
+  .sum {
+    grid-column: 7 / -1;
+    color: var(--ink-2);
+    max-width: var(--measure);
+  }
+
+  /* The fix, centred on the route, level with the role's first line. */
+  .fix {
+    position: absolute;
+    left: calc((100% - var(--gap) * 11) / 12 * 2 + var(--gap) * 1.5);
+    top: calc(var(--t-title) * 0.6);
+    width: 0.95rem;
+    height: 0.82rem;
+    transform: translate(-50%, -50%);
+    overflow: visible;
+  }
+
+  .fix path {
+    fill: var(--night);
+    fill-opacity: var(--k);
+    stroke: var(--ink-2);
+    stroke-width: 1.4;
+    stroke-linejoin: miter;
+    stroke-dasharray: 1;
+    stroke-dashoffset: calc(1 - var(--k));
+  }
+
+  .current .fix path {
+    fill: var(--ink);
+    stroke: var(--ink);
+  }
+
+  @media (max-width: 48rem) {
+    .legs {
+      --route: 0.5rem;
+      padding-left: 1.9rem;
+      row-gap: var(--space-l);
+    }
+
+    .legs::after {
+      display: none;
+    }
+
+    .when,
+    .what,
+    .sum {
+      grid-column: 1 / -1;
+      justify-self: start;
+      text-align: left;
+      padding: 0;
+    }
+
+    .when {
+      order: -1;
+      margin-bottom: var(--space-3xs);
+      clip-path: inset(0 calc((1 - var(--k)) * 100%) 0 0);
+    }
+
+    .sum {
+      margin-top: var(--space-2xs);
+    }
+
+    .fix {
+      left: calc(0.5rem - 1.9rem);
+      top: calc(var(--t-data) * 0.7);
+    }
+  }
+</style>

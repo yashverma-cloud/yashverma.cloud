@@ -1,0 +1,73 @@
+---
+/**
+ * The proof: every case study as one row, its number first where it has one, then what it did
+ * and how. Each row links to its case study. Not a stat strip and not cards: each row is a
+ * sentence, so every number carries its mechanism.
+ */
+import { getCollection } from 'astro:content';
+
+const work = (await getCollection('work', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+/** "80s" reads as a figure with its unit apart: "80 s". */
+const figure = (f: string) => f.replace(/^(\d+)s$/, '$1 s');
+---
+
+<ul class="proof rows" role="list">
+  {
+    work.map((w) => (
+      <li data-proof-row data-slug={w.id}>
+        <a class="row row-grid" href={`/work/${w.id}/`}>
+          {w.data.figure ? <span class="fig t-display figure">{figure(w.data.figure)}</span> : <span class="fig none" />}
+          <span class="res t-lead">{w.data.figure ? w.data.result : w.data.title}</span>
+          <span class="mech t-small">{w.data.mechanism}</span>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .row {
+    align-items: baseline;
+    padding-block: var(--space-m);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .fig {
+    grid-column: 1 / span 3;
+    font-weight: 300;
+  }
+
+  .res {
+    grid-column: 4 / span 5;
+    text-wrap: balance;
+  }
+
+  .mech {
+    grid-column: 9 / -1;
+    color: var(--ink-3);
+  }
+
+  .row:hover .res,
+  .row:focus-visible .res {
+    text-decoration: underline;
+    text-decoration-thickness: var(--w-hairline);
+    text-underline-offset: 0.2em;
+  }
+
+  @media (max-width: 48rem) {
+    .row {
+      row-gap: var(--space-3xs);
+    }
+
+    .fig,
+    .res,
+    .mech {
+      grid-column: 1 / -1;
+    }
+
+    .fig.none {
+      display: none;
+    }
+  }
+</style>
