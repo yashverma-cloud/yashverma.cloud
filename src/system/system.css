@@ -52,6 +52,16 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/*
+ * The font gate (Page.astro): the first screen's words wait, hidden, for their faces, then show
+ * together. No fade: Chrome counts a fading element as painted only when the fade ends, so a fade
+ * adds its length to the page's LCP. Never on an element a script fades: its inline opacity would
+ * override the gate.
+ */
+:root[data-fonts='wait'] [data-await-font] {
+  opacity: 0;
+}
+
 img,
 picture,
 video,

@@ -31,12 +31,12 @@ const phrases = SITE.jobTitle.split(/(?<=,)\s+/);
 ---
 
 <div class="hero" data-hero>
-  <Name class="name t-name" id="name" data-hero-name>
+  <Name class="name t-name" id="name" data-hero-name data-await-font>
     <span class="mask"><span class="word">Yash</span></span>{' '}
     <span class="mask"><span class="word">Verma</span></span>
   </Name>
   <div class="below">
-    <p class="role" data-hero-role>
+    <p class="role" data-hero-role data-await-font>
       <span class="title">
         {
           phrases.map((phrase, i) => (
@@ -49,9 +49,15 @@ const phrases = SITE.jobTitle.split(/(?<=,)\s+/);
       </span>{' '}
       <span class="at">at {SITE.employer}, {place}</span>
     </p>
-    <p class="line t-display" data-hero-line>{line}</p>
+    <p class="line t-display" data-hero-line data-await-font>{line}</p>
   </div>
-  {cue && <p class="cue t-small" data-hero-cue>{cue}</p>}
+  {
+    cue && (
+      <p class="cue t-small" data-hero-cue>
+        <span data-await-font>{cue}</span>
+      </p>
+    )
+  }
 </div>
 
 <style>

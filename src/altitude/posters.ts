@@ -43,6 +43,37 @@ export async function poster(name: string): Promise<PosterSet | null> {
   };
 }
 
+const singles = import.meta.glob<{ default: ImageMetadata }>('../assets/reading/*.webp', { eager: true });
+
+export interface FigureSet {
+  avif: string;
+  webp: string;
+  fallback: string;
+  width: number;
+  height: number;
+}
+
+/**
+ * One rendered image in src/assets/reading (a case study's state: `<slug>-<state>-wide` behind a
+ * section on wide screens, `<slug>-<state>-snap` under its heading on phones), at `widths`.
+ */
+export async function figure(name: string, widths: number[]): Promise<FigureSet | null> {
+  const src = Object.entries(singles).find(([k]) => k.endsWith(`/assets/${name}.webp`))?.[1].default;
+  if (!src) return null;
+  const sizes = [...new Set(widths.map((w) => Math.min(w, src.width)))];
+  const make = async (format: 'avif' | 'webp') =>
+    (
+      await Promise.all(
+        sizes.map(async (width) => {
+          const img = await getImage({ src, width, format, quality: format === 'avif' ? 62 : 74 });
+          return `${img.src} ${width}w`;
+        }),
+      )
+    ).join(', ');
+  const fallback = await getImage({ src, width: sizes[0], format: 'webp', quality: 74 });
+  return { avif: await make('avif'), webp: await make('webp'), fallback: fallback.src, width: src.width, height: src.height };
+}
+
 /**
  * A poster's tiny, soft copy as data URIs, a few hundred bytes each, inlined in the page so the
  * first paint already shows the sky; the poster sharpens over it once it has arrived and decoded.

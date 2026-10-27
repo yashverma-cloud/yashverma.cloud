@@ -34,6 +34,8 @@ interface Props {
   /** Analytics. Off on noindex pages whatever this says. */
   analytics?: boolean;
   bodyClass?: string;
+  /** The faces the first screen's words wait for (the font gate), as `document.fonts.load()` takes them. */
+  faces?: string[];
 }
 
 const {
@@ -49,6 +51,7 @@ const {
   footer = true,
   analytics = true,
   bodyClass,
+  faces = ['1em Archivo'],
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
@@ -138,11 +141,42 @@ const track = analytics && !noindex;
         if (window.__gaReady && window.gtag) window.gtag('event', name, params || {});
       };
       document.documentElement.classList.add('js');
+
+      // The font gate: the first screen's words ([data-await-font]) are held back until their
+      // faces have loaded, then shown together, so no word is ever seen changing face. The
+      // script at the top of <body> opens it when the faces arrive; after 900 ms it opens
+      // anyway, with the words in their stand-in faces (metric-matched: the late swap moves
+      // nothing). window.__fonts resolves when it opens.
+      (function () {
+        var d = document.documentElement;
+        var opened;
+        window.__fonts = new Promise(function (ok) {
+          opened = ok;
+        });
+        window.__fontsOpen = function () {
+          if (d.dataset.fonts === 'wait') d.dataset.fonts = 'done';
+          opened();
+        };
+        if (!document.fonts || !document.fonts.load) return opened();
+        d.dataset.fonts = 'wait';
+        setTimeout(window.__fontsOpen, 900);
+      })();
     </script>
     <slot name="head" />
   </head>
 
   <body class={bodyClass}>
+    <script is:inline define:vars={{ faces }}>
+      // The font gate opens here when the faces arrive. Here, not in <head>: the head's styles
+      // are parsed by now, so document.fonts knows the faces and load() waits for them (in
+      // <head> it resolves at once, with nothing loaded).
+      if (document.documentElement.dataset.fonts === 'wait')
+        Promise.all(
+          faces.map(function (face) {
+            return document.fonts.load(face);
+          }),
+        ).then(window.__fontsOpen, window.__fontsOpen);
+    </script>
     <a class="skip" href="#main">Skip to content</a>
     {nav !== 'none' && <Nav over={nav === 'over'} wordmark={wordmark} />}
     <main id="main">

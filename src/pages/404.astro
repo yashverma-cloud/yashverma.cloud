@@ -9,7 +9,7 @@ import { SITE } from '../consts';
 const cloud = await poster('scenes/in-cloud');
 ---
 
-<Page title={`Page not found — ${SITE.name}`} noindex>
+<Page title={`Page not found — ${SITE.name}`} noindex faces={['1em Archivo', '1em "B612 Mono"']}>
   <div class="lost">
     {cloud && <ScenePoster set={cloud} eager class="lost-still" />}
     <NotFound />

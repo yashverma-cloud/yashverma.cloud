@@ -21,7 +21,7 @@ const rows = posts.map((p) => ({ id: p.id, title: p.data.title, description: p.d
   description="Postmortems and notes on running production infrastructure — Kubernetes, autoscaling, cost and observability on AWS and GCP."
   noindex={posts.length === 0}
 >
-  <div class="writing">
+  <div class="writing" data-await-font>
     <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
     <WritingList posts={rows} />
   </div>
