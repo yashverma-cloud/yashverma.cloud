@@ -20,7 +20,7 @@
  */
 import type { GetStaticPaths } from 'astro';
 import '../system/tokens.css';
-import { SITE } from '../consts';
+import { SITE, ogImageHref } from '../consts';
 
 // getStaticPaths runs in its own scope, so the table lives inside it.
 export const getStaticPaths = (() => {
@@ -40,7 +40,7 @@ if (content) query.set('utm_content', content);
 const target = `/?${query.toString()}`;
 
 const home = new URL('/', SITE.url).href;
-const ogImage = new URL('/og/default.png', SITE.url).href;
+const ogImage = ogImageHref('/og/default.png');
 ---
 
 <!doctype html>
