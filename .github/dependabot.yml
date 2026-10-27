@@ -24,6 +24,9 @@ updates:
       # @astrojs/check supports TypeScript 5 and 6 only. Remove once it supports 7.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
+      # satori renders the OG images; 0.63 bands the sky gradients. Patches only; retest before lifting.
+      - dependency-name: 'satori'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
 
   - package-ecosystem: github-actions
     directory: '/'
