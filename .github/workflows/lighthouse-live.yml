@@ -1,0 +1,37 @@
+name: Lighthouse (live)
+
+# Weekly audit of the live site against the same gates as CI (lighthouserc.live.json).
+# A score below a gate fails the run, and GitHub emails the failure. The reports are kept
+# as an artifact for 90 days.
+on:
+  schedule:
+    - cron: '30 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          check-latest: true
+
+      - name: Lighthouse CI against yashverma.cloud
+        run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.live.json
+
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: lighthouse-live
+          path: .lighthouseci/
+          retention-days: 90

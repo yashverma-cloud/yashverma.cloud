@@ -142,6 +142,28 @@ const track = analytics && !noindex;
       };
       document.documentElement.classList.add('js');
 
+      // Script errors and lost WebGL contexts go to GA4 as `exception` events, at most 5 a page.
+      // Those before GA4 has loaded wait in window.__errq, which the loader below sends.
+      (function () {
+        var sent = 0;
+        window.__errq = [];
+        function report(description) {
+          if (sent++ >= 5) return;
+          var p = { description: String(description).slice(0, 150), fatal: false };
+          if (window.__gaReady) window.__track('exception', p);
+          else window.__errq.push(p);
+        }
+        window.addEventListener('error', function (e) {
+          var file = (e.filename || '').split('/').pop();
+          report((e.message || 'error') + ' @ ' + file + ':' + (e.lineno || 0));
+        });
+        window.addEventListener('unhandledrejection', function (e) {
+          report('rejection: ' + ((e.reason && e.reason.message) || e.reason));
+        });
+        // Capture phase: the event fires on the canvas and does not bubble.
+        window.addEventListener('webglcontextlost', function () { report('webgl context lost'); }, true);
+      })();
+
       // The font gate: the first screen's words ([data-await-font]) are held back until their
       // faces have loaded, then shown together, so no word is ever seen changing face. The
       // script at the top of <body> opens it when the faces arrive; after 900 ms it opens
@@ -201,6 +223,10 @@ const track = analytics && !noindex;
             window.gtag('js', new Date());
             window.gtag('config', id);
             window.__gaReady = true;
+            (window.__errq || []).forEach(function (p) {
+              window.__track('exception', p);
+            });
+            window.__errq = [];
           });
         </script>
       )
