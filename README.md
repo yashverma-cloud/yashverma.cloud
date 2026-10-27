@@ -79,7 +79,19 @@ list and move `/writing/` into the full set of assertions.
 - `public/_headers` sets the security and caching headers; the script and style sources are
   in the CSP `<meta>` that Astro writes from `security.csp` in `astro.config.mjs`.
   `public/_redirects` answers the bio short links and the runbook's old paths at the edge.
-- Dependencies are updated monthly by Dependabot.
+- CI caches Astro's encoded images (`node_modules/.astro`), keyed on `src/assets/`, the config
+  and the lockfile, so a warm run skips re-encoding the stills. The output is the same.
+
+## Dependencies
+
+Dependabot (`.github/dependabot.yml`) opens, every Monday, one grouped pull request for all minor
+and patch updates, and a separate pull request for each major (Astro and its integrations
+together). Security updates, if enabled in the repository settings, arrive one pull request each.
+
+Once a month the open Dependabot pull requests are triaged: merge when every required check is
+green and the change is a tool or patch; for anything that renders output (Astro, Satori, sharp),
+build before and after and compare the pages and OG images first; a major that needs migration
+work is closed and planned as its own change. After each merge, check the live site.
 
 To roll back, open the project's deployments in the Cloudflare dashboard and roll back to the
 previous production deployment, then revert the offending commit through a pull request.

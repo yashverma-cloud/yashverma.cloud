@@ -23,6 +23,16 @@ jobs:
       - name: Install
         run: npm ci
 
+      # Astro keeps every encoded image in node_modules/.astro, keyed on the source file and its
+      # transform, so a restored cache only skips re-encoding; the output is the same. Restored
+      # after npm ci, which clears node_modules.
+      - name: Cache encoded images
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.astro
+          key: astro-images-${{ hashFiles('src/assets/**', 'astro.config.mjs', 'package-lock.json') }}
+          restore-keys: astro-images-
+
       - name: Build
         run: npm run build
 
