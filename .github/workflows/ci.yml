@@ -3,6 +3,10 @@ name: CI
 on:
   pull_request:
     branches: ['main']
+  # A run on main saves the image cache that every pull request can restore;
+  # a pull request's own cache is visible only to that pull request.
+  push:
+    branches: ['main']
 
 permissions:
   contents: read
