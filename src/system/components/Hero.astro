@@ -24,7 +24,6 @@ const {
   cue = 'Scroll to descend',
   as: Name = 'h1',
 } = Astro.props;
-const place = SITE.location.split(',')[0];
 // The title's phrases ("Infrastructure Engineer," and "Cloud Operations") are whole lines on tall
 // screens, so the role's height never depends on where a font happens to wrap it.
 const phrases = SITE.jobTitle.split(/(?<=,)\s+/);
@@ -47,7 +46,7 @@ const phrases = SITE.jobTitle.split(/(?<=,)\s+/);
           ))
         }
       </span>{' '}
-      <span class="at">at {SITE.employer}, {place}</span>
+      <span class="at">at {SITE.employer}</span>
     </p>
     <p class="line t-display" data-hero-line data-await-font>{line}</p>
   </div>

@@ -1,7 +1,7 @@
 ---
 role: 'Infrastructure Engineer, Cloud Operations'
 company: 'Copado'
-location: 'Jaipur, India'
+location: 'India · IST'
 start: '2026-03'
 order: 1
 summary: >-

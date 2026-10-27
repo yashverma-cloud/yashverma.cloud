@@ -1,6 +1,6 @@
 # yashverma.cloud
 
-Personal site of Yash Verma — cloud infrastructure engineer, Jaipur, India.
+Personal site of Yash Verma — cloud infrastructure engineer.
 Live at <https://yashverma.cloud/>.
 
 Static site built with [Astro](https://astro.build), deployed to Cloudflare Pages.

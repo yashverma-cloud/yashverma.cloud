@@ -17,7 +17,7 @@ const DESCENT = 0.21;
 const ROBOTO_PER_ARIAL = 98.69 / 99.46;
 
 const SAMPLE =
-  'I keep production Kubernetes running when nodes die. Infrastructure Engineer, Cloud Operations at Copado, Jaipur. ' +
+  'I keep production Kubernetes running when nodes die. Infrastructure Engineer, Cloud Operations at Copado. ' +
   'Work Experience Contact Scroll to descend. Autoscaling, cost and observability across multi-region production ' +
   'infrastructure. Five years on AWS and GCP, before that at BLG and Treebo. The quick brown fox jumps over the lazy dog. ' +
   'Yash Verma. Cut cloud spend by rightsizing nodes and tuning the horizontal pod autoscaler against real load curves.';

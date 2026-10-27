@@ -36,7 +36,7 @@ const hashInlineScripts = {
 
 /**
  * compressHTML drops the whitespace between tags whenever it holds a line break, so the page's
- * text content runs one block into the next ("…Cloud OperationsCopado · Jaipur…"), and that is
+ * text content runs one block into the next ("…Cloud OperationsCopado · India…"), and that is
  * how crawlers and text extraction read it. This puts a line break where a block element ends or
  * begins: whitespace at a block's edge is never rendered, so the page looks the same, and the
  * words come apart. Inline elements carry their own spaces in the components ({' '}). Script,

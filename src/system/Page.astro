@@ -67,13 +67,13 @@ const personLd = {
   '@id': personId,
   name: SITE.name,
   jobTitle: SITE.jobTitle,
-  description: `${SITE.jobTitle} at ${SITE.employer}, in ${SITE.location}. Autoscaling, cost and observability across multi-region production infrastructure on AWS and GCP.`,
+  description: `${SITE.jobTitle} at ${SITE.employer}. Autoscaling, cost and observability across multi-region production infrastructure on AWS and GCP.`,
   image: new URL(portraitJpg.src, Astro.site ?? SITE.url).href,
   url: SITE.url,
   sameAs: [...SAME_AS],
   worksFor: { '@type': 'Organization', name: SITE.employer },
   alumniOf: { '@type': 'Organization', name: 'Treebo Hospitality Ventures' },
-  homeLocation: { '@type': 'Place', name: 'Jaipur, Rajasthan, India' },
+  homeLocation: { '@type': 'Place', name: 'India', address: { '@type': 'PostalAddress', addressCountry: 'IN' } },
   knowsAbout: ['Amazon Web Services', 'Kubernetes', 'Terraform', 'Site reliability engineering', 'Observability', 'CI/CD'],
 };
 
