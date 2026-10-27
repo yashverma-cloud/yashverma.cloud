@@ -9,6 +9,12 @@
  *   approach        the glide over the survey sheet under the ground sections (progress 1.5)
  *   horizon         contact's sunrise, where the approach lands (progress 2): the sun on the horizon
  *   in-cloud        inside the deck (the 404)
+ *   reading         each case study's three reading sections, at the end of each one's stretch
+ *                   of the drawing (STATES in src/altitude/scenes/catalogue.ts), into
+ *                   src/assets/reading/<slug>-<state>-{wide,snap}.webp: `wide` as the live
+ *                   reading view frames it, held behind the section on wide screens in still
+ *                   mode; `snap` the drawing alone, centred, under the heading on phones.
+ *                   `reading:<slug>` renders one case study's.
  *
  *   npm run build:fast && PLAYWRIGHT_BROWSERS_PATH=0 node scripts/altitude/posters.mjs [name ...]
  *
@@ -46,8 +52,13 @@ const OFF_FLIGHT = {
   'in-cloud': { pos: [-5200, 1160, 6400], yaw: -8, pitch: -1, dawn: 0.6 },
 };
 
+// The reading sections' stills: CSS size and pixel ratio (the labels keep their real size).
+const READING = { wide: { size: [1440, 900], dpr: 1.75 }, snap: { size: [360, 240], dpr: 3 } };
+const STATE_KEYS = ['problem', 'approach', 'result'];
+
 const only = process.argv.slice(2);
 const want = (name) => !only.length || only.includes(name);
+const wantReading = (slug) => !only.length || only.includes('reading') || only.includes(`reading:${slug}`);
 // Everything but the scene is hidden: the stills carry no copy, the page lays its own over them.
 const BARE = (stage, labels) => `
   body * { visibility: hidden !important; }
@@ -95,9 +106,38 @@ async function open(browser, orientation, path) {
 }
 
 await mkdir(OUT, { recursive: true });
+await mkdir('src/assets/reading', { recursive: true });
 const server = await serveDist(4335);
 const browser = await chromium.launch({ args: ['--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 try {
+  for (const [kind, { size, dpr }] of Object.entries(READING)) {
+    for (const slug of WORK.filter(wantReading)) {
+      const [w, h] = size;
+      const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: dpr, bypassCSP: true });
+      page.on('pageerror', (e) => console.error('page error:', e.message));
+      await page.goto(`http://127.0.0.1:4335/work/${slug}/?capture=1&q=poster&dpr=${dpr}`, { waitUntil: 'load' });
+      await page.waitForFunction(() => window.__altReady && window.__alt, null, { timeout: 300000 });
+      await page.evaluate(() => document.fonts.ready);
+      await bare(page, BARE('[data-work-stage]', true));
+      for (const [k, key] of STATE_KEYS.entries()) {
+        await page.evaluate(
+          ([k, snap, f]) => {
+            const a = window.__alt;
+            a.goto(a.stateProgress(k, 0.999), a.states[k].t[1], f, snap);
+            const gl = a.engine.renderer.getContext();
+            gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(4));
+          },
+          [k, kind === 'snap', 12],
+        );
+        await page.waitForTimeout(200);
+        const out = `src/assets/reading/${slug}-${key}-${kind}.webp`;
+        const info = await fit(await page.screenshot({ timeout: 180000 }), out);
+        console.log(out, `${info.width}x${info.height}`, `${Math.round(info.size / 1024)} KB`);
+      }
+      await page.close();
+    }
+  }
+
   for (const orientation of Object.keys(SIZES).filter((o) => !process.env.ONLY_ORIENTATION || o === process.env.ONLY_ORIENTATION)) {
     for (const slug of WORK.filter(want)) {
       const page = await open(browser, orientation, `/work/${slug}/`);

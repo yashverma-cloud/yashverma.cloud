@@ -203,6 +203,11 @@ export class AltitudeEngine {
     return this.state;
   }
 
+  /** The camera has arrived where the page last asked it to be (nothing left to ease). */
+  get settled(): boolean {
+    return this.progress === this.target;
+  }
+
   get drawingTime(): number {
     return this.sceneTime;
   }

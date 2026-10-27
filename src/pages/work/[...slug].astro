@@ -1,17 +1,27 @@
 ---
 import type { GetStaticPaths } from 'astro';
-import { getCollection, render } from 'astro:content';
+import { getCollection } from 'astro:content';
 import Page from '../../system/Page.astro';
 import SceneFrame from '../../system/components/SceneFrame.astro';
 import ScenePoster from '../../system/components/ScenePoster.astro';
-import { poster } from '../../altitude/posters';
-import { SCENES } from '../../altitude/scenes/catalogue';
+import { figure, poster } from '../../altitude/posters';
+import { SCENES, STATE_KEYS } from '../../altitude/scenes/catalogue';
 import { SITE } from '../../consts';
 
 /**
  * Case-study pages. Each opens on its own scene: the system drawn as white linework on the
  * survey sheet, playing once as the page opens (live), or its rendered still. Then the case
- * study itself: Problem, What I did, Result, with the labels in the margin.
+ * study itself, one section per heading (Problem, What I did, Result), each with its state of
+ * the drawing:
+ *
+ *   wide, live    the scene stays, the drawing beside the text, and reading moves its clock
+ *                 through each section's state (src/altitude/work.ts)
+ *   wide, still   each section's state as a still behind it, held while the section passes
+ *   narrow        a snapshot of the state under each heading
+ *
+ * The survey sheet runs on under the words through a veil, never flat. At the end, the next
+ * case study: the cloud opens on its scene, and following the link carries that scene into the
+ * next page's opening (a view transition, where the browser has them).
  *
  * Only non-draft entries generate a page, so the site never ships a placeholder.
  */
@@ -24,12 +34,35 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 const { entry, next } = Astro.props;
-const { Content } = await render(entry);
 const scene = SCENES[entry.id as keyof typeof SCENES];
 const still = await poster(`scenes/${entry.id}`);
-const figure = entry.data.figure?.replace(/^(\d+)s$/, '$1 s');
+const figureText = (f?: string) => f?.replace(/^(\d+)s$/, '$1 s');
 const meta = [entry.data.employer, entry.data.year].filter(Boolean).join(' · ');
 const description = [entry.data.figure, entry.data.result].filter(Boolean).join(' ').concat(`. ${entry.data.mechanism}.`);
+
+// One section per h2 of the rendered case study; the sections take the drawing's states in order.
+const parts = (entry.rendered?.html ?? '').split(/(?=<h2[\s>])/).filter((part) => part.trim());
+const steps = await Promise.all(
+  parts.map(async (part, i) => {
+    const head = part.match(/^<h2([^>]*)>([\s\S]*?)<\/h2>/);
+    const key = head ? STATE_KEYS[i] : undefined;
+    return {
+      key,
+      id: head?.[1].match(/id="([^"]+)"/)?.[1],
+      title: head?.[2],
+      body: head ? part.slice(head[0].length) : part,
+      snap: key ? await figure(`reading/${entry.id}-${key}-snap`, [540, 1080]) : null,
+      wide: key ? await figure(`reading/${entry.id}-${key}-wide`, [1280, 1920, 2560]) : null,
+    };
+  }),
+);
+
+// The survey sheet the words read over (the home page's glide over it), and the next scene with
+// the cloud it opens out of.
+const ground = await poster('scenes/approach');
+const nextStill = next && next.id !== entry.id ? await poster(`scenes/${next.id}`) : null;
+const cloud = nextStill ? await poster('scenes/in-cloud') : null;
+const nextFigure = figureText(next?.data.figure);
 ---
 
 <Page
@@ -55,7 +88,7 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
   </Fragment>
 
   <div class="opening" data-work-stage={entry.id}>
-    {still && <ScenePoster set={still} alt={scene?.alt} eager class="still" />}
+    {still && <ScenePoster set={still} alt={scene?.alt} eager class="still" name={`scene-${entry.id}`} />}
     <canvas class="scene-canvas" data-canvas aria-hidden="true"></canvas>
     <svg class="leaders" data-leaders aria-hidden="true"></svg>
     <div class="labels" data-labels aria-hidden="true"></div>
@@ -63,34 +96,73 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
       id="case"
       as="h1"
       title={entry.data.title}
-      figure={figure}
+      figure={figureText(entry.data.figure)}
       result={entry.data.figure ? entry.data.result : undefined}
     >
       <p class="mechanism t-lead">{entry.data.mechanism}</p>
     </SceneFrame>
-    <p class="back t-small"><a href="/#work">← Work</a></p>
+    <p class="back t-small" data-await-font><a href="/#work">← Work</a></p>
   </div>
 
-  <article class="case" aria-labelledby="case-title">
-    {meta && <p class="meta t-data bleed">{meta}</p>}
-    <div class="prose bleed">
-      <Content />
+  <article class="case" aria-labelledby="case-title" data-case>
+    {ground && <ScenePoster set={ground} class="ground-still" />}
+    <div class="veil-in" aria-hidden="true"></div>
+    <div class="steps">
+      {meta && <p class="meta t-data bleed">{meta}</p>}
+      {
+        steps.map((step) => (
+          <section class="step" data-step={step.key} aria-labelledby={step.id}>
+            {step.wide && (
+              <picture class="step-still" aria-hidden="true">
+                <source type="image/avif" srcset={step.wide.avif} sizes="100vw" />
+                <source type="image/webp" srcset={step.wide.webp} sizes="100vw" />
+                <img src={step.wide.fallback} alt="" loading="lazy" decoding="async" />
+              </picture>
+            )}
+            <div class="step-copy bleed">
+              {step.title && <h2 id={step.id} set:html={step.title} />}
+              {step.snap && (
+                <picture class="snap" aria-hidden="true">
+                  <source type="image/avif" srcset={step.snap.avif} sizes="(max-width: 40rem) calc(100vw - 2.5rem), 36rem" />
+                  <source type="image/webp" srcset={step.snap.webp} sizes="(max-width: 40rem) calc(100vw - 2.5rem), 36rem" />
+                  <img src={step.snap.fallback} alt="" width={step.snap.width} height={step.snap.height} loading="lazy" decoding="async" />
+                </picture>
+              )}
+              <div class="step-body" set:html={step.body} />
+            </div>
+          </section>
+        ))
+      }
     </div>
-    {
-      next && next.id !== entry.id && (
-        <p class="next bleed">
-          <span class="t-small">Next</span>{' '}
-          <a class="t-title" href={`/work/${next.id}/`}>
-            {next.data.title}
-          </a>
-        </p>
-      )
-    }
   </article>
 
+  {
+    next && next.id !== entry.id && (
+      <section class="next" aria-labelledby="next-title" data-next>
+        <div class="next-scene" aria-hidden="true">
+          {nextStill && <ScenePoster set={nextStill} class="next-still" name={`scene-${next.id}`} />}
+          {cloud && <ScenePoster set={cloud} class="next-cloud" />}
+        </div>
+        <div class="next-copy bleed">
+          <p class="next-label t-small">Next case study</p>
+          <h2 class="next-title t-display" id="next-title">
+            <a href={`/work/${next.id}/`}>{next.data.title}</a>
+          </h2>
+          {nextFigure && (
+            <p class="next-fig">
+              <span class="num t-display">{nextFigure}</span>{' '}
+              <span class="res t-lead">{next.data.result}</span>
+            </p>
+          )}
+        </div>
+      </section>
+    )
+  }
+
   <script>
-    import { bootWork } from '../../altitude/work';
+    import { bootStills, bootWork } from '../../altitude/work';
     bootWork();
+    bootStills();
   </script>
 </Page>
 
@@ -155,6 +227,10 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
     letter-spacing: var(--tr-data);
     color: var(--ink);
     opacity: 0;
+    /* A map label's knockout, as on the home page: linework never crosses the words. */
+    padding-inline: 0.25em;
+    margin-inline: -0.25em;
+    background: color-mix(in srgb, var(--night) 72%, transparent);
   }
 
   .labels :global(.label[data-amber]) {
@@ -188,31 +264,72 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
     display: none;
   }
 
+  /* The opening's foot fades to the sheet, so the case study's ground comes in through it rather
+     than at an edge (on wide live screens the scene itself carries on instead). */
+  .opening::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 1;
+    height: 28svh;
+    background: linear-gradient(to bottom, rgb(14 34 64 / 0), var(--sheet));
+    pointer-events: none;
+  }
+
+  /* --- The case study ------------------------------------------------------------------- */
+
+  /*
+   * The words read over the survey sheet: the home page's glide over it, held behind them (and
+   * drifting slowly where motion is allowed), seen through a veil of the sheet's own colour. On
+   * wide screens the veil is dense under the words and clear over the drawing beside them.
+   */
   .case {
+    --veil: 14 34 64;
     position: relative;
     z-index: var(--z-copy);
+    isolation: isolate;
     background: var(--sheet);
-    padding-block: var(--space-2xl) var(--space-3xl);
-    border-top: var(--w-hairline) solid var(--rule-faint);
+  }
+
+  .case > :global(.ground-still) {
+    position: sticky;
+    top: 0;
+    display: block;
+    height: 100lvh;
+    margin-bottom: -100lvh;
+    z-index: -1;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 24svh);
+    mask-image: linear-gradient(to bottom, transparent, #000 24svh);
+  }
+
+  /* The veil comes in under the opening's last screen, never as an edge. */
+  .veil-in {
+    height: 24svh;
+    background: rgb(var(--veil) / 0.72);
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000);
+    mask-image: linear-gradient(to bottom, transparent, #000);
+  }
+
+  .steps {
+    padding-block: var(--space-s) var(--space-3xl);
+    background: linear-gradient(to bottom, rgb(var(--veil) / 0.72), rgb(var(--veil) / 0.78) 40svh);
   }
 
   .meta {
     color: var(--ink-2);
-    margin-bottom: var(--space-l);
+    margin-bottom: var(--space-xl);
   }
 
-  /*
-   * Problem / What I did / Result: each label in the margin, level with its first paragraph.
-   * Every label is pinned to the first columns and everything else to the text columns, so
-   * grid auto-placement starts a new row at each label (as the v2 page did).
-   */
-  .prose {
+  .step + .step {
+    margin-top: var(--space-2xl);
+  }
+
+  .step-copy {
     row-gap: var(--space-s);
     align-items: start;
   }
 
-  .prose > :global(h2) {
-    grid-column: 1 / span 3;
+  .step-copy > h2 {
     font-size: var(--t-small);
     font-weight: 560;
     color: var(--ink-2);
@@ -220,49 +337,320 @@ const description = [entry.data.figure, entry.data.result].filter(Boolean).join(
     border-top: var(--w-hairline) solid var(--rule);
   }
 
-  .prose > :global(:not(h2)) {
-    grid-column: 4 / span 7;
+  .step-body {
+    display: grid;
+    row-gap: var(--space-s);
+  }
+
+  .step-body > :global(*) {
     max-width: var(--measure);
   }
 
-  .prose > :global(h2:not(:first-child)),
-  .prose > :global(h2:not(:first-child) + *) {
-    margin-top: var(--space-xl);
-  }
-
-  .prose > :global(ul) {
+  .step-body > :global(ul) {
     padding-left: 1.2em;
     display: grid;
     row-gap: var(--space-2xs);
   }
 
-  .prose > :global(pre) {
+  .step-body > :global(pre) {
     max-width: min(100%, 52rem);
   }
 
+  /* Under each heading on narrow screens: the drawing at that point, small. */
+  .snap {
+    display: block;
+    max-width: 36rem;
+    margin-block: var(--space-2xs) var(--space-xs);
+  }
+
+  .snap img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    -webkit-mask-image: radial-gradient(ellipse 74% 72% at 50% 54%, #000 58%, transparent 100%);
+    mask-image: radial-gradient(ellipse 74% 72% at 50% 54%, #000 58%, transparent 100%);
+  }
+
+  .step-still {
+    display: none;
+  }
+
+  /* --- Wide screens: the drawing beside the words ------------------------------------------- */
+
+  @media (min-width: 60rem) and (min-aspect-ratio: 5/4) {
+    .snap {
+      display: none;
+    }
+
+    /* Dense under the words (the left half), clear over the drawing (the right). */
+    .veil-in,
+    .steps {
+      background: linear-gradient(to right, rgb(var(--veil) / 0.82), rgb(var(--veil) / 0.76) 44%, rgb(var(--veil) / 0) 60%);
+    }
+
+    .steps {
+      padding-block: var(--space-s) 40svh;
+    }
+
+    .step-copy > :global(*) {
+      grid-column: 1 / span 6;
+    }
+
+    .step {
+      padding-block: var(--space-xl);
+    }
+
+    .step + .step {
+      margin-top: var(--space-3xl);
+    }
+
+    /* Live: the scene stays as the page reads on; the opening's still scrolls away under it. */
+    :root[data-mode='live'] .scene-canvas,
+    :root[data-mode='live'] .leaders,
+    :root[data-mode='live'] .labels {
+      position: fixed;
+    }
+
+    :root[data-mode='live'] .case {
+      background: transparent;
+    }
+
+    :root[data-mode='live'] .opening::after {
+      display: none;
+    }
+
+    :root[data-mode='live'] .case > :global(.ground-still) {
+      display: none;
+    }
+
+    /* Still: the sections' stills are the ground here. */
+    :root:not([data-mode='live']) .case > :global(.ground-still) {
+      display: none;
+    }
+
+    /* With script, each section's still lies behind the page and the section at the reading line
+       fades its own in (src/altitude/work.ts bootStills): one drawing on screen, never two. The
+       ones beside it are laid out, unseen, so they have loaded by the time they are needed. */
+    :root.js:not([data-mode='live']) .step-still {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      opacity: 0;
+      transition: opacity var(--dur-slow) var(--ease-settle);
+    }
+
+    :root.js:not([data-mode='live']) .step:is([data-active], [data-near]) .step-still {
+      display: block;
+    }
+
+    :root.js:not([data-mode='live']) .step[data-active] .step-still {
+      opacity: 1;
+    }
+
+    /* Without script, each section holds its still behind itself while it passes. */
+    :root:not(.js):not([data-mode='live']) .step {
+      min-height: 100lvh;
+    }
+
+    :root:not(.js):not([data-mode='live']) .step-still {
+      display: block;
+      position: sticky;
+      top: 0;
+      height: 100lvh;
+      margin-bottom: -100lvh;
+      z-index: -1;
+    }
+
+    :root:not([data-mode='live']) .step-still::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        var(--sheet),
+        rgb(var(--veil) / 0) 22svh,
+        rgb(var(--veil) / 0) calc(100% - 22svh),
+        var(--sheet)
+      );
+    }
+
+    .step-still img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 72% 50%;
+    }
+  }
+
+  /* Where motion is allowed, the sheet drifts slowly as the case study scrolls past; elsewhere it
+     holds still. The timeline is the case study's: the still itself doesn't move while stuck. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .case {
+        view-timeline: --case block;
+      }
+
+      .case > :global(.ground-still img) {
+        animation: glide linear both;
+        animation-timeline: --case;
+        animation-range: contain 0% contain 100%;
+      }
+    }
+  }
+
+  @keyframes glide {
+    from {
+      transform: scale(1.12) translateY(-3%);
+    }
+    to {
+      transform: scale(1.02) translateY(2%);
+    }
+  }
+
+  /* --- Next: the cloud opens on the next case study's scene ----------------------------------- */
+
   .next {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-m);
-    border-top: var(--w-hairline) solid var(--rule-faint);
+    position: relative;
+    z-index: var(--z-copy);
+    isolation: isolate;
+    display: grid;
+    align-content: end;
+    min-height: 92svh;
+    padding-block: var(--space-3xl) var(--space-2xl);
+    background: var(--deck);
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, transparent, #000 30svh);
+    mask-image: linear-gradient(to bottom, transparent, #000 30svh);
+  }
+
+  .next-scene,
+  .next-scene :global(.scene-poster) {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  /* A burn under the words, low on the left, where the drawing isn't: after the scene in the
+     page's order, so it lies over the still and the cloud and under the words. */
+  .next::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: radial-gradient(ellipse 80% 70% at 10% 100%, rgb(4 12 31 / 0.86) 30%, rgb(4 12 31 / 0) 100%);
+    pointer-events: none;
+  }
+
+  /* The cloud the scene opens out of: only where it can open with the scroll. */
+  .next-scene :global(.next-cloud) {
+    display: none;
+  }
+
+  .next-copy {
     row-gap: var(--space-2xs);
   }
 
-  .next span {
+  .next-copy > * {
+    grid-column: 1 / span 7;
+  }
+
+  .next-label {
     color: var(--ink-2);
   }
 
-  .next a {
-    grid-column: 1 / span 9;
+  .next-title {
+    max-width: 14em;
+    text-wrap: balance;
   }
 
-  @media (max-width: 60rem) {
-    .prose > :global(h2),
-    .prose > :global(:not(h2)) {
-      grid-column: 1 / -1;
+  .next-title a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  /* The whole scene is the link; the ring stays on the title. */
+  .next-title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .next-title a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: var(--w-hairline);
+    text-underline-offset: 0.12em;
+  }
+
+  .next-fig {
+    margin-top: var(--space-xs);
+  }
+
+  .next-fig .num {
+    display: block;
+  }
+
+  .next-fig .res {
+    color: var(--ink-2);
+  }
+
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .next {
+        view-timeline: --next block;
+      }
+
+      .next-scene :global(.next-cloud) {
+        display: block;
+        animation: open linear both;
+        animation-timeline: --next;
+        animation-range: entry 0% cover 55%;
+        -webkit-mask-image: radial-gradient(ellipse calc(var(--open) * 150%) calc(var(--open) * 110%) at 62% 44%, transparent 60%, #000 100%);
+        mask-image: radial-gradient(ellipse calc(var(--open) * 150%) calc(var(--open) * 110%) at 62% 44%, transparent 60%, #000 100%);
+      }
+    }
+  }
+
+  @property --open {
+    syntax: '<number>';
+    inherits: false;
+    initial-value: 1;
+  }
+
+  @keyframes open {
+    from {
+      --open: 0.02;
+    }
+    to {
+      --open: 1;
+    }
+  }
+
+  @media (min-width: 60rem) and (min-aspect-ratio: 5/4) {
+    .next {
+      min-height: 100svh;
     }
 
-    .prose > :global(h2:not(:first-child) + *) {
-      margin-top: 0;
+    .next-copy > * {
+      grid-column: 1 / span 5;
     }
+  }
+</style>
+
+<style is:global>
+  /* The next case study's scene carries into its page's opening (old and new page both opt in). */
+  @view-transition {
+    navigation: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    @view-transition {
+      navigation: none;
+    }
+  }
+
+  ::view-transition-group(*) {
+    animation-duration: var(--dur-base);
+    animation-timing-function: var(--ease-glide);
   }
 </style>

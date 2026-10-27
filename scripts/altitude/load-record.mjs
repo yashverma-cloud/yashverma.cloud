@@ -7,6 +7,7 @@
  *     --profile=phone|laptop [--label=before] [--toolbar=56] [--seconds=8] [--path=/]
  *
  * phone: 390×844 at 3x, touch, 4× CPU slowdown and Slow 4G (Lighthouse's mobile profile).
+ *   --font-delay=N holds the fonts back N ms; --path=/work/<slug>/ records a case study.
  *   --toolbar=N makes innerHeight N px shorter than the large viewport, as a phone's URL bar
  *   does on load (device emulation has no browser chrome, so there svh = lvh = innerHeight).
  * laptop: 1440×900 at 1x, no CPU slowdown, a 10 Mbps / 40 ms connection.
@@ -27,7 +28,9 @@ const label = arg('label', 'now');
 const toolbar = Number(arg('toolbar', profile === 'phone' ? '56' : '0'));
 const seconds = Number(arg('seconds', '8'));
 const path = arg('path', '/');
-const OUT = '.screenshots/web-06-polish';
+// --font-delay=N holds every font response back N ms: the face arrives after the first paint.
+const fontDelay = Number(arg('font-delay', '0'));
+const OUT = arg('out', '.screenshots/web-06-polish');
 const FPS = 30;
 
 const PROFILES = {
@@ -87,6 +90,26 @@ const INIT = `
   }).observe({ type: 'resource', buffered: true });
   document.fonts.ready.then(() => (m.fontsReady = Math.round(performance.now())));
   const els = { name: '[data-hero-name]', role: '[data-hero-role]', line: '[data-hero-line]', word: '[data-hero-name] .word' };
+  // Fallback glyphs: how much of each first-screen text is on screen while its face is not loaded.
+  const texts = { name: ['[data-hero-name] .word', 'Archivo'], role: ['[data-hero-role]', 'Archivo'], line: ['[data-hero-line]', 'Archivo'], nav: ['[data-nav] nav a, [data-nav] .word', 'Archivo'], cue: ['[data-hero-cue] span', 'Archivo'], readout: ['.tape-read', 'B612 Mono'], title: ['[data-frame-title]', 'Archivo'], mechanism: ['.mechanism', 'Archivo'], back: ['.back a', 'Archivo'], labels: ['[data-labels] .label', 'B612 Mono'] };
+  const face = (name) => {
+    for (const f of document.fonts) if (f.family.replace(/["']/g, '') === name) return f.status;
+    return '-';
+  };
+  const seen = (el) => {
+    let o = 1;
+    for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+      const cs = getComputedStyle(n);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return 0;
+      o *= +cs.opacity;
+    }
+    const b = el.getBoundingClientRect();
+    if (b.bottom <= 0 || b.top >= innerHeight || b.width === 0) return 0;
+    // A word held under its mask is out of sight.
+    const mask = el.parentElement && el.parentElement.classList.contains('mask') ? el.parentElement.getBoundingClientRect() : null;
+    if (mask) o *= Math.max(0, Math.min(b.bottom, mask.bottom) - Math.max(b.top, mask.top)) / (b.height || 1);
+    return Math.round(o * 100) / 100;
+  };
   let last = '';
   const t0 = performance.now();
   const tick = () => {
@@ -98,6 +121,12 @@ const INIT = `
       const b = el.getBoundingClientRect();
       row[k] = [Math.round(b.top * 2) / 2, Math.round(b.height * 2) / 2];
       if (k === 'word') row.wordOpacity = +getComputedStyle(el).opacity;
+    }
+    row.faces = { Archivo: face('Archivo'), 'B612 Mono': face('B612 Mono') };
+    row.seen = {};
+    for (const [k, [sel]] of Object.entries(texts)) {
+      const all = [...document.querySelectorAll(sel)];
+      row.seen[k] = all.length ? Math.max(...all.map(seen)) : 0;
     }
     const img = document.querySelector('.stage-poster img');
     if (img && img.complete && img.naturalWidth && !m.posterLoaded) m.posterLoaded = Math.round(t);
@@ -142,6 +171,11 @@ try {
   const context = await browser.newContext(P.ctx);
   const page = await context.newPage();
   await page.addInitScript(INIT);
+  if (fontDelay > 0)
+    await page.route('**/fonts/*.woff2', async (route) => {
+      await new Promise((ok) => setTimeout(ok, fontDelay));
+      await route.continue();
+    });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (msg) => msg.type() === 'error' && !/GL Driver|GPU stall/.test(msg.text()) && errors.push(msg.text()));
@@ -183,6 +217,24 @@ try {
 } finally {
   await browser.close();
   server.close();
+}
+
+// Fallback glyphs on screen: per text, how long it showed (any part, any opacity) before its face loaded.
+const FACES = { name: 'Archivo', role: 'Archivo', line: 'Archivo', nav: 'Archivo', cue: 'Archivo', readout: 'B612 Mono', title: 'Archivo', mechanism: 'Archivo', back: 'Archivo', labels: 'B612 Mono' };
+result.fallback = {};
+for (const [k, fam] of Object.entries(FACES)) {
+  let ms = 0;
+  let first = null;
+  result.hero.forEach((row, i) => {
+    const next = result.hero[i + 1]?.t ?? seconds * 1000;
+    if (row.seen?.[k] > 0.02 && row.faces?.[fam] !== 'loaded') {
+      ms += next - row.t;
+      first ??= row.t;
+    }
+  });
+  const shown = result.hero.find((r) => r.seen?.[k] > 0.02)?.t ?? null;
+  const loaded = result.hero.find((r) => r.faces?.[fam] === 'loaded')?.t ?? null;
+  result.fallback[k] = { firstSeen: shown, faceLoaded: loaded, fallbackMs: Math.round(ms), fallbackFrom: first };
 }
 
 // Frames on a constant 30 fps clock from navigation start: each tick shows the latest frame.
@@ -237,4 +289,9 @@ console.log(
   `${profile}/${label}: mode ${result.mode}, CLS ${result.cls} (${result.shifts.length} shifts), FCP ${result.fcp}, LCP ${result.lcp?.t} ${result.lcp?.el}, Archivo ${result.archivoFontMs}, fonts.ready ${result.fontsReadyMs}, poster ${result.posterLoadedMs}, stage ${result.stageOnMs}`,
 );
 console.log(`  top of name ${moved('name')}, role ${moved('role')}, line ${moved('line')} (px over ${result.hero.length} changes); errors ${result.errors.length}`);
+console.log(
+  `  fallback glyphs on screen (ms): ${Object.entries(result.fallback)
+    .map(([k, f]) => `${k} ${f.fallbackMs}${f.fallbackMs ? ` from ${f.fallbackFrom}` : ''} (seen ${f.firstSeen ?? '-'}, face ${f.faceLoaded ?? '-'})`)
+    .join('; ')}`,
+);
 console.log(`  ${base}.webm, ${base}.png, ${base}.json`);

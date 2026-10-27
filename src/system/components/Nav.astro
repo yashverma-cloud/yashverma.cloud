@@ -36,9 +36,9 @@ const path = Astro.url.pathname;
   <div class="bar bleed">
     <a class="home" href="/" aria-label="Yash Verma, home">
       <Monogram class="mark" />
-      <span class="word">Yash Verma</span>
+      <span class="word" data-await-font>Yash Verma</span>
     </a>
-    <nav aria-label="Sections">
+    <nav aria-label="Sections" data-await-font>
       <ul role="list">
         {
           items.map((item) => (

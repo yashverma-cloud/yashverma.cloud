@@ -11,9 +11,11 @@ interface Props {
   /** The first screen's poster loads eagerly and at high priority; the rest lazily. */
   eager?: boolean;
   class?: string;
+  /** A view-transition name, so the same scene on the next page grows out of this one. */
+  name?: string;
 }
 
-const { set, alt = '', eager = false, class: className } = Astro.props;
+const { set, alt = '', eager = false, class: className, name } = Astro.props;
 ---
 
 <picture class:list={['scene-poster', className]}>
@@ -27,6 +29,7 @@ const { set, alt = '', eager = false, class: className } = Astro.props;
     decoding="async"
     loading={eager ? 'eager' : 'lazy'}
     fetchpriority={eager ? 'high' : undefined}
+    style={name ? `view-transition-name: ${name}` : undefined}
   />
 </picture>
 

@@ -27,7 +27,7 @@ const { id, title, figure, result, href, poster, alt = '', eager = false, as: He
 
 <section class="frame" id={id} data-frame={id} aria-labelledby={`${id}-title`}>
   {poster && <ScenePoster set={poster} alt={alt} eager={eager} class="frame-poster" />}
-  <div class="copy bleed">
+  <div class="copy bleed" data-await-font={Heading === 'h1' ? '' : undefined}>
     <Heading class="title t-display" id={`${id}-title`} data-frame-title>{title}</Heading>
     <div class="beats" data-frame-beats>
       {

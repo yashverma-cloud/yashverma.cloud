@@ -7,6 +7,11 @@
  *   npm run build:fast && PLAYWRIGHT_BROWSERS_PATH=0 node scripts/system/contrast-over-image.mjs <path> <selector>[,<selector>...] [--sizes=1440x900,390x844] [--scroll=<y>] [--scrollto=<selector>,...] [--goto=<p>,<p>...]
  *
  * --scrollto measures with each matching element at the top of the screen in turn, at every size.
+ * --every=<selector> does the same for every element the selector matches (each paragraph of a
+ * case study, say), not only the first.
+ *
+ * --read measures a case study's live reading view: the page opens in capture mode and, at each
+ * scroll position, the scene is rendered where the live page would have it (src/altitude/work.ts).
  *
  * --goto measures the live scene itself: the page opens in capture mode and the home flight is
  * set to each progress in turn (2 is where the approach lands at contact), the copy, veils and
@@ -25,6 +30,10 @@ const sizes = arg('sizes', '1440x900,390x844').split(',').map((s) => s.split('x'
 const scrollY = Number(arg('scroll', '0'));
 const gotos = arg('goto', '') ? arg('goto', '').split(',').map(Number) : null;
 const scrolltos = arg('scrollto', '') ? arg('scrollto', '').split(',') : null;
+const every = arg('every', '');
+const read = process.argv.includes('--read');
+// --settle=ms: how long to wait after each scroll (a still mode crossfade takes 900 ms).
+const settle = Number(arg('settle', '700'));
 
 const lum = ([r, g, b]) => {
   const f = (v) => {
@@ -44,19 +53,32 @@ try {
     // The page's CSP forbids injected styles; this test context may add one.
     const context = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, isMobile: phone, hasTouch: phone, bypassCSP: true });
     const page = await context.newPage();
-    const url = gotos ? `${path}${path.includes('?') ? '&' : '?'}capture=1&q=low&dpr=0.5` : path;
-    await page.goto(`http://127.0.0.1:4325${url}`, { waitUntil: gotos ? 'load' : 'networkidle' });
+    const live = gotos || read;
+    const url = live ? `${path}${path.includes('?') ? '&' : '?'}capture=1&q=low&dpr=0.5` : path;
+    await page.goto(`http://127.0.0.1:4325${url}`, { waitUntil: live ? 'load' : 'networkidle' });
     await page.evaluate(() => document.fonts.ready);
-    if (gotos) {
+    if (live) {
       await page.waitForFunction(() => window.__altReady, null, { timeout: 300000 });
       // The canvas fades in over the hero's poster after the scene starts.
       await page.waitForTimeout(1200);
     }
-    for (const at of gotos ?? scrolltos ?? [null]) {
+    // Every match of --every, by index, as `selector#n`.
+    const positions = every ? (await page.evaluate((sel) => document.querySelectorAll(sel).length, every)) : 0;
+    const spots = every ? Array.from({ length: positions }, (_, i) => `${every}#${i}`) : null;
+    for (const at of gotos ?? spots ?? scrolltos ?? [null]) {
       if (typeof at === 'number') await page.evaluate((at) => window.__alt.goto(at, 3), at);
-      else if (typeof at === 'string') await page.evaluate((sel) => document.querySelector(sel)?.scrollIntoView({ block: 'start' }), at);
+      else if (typeof at === 'string')
+        await page.evaluate((spot) => {
+          const [sel, n] = spot.includes('#') && /#\d+$/.test(spot) ? [spot.replace(/#\d+$/, ''), Number(spot.match(/#(\d+)$/)[1])] : [spot, 0];
+          document.querySelectorAll(sel)[n]?.scrollIntoView({ block: 'start' });
+        }, at);
       else if (scrollY) await page.evaluate((y) => window.scrollTo(0, y), scrollY);
-      await page.waitForTimeout(at === null ? 400 : 700);
+      if (read && typeof at !== 'number')
+        await page.evaluate(() => {
+          const w = window.__alt.want(1e9);
+          window.__alt.goto(w.p, w.t, 3);
+        });
+      await page.waitForTimeout(at === null ? 400 : settle);
       const where = typeof at === 'number' ? ` p=${at}` : typeof at === 'string' ? ` at ${at}` : '';
       const items = await page.evaluate((sel) => {
         const out = [];

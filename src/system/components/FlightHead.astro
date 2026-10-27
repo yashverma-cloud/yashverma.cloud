@@ -8,10 +8,9 @@
  *          controller may still drop to still if WebGL fails to start.
  *   still  everything else, and JS off (no script, no data-mode).
  *
- * The rise waits on document.fonts.load() for the name's face, not on document.fonts.ready:
- * .ready resolves as soon as nothing is loading, which on a cold load is before the preloaded
- * face has even been asked for. A short timeout lets the name rise anyway on a slow connection
- * (its fallback is metric-matched, so the late swap moves nothing). `window.__risen` resolves
+ * The rise waits for Page.astro's font gate (`window.__fonts`), which opens once the faces have
+ * loaded, or after 900 ms on a slow connection (the fallbacks are metric-matched, so a late swap
+ * moves nothing), and the rest of the first screen arrives with it. `window.__risen` resolves
  * when the rise is over; the scene loads after it, so compiling shaders never stalls the motion.
  */
 ---
@@ -50,10 +49,6 @@
         risen();
       }, 1800);
     };
-    setTimeout(go, 900);
-    if (document.fonts && document.fonts.load)
-      document.fonts.load('300 1em Archivo', 'Yash Verma').then(function () {
-        requestAnimationFrame(go);
-      }, go);
+    (window.__fonts || Promise.resolve()).then(go);
   })();
 </script>
