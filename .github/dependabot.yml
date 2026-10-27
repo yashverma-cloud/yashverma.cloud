@@ -1,22 +1,41 @@
 version: 2
 updates:
+  # One weekly PR for every minor and patch update; a separate PR for each major.
+  # The groups apply to version updates only, so security updates still arrive one PR each.
   - package-ecosystem: npm
     directory: '/'
     schedule:
-      interval: monthly
-    open-pull-requests-limit: 5
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 4
     groups:
-      astro:
+      # Astro and its integrations release majors together; one PR keeps them in step.
+      astro-major:
+        applies-to: version-updates
         patterns:
           - 'astro'
           - '@astrojs/*'
+        update-types: ['major']
+      minor-and-patch:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: ['minor', 'patch']
     ignore:
       # @astrojs/check supports TypeScript 5 and 6 only. Remove once it supports 7.
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
+      # satori renders the OG images; 0.63 bands the sky gradients. Patches only; retest before lifting.
+      - dependency-name: 'satori'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
 
   - package-ecosystem: github-actions
     directory: '/'
     schedule:
-      interval: monthly
-    open-pull-requests-limit: 5
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 2
+    groups:
+      minor-and-patch:
+        applies-to: version-updates
+        patterns: ['*']
+        update-types: ['minor', 'patch']
