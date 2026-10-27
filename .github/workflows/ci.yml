@@ -18,6 +18,8 @@ jobs:
         uses: actions/setup-node@v7
         with:
           node-version: 22
+          # Astro needs a recent 22.x; the runner's cached Node can lag behind.
+          check-latest: true
           cache: npm
 
       - name: Install
