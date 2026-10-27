@@ -38,3 +38,4 @@ Thumbs.db
 
 # Downloaded font sources and tool venvs (scripts/system/fonts.py)
 .cache/
+.lighthouseci/

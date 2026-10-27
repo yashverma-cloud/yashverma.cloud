@@ -85,20 +85,21 @@ export default defineConfig({
   security: {
     // Astro hashes every script and <style> it emits into a CSP <meta> on each page.
     // GA4 loads from googletagmanager.com and reports to google-analytics.com and
-    // www.google.com/g/collect (Base.astro).
+    // www.google.com/g/collect (Base.astro). Cloudflare Web Analytics (enabled on the Pages project)
+    // injects its beacon from static.cloudflareinsights.com and reports to cloudflareinsights.com.
     // Directives a <meta> can't carry (frame-ancestors) are headers in public/_headers.
     csp: {
       directives: [
         "default-src 'self'",
         "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://www.google.com",
-        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com",
+        "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://www.google.com https://cloudflareinsights.com",
         "font-src 'self'",
         "object-src 'none'",
         "base-uri 'self'",
         "form-action 'self'",
       ],
       scriptDirective: {
-        resources: ["'self'", 'https://www.googletagmanager.com'],
+        resources: ["'self'", 'https://www.googletagmanager.com', 'https://static.cloudflareinsights.com'],
       },
       styleDirective: {
         // Diagrams and the poster pass CSS custom properties through style attributes.

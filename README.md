@@ -82,6 +82,20 @@ list and move `/writing/` into the full set of assertions.
 - CI caches Astro's encoded images (`node_modules/.astro`), keyed on `src/assets/`, the config
   and the lockfile, so a warm run skips re-encoding the stills. The output is the same.
 
+## Monitoring
+
+- Uptime (`.github/workflows/uptime.yml`): every 15 minutes, the home page, a case study, the
+  runbook and one old github.io address (which must still redirect). Three tries per URL; a
+  failed run is the alert, emailed by GitHub to the account that owns the schedule.
+- Lighthouse on the live site (`.github/workflows/lighthouse-live.yml`, config
+  `lighthouserc.live.json`): weekly, the same gates as CI; reports kept as an artifact for 90 days.
+- Real visitors: Cloudflare Web Analytics (enabled on the Pages project; its beacon hosts are in
+  the CSP) for Core Web Vitals per page, alongside GA4.
+- Front-end errors: script errors, unhandled rejections and lost WebGL contexts are sent to GA4 as
+  `exception` events (at most 5 a page), from `src/system/Page.astro`.
+- GitHub turns scheduled workflows off after 60 days without repository activity; re-enable them
+  from the Actions tab if that happens.
+
 ## Dependencies
 
 Dependabot (`.github/dependabot.yml`) opens, every Monday, one grouped pull request for all minor

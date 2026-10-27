@@ -1,0 +1,37 @@
+name: Uptime
+
+# Every 15 minutes: the home page, a case study, the runbook and one old github.io address
+# (which must still redirect here). A failed run is the alert: GitHub emails it to the account
+# that owns the schedule. Each URL gets three tries, 10 s apart, before it counts as down.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check the sites
+        run: |
+          # check <url> <status> [text the redirect target must contain]
+          check() {
+            local got code to
+            for try in 1 2 3; do
+              got=$(curl -sS -o /dev/null --max-time 20 -w '%{http_code} %{redirect_url}' "$1" || echo "000 ")
+              code=${got%% *}; to=${got#* }
+              if [[ $code == "$2" && $to == *"${3:-}"* ]]; then echo "ok    $1 -> $got"; return 0; fi
+              sleep 10
+            done
+            echo "::error::$1 answered '$got', expected $2 ${3:-}"
+            return 1
+          }
+          fail=0
+          check https://yashverma.cloud/ 200 || fail=1
+          check https://yashverma.cloud/work/karpenter-autoscaling/ 200 || fail=1
+          check https://runbook.yashverma.cloud/ 200 || fail=1
+          check https://yashverma-cloud.github.io/work/karpenter-autoscaling/ 301 yashverma.cloud/work/karpenter-autoscaling/ || fail=1
+          exit $fail
