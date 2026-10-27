@@ -6,10 +6,10 @@ export const SITE = {
   /** Official title, must match the resume (CLAUDE.md). */
   jobTitle: 'Infrastructure Engineer, Cloud Operations',
   employer: 'Copado',
-  location: 'Jaipur, India',
+  location: 'India · IST',
   title: 'Yash Verma — cloud infrastructure engineer',
   description:
-    'I keep production Kubernetes running when nodes die. Infrastructure Engineer, Cloud Operations at Copado, in Jaipur. Autoscaling, cost and observability across multi-region production infrastructure. Five years on AWS and GCP, at Treebo, BLG and now Copado.',
+    'I keep production Kubernetes running when nodes die. Infrastructure Engineer, Cloud Operations at Copado. Autoscaling, cost and observability across multi-region production infrastructure. Five years on AWS and GCP, at Treebo, BLG and now Copado.',
   analyticsId: 'G-75ZS56MGG5',
   /** Attribution on X link cards (twitter:site). */
   xHandle: '@yashverma_cloud',

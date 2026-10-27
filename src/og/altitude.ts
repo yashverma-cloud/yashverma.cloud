@@ -87,7 +87,7 @@ export async function homeCard(): Promise<El> {
     div(
       { position: 'absolute', left: 66, top: horizon + 26, flexDirection: 'column' },
       div({ fontFamily: 'Archivo Wide', fontSize: 32, color: colour.ink }, SITE.jobTitle),
-      div({ fontFamily: 'Archivo', fontSize: 28, color: colour.ink2, marginTop: 6 }, `at ${SITE.employer}, ${SITE.location.split(',')[0]} · ${HOST}`),
+      div({ fontFamily: 'Archivo', fontSize: 28, color: colour.ink2, marginTop: 6 }, `at ${SITE.employer} · ${HOST}`),
     ),
   );
 }
