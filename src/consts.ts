@@ -31,3 +31,17 @@ export const SAME_AS = [
   'https://x.com/yashverma_cloud',
   'https://www.threads.com/@yashverma_cloud',
 ] as const;
+
+/**
+ * Absolute URL of an OG image, versioned with the deploy's commit (Cloudflare Pages sets
+ * CF_PAGES_COMMIT_SHA at build time). Each deploy gets new image URLs, so neither Cloudflare's
+ * edge cache (/og/* is cached for 30 days) nor a link preview cache can keep an old card.
+ */
+export function ogImageHref(path: string): string {
+  const url = new URL(path, SITE.url);
+  // Read through globalThis: this module is also bundled for the browser, which has no process.
+  const env = (globalThis as { process?: { env: Record<string, string | undefined> } }).process?.env;
+  const version = (env?.CF_PAGES_COMMIT_SHA ?? '').slice(0, 7);
+  if (version) url.searchParams.set('v', version);
+  return url.href;
+}

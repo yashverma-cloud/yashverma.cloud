@@ -11,7 +11,7 @@ import './fonts.css';
 import './system.css';
 import { getImage } from 'astro:assets';
 import portrait from '../assets/yash.jpg';
-import { SITE, SAME_AS } from '../consts';
+import { SITE, SAME_AS, ogImageHref } from '../consts';
 import Nav from './components/Nav.astro';
 import Footer from './components/Footer.astro';
 
@@ -56,7 +56,7 @@ const {
 
 const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
 // Crawlers need absolute image URLs.
-const ogImageUrl = new URL(ogImage, Astro.site ?? SITE.url).href;
+const ogImageUrl = ogImageHref(ogImage);
 
 // The portrait, as a plain JPEG Google can use for the person.
 const portraitJpg = await getImage({ src: portrait, width: 400, height: 400, format: 'jpg' });
