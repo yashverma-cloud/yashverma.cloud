@@ -41,7 +41,7 @@ const server = await serveDist(4401, join(ROOT, 'dist'));
 const browser = await chromium.launch();
 try {
   for (const job of JOBS) {
-    const page = await browser.newPage({ viewport: { width: job.w, height: job.h }, deviceScaleFactor: 1 });
+    const page = await browser.newPage({ viewport: { width: job.w, height: job.h }, deviceScaleFactor: 1, bypassCSP: true });
     await page.goto(`http://127.0.0.1:4401/lab/brand/${job.page}/`);
     if (guides) await page.evaluate(() => document.body.classList.add('guides'));
     await page.waitForFunction(() => document.documentElement.dataset.ready === 'true');
