@@ -4,8 +4,8 @@ Underscore-prefixed, so the collection loader ignores this file. It is the contr
 writes the posts; the section's code is in `src/pages/writing/`, `src/pages/og/writing/`,
 `src/system/templates/` (Note, Article) and `postCard` in `src/og/altitude.ts`.
 
-**Status: routed, nothing published.** `/writing/` shows "No posts yet.", carries `noindex`, and
-stays out of the sitemap and the nav until the first post is published (README.md, "/writing").
+**Status: live.** Ten dated notes were imported from LinkedIn on 28 Oct 2026. With none published,
+`/writing/` shows "No posts yet." and carries `noindex` (README.md, "/writing").
 
 ## Frontmatter
 

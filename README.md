@@ -57,15 +57,14 @@ Design tokens are defined once in `src/system/tokens.mjs`; `npm run build` regen
 
 ## /writing
 
-Postmortems and notes, from the `writing` collection (`src/content/writing/`; the rules for a
-post file are in `_contract.md` there). Only entries with `draft: false` appear. While none is
-published, `/writing/` shows "No posts yet.", carries `noindex`, and is left out of the sitemap
-(`astro.config.mjs`) and the nav (`Nav.astro`); the first published post brings all three in,
-with its page, Open Graph card and `BlogPosting` data.
+Notes and articles, from the `writing` collection (`src/content/writing/`; the rules for a
+post file are in `_contract.md` there). Only entries with `draft: false` appear. A published
+entry gets a page, an Open Graph card, `BlogPosting` data, a sitemap entry, a listing row and the
+Writing item in the nav. With none published, `/writing/` shows "No posts yet." and carries
+`noindex`.
 
-`lighthouserc.json` audits `/writing/` for accessibility and best practices only while it is
-`noindex`. When the first post is published, add its `/writing/<slug>/index.html` to the `url`
-list and move `/writing/` into the full set of assertions.
+`lighthouserc.json` audits `/writing/` and one note (all notes share a template) with the full
+set of assertions.
 
 ## Deploys
 
