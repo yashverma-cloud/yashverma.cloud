@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import Page from '../../system/Page.astro';
 import SectionHeader from '../../system/components/SectionHeader.astro';
 import WritingList from '../../system/components/WritingList.astro';
+import WritingGround from '../../system/components/WritingGround.astro';
 import { SITE } from '../../consts';
 
 /**
@@ -21,16 +22,17 @@ const rows = posts.map((p) => ({ id: p.id, title: p.data.title, description: p.d
   description="Postmortems and notes on running production infrastructure — Kubernetes, autoscaling, cost and observability on AWS and GCP."
   noindex={posts.length === 0}
 >
-  <div class="writing" data-await-font>
-    <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
-    <WritingList posts={rows} />
-  </div>
+  <WritingGround>
+    <div class="writing" data-await-font>
+      <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
+      <WritingList posts={rows} />
+    </div>
+  </WritingGround>
 </Page>
 
 <style>
   .writing {
     min-height: 70svh;
     padding-block: calc(var(--nav-h) + var(--space-2xl)) var(--space-3xl);
-    background: var(--night);
   }
 </style>
