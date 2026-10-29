@@ -1,0 +1,69 @@
+---
+/**
+ * The ground under every /writing page (the list, a note, an article): the template's horizon
+ * across the top, the dawn wash under it, and a little faint linework standing on it. One
+ * static CSS/SVG layer, the same on all three; it fades out before the body text begins.
+ * No script, no motion, nothing per post.
+ */
+import { KARPENTER_SKETCH, isoDrawing } from '../brand/linework';
+
+// The drawing's first five parts: the running boxes and the field, without the amber pod.
+const { svg, box } = isoDrawing({ boxes: KARPENTER_SKETCH.boxes.slice(0, 5), scale: 14, stroke: 1.4 });
+const viewBox = box.map((n) => n.toFixed(1)).join(' ');
+---
+
+<div class="ground">
+  <div class="sky" aria-hidden="true">
+    <svg class="lines" viewBox={viewBox} preserveAspectRatio="xMaxYMax meet" focusable="false" set:html={svg} />
+  </div>
+  <slot />
+</div>
+
+<style>
+  .ground {
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* The layer: its horizon sits at --horizon-y; the wash runs under it and the whole layer
+     fades out well above the text column's body. */
+  .sky {
+    --sky-h: clamp(22rem, 52svh, 40rem);
+    --horizon-y: calc(var(--sky-h) * 0.56);
+    position: absolute;
+    inset: 0 0 auto;
+    height: var(--sky-h);
+    z-index: -1;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(#000 0, #000 var(--horizon-y), transparent 100%);
+    mask-image: linear-gradient(#000 0, #000 var(--horizon-y), transparent 100%);
+  }
+
+  /* The horizon: the system's hairline in the rule colour (--rule at 45%, so a line of text it
+     crosses keeps AA contrast). Under it, the dawn wash. */
+  .sky::before {
+    content: '';
+    position: absolute;
+    inset: var(--horizon-y) 0 0;
+    border-top: var(--w-hairline) solid rgb(95 130 171 / 0.45);
+    background: linear-gradient(rgb(226 144 96 / 0.14), transparent);
+  }
+
+  /* The linework stands on the horizon, at the right, faint; quieter still on a phone. */
+  .lines {
+    position: absolute;
+    right: max(var(--margin), env(safe-area-inset-right));
+    bottom: calc(var(--sky-h) - var(--horizon-y));
+    width: clamp(11rem, 30vw, 40rem);
+    height: auto;
+    max-height: calc(var(--horizon-y) - var(--nav-h));
+    opacity: 0.2;
+    overflow: visible;
+  }
+
+  @media (max-width: 48rem) {
+    .lines {
+      opacity: 0.14;
+    }
+  }
+</style>
