@@ -26,7 +26,7 @@ const published = routed ? await getCollection('writing', ({ data }) => !data.dr
 const items = [
   { label: 'Work', href: '/#work', narrow: true },
   { label: 'Experience', href: '/#experience', narrow: false },
-  ...(published.length > 0 ? [{ label: 'Writing', href: '/writing/', narrow: false }] : []),
+  ...(published.length > 0 ? [{ label: 'Writing', href: '/writing/', narrow: true }] : []),
   { label: 'Contact', href: '/#contact', narrow: true },
 ];
 const path = Astro.url.pathname;
