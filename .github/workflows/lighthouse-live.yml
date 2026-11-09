@@ -26,7 +26,9 @@ jobs:
           check-latest: true
 
       # Cloudflare's bot protection injects an inline script that the CSP blocks, so Lighthouse's
-      # console-errors audit is skipped (lighthouserc.live.json) and checked in the next step instead.
+      # console-errors audit is skipped (lighthouserc.live.json) and checked in the last step instead,
+      # on the pages.dev address: the same deployment and CSP, outside the bot protection (which
+      # challenges a browser driven by Playwright).
       - name: Lighthouse CI against yashverma.cloud
         run: npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.live.json
 
@@ -40,9 +42,9 @@ jobs:
           CHROME_CHANNEL: chrome
         run: >-
           node scripts/system/live-console.mjs
-          https://yashverma.cloud/
-          https://yashverma.cloud/work/karpenter-autoscaling/
-          https://yashverma.cloud/work/cloud-cost-optimisation/
+          https://yashverma-cloud.pages.dev/
+          https://yashverma-cloud.pages.dev/work/karpenter-autoscaling/
+          https://yashverma-cloud.pages.dev/work/cloud-cost-optimisation/
 
       - name: Keep the reports
         if: always()
