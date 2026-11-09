@@ -24,7 +24,7 @@
     "satori": "^0.33.5",
     "three": "^0.187.0",
     "typescript": "^6.0.3",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/three": "^0.187.0",
