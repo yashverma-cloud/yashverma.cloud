@@ -97,7 +97,7 @@ set of assertions.
 
 ## Dependencies
 
-Dependabot (`.github/dependabot.yml`) opens, every Monday, one grouped pull request for all minor
+Dependabot (`.github/dependabot.yml`) opens, on the first day of each month, one grouped pull request for all minor
 and patch updates, and a separate pull request for each major (Astro and its integrations
 together). Security updates, if enabled in the repository settings, arrive one pull request each.
 
