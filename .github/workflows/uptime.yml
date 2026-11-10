@@ -1,7 +1,7 @@
 name: Uptime
 
-# Every 15 minutes: the home page, a case study, the runbook and one old github.io address
-# (which must still redirect here). A failed run is the alert: GitHub emails it to the account
+# Every 15 minutes: the home page, a case study, the runbook (each on its pages.dev address and on
+# its custom domain) and one old github.io address (which must still redirect here). A failed run is the alert: GitHub emails it to the account
 # that owns the schedule. Each URL gets three tries, 10 s apart, before it counts as down.
 on:
   schedule:
@@ -29,9 +29,27 @@ jobs:
             echo "::error::$1 answered '$got', expected $2 ${3:-}"
             return 1
           }
+          # edge <url>: the custom domain answers through Cloudflare. Bot protection may answer this
+          # runner with its challenge (403 plus a cf-mitigated: challenge header), which counts as up.
+          edge() {
+            local code mitigated
+            for try in 1 2 3; do
+              read -r code mitigated < <(curl -sS -o /dev/null -D - --max-time 20 "$1" 2>/dev/null \
+                | awk 'NR==1{c=$2} tolower($1)=="cf-mitigated:"{m=$2} END{gsub(/\r/,"",m); print c, m}')
+              if [[ $code == 200 ]]; then echo "ok    $1 -> 200"; return 0; fi
+              if [[ $code == 403 && $mitigated == challenge ]]; then echo "ok    $1 -> 403 bot challenge"; return 0; fi
+              sleep 10
+            done
+            echo "::error::$1 answered '${code:-000} ${mitigated:-}', expected 200 or a Cloudflare bot challenge"
+            return 1
+          }
           fail=0
-          check https://yashverma.cloud/ 200 || fail=1
-          check https://yashverma.cloud/work/karpenter-autoscaling/ 200 || fail=1
-          check https://runbook.yashverma.cloud/ 200 || fail=1
+          # The deployments themselves, on their pages.dev addresses (outside the zone's bot protection).
+          check https://yashverma-cloud.pages.dev/ 200 || fail=1
+          check https://yashverma-cloud.pages.dev/work/karpenter-autoscaling/ 200 || fail=1
+          check https://yashverma-runbook.pages.dev/ 200 || fail=1
+          edge https://yashverma.cloud/ || fail=1
+          edge https://yashverma.cloud/work/karpenter-autoscaling/ || fail=1
+          edge https://runbook.yashverma.cloud/ || fail=1
           check https://yashverma-cloud.github.io/work/karpenter-autoscaling/ 301 yashverma.cloud/work/karpenter-autoscaling/ || fail=1
           exit $fail

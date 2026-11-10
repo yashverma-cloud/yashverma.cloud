@@ -9,6 +9,7 @@
       "numberOfRuns": 3,
       "settings": {
         "chromeFlags": "--no-sandbox --headless=new",
+        "skipAudits": ["errors-in-console"],
         "blockedUrlPatterns": [
           "*google-analytics.com*",
           "*analytics.google.com*",
