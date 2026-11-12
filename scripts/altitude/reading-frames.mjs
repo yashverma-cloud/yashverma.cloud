@@ -15,7 +15,7 @@ const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || `--$
 const [w, h] = arg('size', '1440x900').split('x').map(Number);
 const mode = arg('mode', 'live');
 const OUT = arg('out', '.screenshots/web-06-final2/reading');
-const all = ['cloud-cost-optimisation', 'live-migration-to-kubernetes', 'alert-payload-reduction', 'karpenter-autoscaling', 'jarvis-slack-ops', 'sendmail-ses-cli'];
+const all = ['cloud-cost-optimisation', 'live-migration-to-kubernetes', 'alert-payload-reduction', 'karpenter-autoscaling', 'jarvis-slack-ops', 'sendmail-ses-cli', 'scaling-on-sessions'];
 const only = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const LINE = 0.55;
 

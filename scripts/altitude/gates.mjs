@@ -29,6 +29,7 @@ const PAGES = [
   '/work/karpenter-autoscaling/',
   '/work/jarvis-slack-ops/',
   '/work/sendmail-ses-cli/',
+  '/work/scaling-on-sessions/',
   '/writing/',
   '/404.html',
 ];

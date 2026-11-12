@@ -12,7 +12,8 @@
         "http://localhost/work/alert-payload-reduction/index.html",
         "http://localhost/work/karpenter-autoscaling/index.html",
         "http://localhost/work/jarvis-slack-ops/index.html",
-        "http://localhost/work/sendmail-ses-cli/index.html"
+        "http://localhost/work/sendmail-ses-cli/index.html",
+        "http://localhost/work/scaling-on-sessions/index.html"
       ],
       "numberOfRuns": 3,
       "settings": {
