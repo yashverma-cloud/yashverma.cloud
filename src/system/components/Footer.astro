@@ -8,7 +8,6 @@ const year = new Date().getFullYear();
 
 <footer class="footer bleed">
   <p class="who t-small">© {year} Yash Verma</p>
-  <p class="built t-small ink-3">Built with Astro. Hosted on Cloudflare Pages.</p>
   <p class="sa last" lang="sa">साम्ब सदाशिव</p>
 </footer>
 
@@ -27,19 +26,13 @@ const year = new Date().getFullYear();
     color: var(--ink-2);
   }
 
-  .built {
-    grid-column: 7 / -1;
-    text-align: right;
-  }
-
   .last {
     grid-column: 1 / -1;
     margin-top: var(--space-xs);
   }
 
   @media (max-width: 40rem) {
-    .who,
-    .built {
+    .who {
       grid-column: 1 / -1;
       text-align: left;
     }

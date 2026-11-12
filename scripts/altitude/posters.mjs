@@ -34,6 +34,7 @@ const WORK = [
   'karpenter-autoscaling',
   'jarvis-slack-ops',
   'sendmail-ses-cli',
+  'scaling-on-sessions',
 ];
 // Progress on the home flight: HOLDS in src/altitude/flights/home.ts, just before each leave,
 // then the approach (APPROACH): mid-glide, and where it lands at contact.

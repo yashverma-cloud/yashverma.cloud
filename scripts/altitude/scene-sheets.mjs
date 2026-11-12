@@ -11,7 +11,7 @@ import { serveDist } from '../lab/serve.mjs';
 
 const arg = (k, d) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || `--${k}=${d}`).split('=')[1];
 const [w, h] = arg('size', '1440x900').split('x').map(Number);
-const all = ['cloud-cost-optimisation', 'live-migration-to-kubernetes', 'alert-payload-reduction', 'karpenter-autoscaling', 'jarvis-slack-ops', 'sendmail-ses-cli'];
+const all = ['cloud-cost-optimisation', 'live-migration-to-kubernetes', 'alert-payload-reduction', 'karpenter-autoscaling', 'jarvis-slack-ops', 'sendmail-ses-cli', 'scaling-on-sessions'];
 const only = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const OUT = '.screenshots/web-06/scenes';
 await mkdir(OUT, { recursive: true });

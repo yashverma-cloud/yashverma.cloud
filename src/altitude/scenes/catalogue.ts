@@ -43,6 +43,7 @@ export const VIEWS = {
   'karpenter-autoscaling': orbit([0, 4, -12], 380),
   'jarvis-slack-ops': orbit([6, 6, 12], 350),
   'sendmail-ses-cli': orbit([-28, 6, 0], 330),
+  'scaling-on-sessions': orbit([-10, 12, 0], 330),
 } satisfies Record<string, SceneView>;
 
 /** A case study's three reading sections, in the order they appear: Problem, What I did, Result. */
@@ -103,6 +104,12 @@ export const STATES = {
     approach: { t: [2.2, 3.6], back: 0.96 },
     result: { t: [3.6, 5.6], back: 1 },
   },
+  // Load gathered on one pod under a low average; VPA, the cap and KEDA's first pod; the next pod arrives early.
+  'scaling-on-sessions': {
+    problem: { t: [1.0, 2.15], back: 0.92 },
+    approach: { t: [2.15, 4.8], back: 0.96 },
+    result: { t: [4.8, 6.0], back: 1 },
+  },
 } satisfies Record<string, Record<StateKey, ReadingState>>;
 
 const alt = (slug: string) => FEATURED.find((f) => f.slug === slug)?.alt ?? '';
@@ -119,6 +126,10 @@ export const SCENES = {
   'sendmail-ses-cli': {
     alt: 'Legacy jobs pipe mail into the same socket; the old tool lifts out and a new CLI of the same shape drops in, sending through AWS SES to the mailbox.',
     load: () => import('./sendmail') as Promise<SceneModule>,
+  },
+  'scaling-on-sessions': {
+    alt: 'Pods in a row with most of the load on one while the average stays low; VPA makes the pods taller, a session cap bounds each one, and KEDA adds new pods, dashed until ready, before the others reach the cap.',
+    load: () => import('./sessions') as Promise<SceneModule>,
   },
 } as const;
 
