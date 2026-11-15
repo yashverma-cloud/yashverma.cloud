@@ -30,7 +30,6 @@ const PAGES = [
   '/work/jarvis-slack-ops/',
   '/work/sendmail-ses-cli/',
   '/work/scaling-on-sessions/',
-  '/writing/',
   '/404.html',
 ];
 const PHONE = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true };

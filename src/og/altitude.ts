@@ -5,7 +5,6 @@
  *
  *   home        the hero at one size: the name on the horizon of the real scene, the role below
  *   case study  that case study's scene, the title and the mechanism, the lockup
- *   writing     the post's title and description on the night ground over the dawn horizon
  *
  * Everything that matters sits inside the 1200×600 band X keeps when it crops to 2:1.
  */
@@ -112,26 +111,6 @@ export async function caseStudyCard({ title, mechanism, still }: CaseStudyCard):
       div({ fontFamily: 'Archivo', fontWeight: 600, fontSize: 22, color: colour.ink2, marginBottom: 22 }, 'Case study'),
       div({ fontFamily: 'Archivo Wide', fontSize: 58, lineHeight: 1.06, color: colour.ink, letterSpacing: -1.2, textWrap: 'balance' }, title),
       div({ fontFamily: 'Archivo', fontSize: 28, lineHeight: 1.3, color: colour.ink2, marginTop: 26 }, mechanism),
-    ),
-    signature(),
-  );
-}
-
-export interface PostCard {
-  title: string;
-  description: string;
-}
-
-/** A post's card: no picture, the words on the night ground over the dawn horizon. */
-export function postCard({ title, description }: PostCard): El {
-  return div(
-    { width: OG.width, height: OG.height, position: 'relative', backgroundColor: colour.night },
-    div({ position: 'absolute', left: 0, top: 470, width: OG.width, height: 160, borderTop: `2px solid ${colour.rule}`, backgroundImage: `linear-gradient(180deg, ${colour.glow}38 0%, ${colour.glow}00 100%)` }),
-    div(
-      { position: 'absolute', left: 64, top: 60, width: 1000, flexDirection: 'column' },
-      div({ fontFamily: 'Archivo', fontWeight: 600, fontSize: 22, color: colour.ink2, marginBottom: 22 }, 'Writing'),
-      div({ fontFamily: 'Archivo Wide', fontSize: title.length > 52 ? 50 : 60, lineHeight: 1.06, color: colour.ink, letterSpacing: -1.2, textWrap: 'balance', maxWidth: 940 }, title),
-      div({ fontFamily: 'Archivo', fontSize: 28, lineHeight: 1.3, color: colour.ink2, marginTop: 24, maxWidth: 900 }, description),
     ),
     signature(),
   );
