@@ -1,7 +1,7 @@
 ---
 role: 'DevOps Engineer'
 company: 'Treebo Hospitality Ventures'
-location: 'Bengaluru, India'
+location: 'India'
 start: '2024-07'
 end: '2025-07'
 order: 3
