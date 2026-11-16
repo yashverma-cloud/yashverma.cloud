@@ -1,7 +1,7 @@
 name: Uptime
 
-# Every 15 minutes: the home page, a case study, the runbook (each on its pages.dev address and on
-# its custom domain) and one old github.io address (which must still redirect here). A failed run is the alert: GitHub emails it to the account
+# Every 15 minutes: the home page, a case study and the runbook (each on its pages.dev address and on
+# its custom domain), the writing site, one old /writing/ address (which must redirect there) and one old github.io address (which must still redirect here). A failed run is the alert: GitHub emails it to the account
 # that owns the schedule. Each URL gets three tries, 10 s apart, before it counts as down.
 on:
   schedule:
@@ -51,5 +51,7 @@ jobs:
           edge https://yashverma.cloud/ || fail=1
           edge https://yashverma.cloud/work/karpenter-autoscaling/ || fail=1
           edge https://runbook.yashverma.cloud/ || fail=1
+          edge https://writing.yashverma.cloud/ || fail=1
+          check https://yashverma-cloud.pages.dev/writing/ 301 writing.yashverma.cloud/ || fail=1
           check https://yashverma-cloud.github.io/work/karpenter-autoscaling/ 301 yashverma.cloud/work/karpenter-autoscaling/ || fail=1
           exit $fail

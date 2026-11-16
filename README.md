@@ -35,13 +35,13 @@ then open the network URL it prints.
 
 ```
 src/
-  content/      experience, work, certifications, recognition, links, writing  (content collections)
+  content/      experience, work, certifications, recognition, links  (content collections)
   system/       the design system: tokens.mjs (single source), tokens.css (generated), fonts,
-                system.css, Page.astro (metadata, JSON-LD, analytics), components/, templates/
+                system.css, Page.astro (metadata, JSON-LD, analytics), components/
   altitude/     the 3D world: engine/, scenes/ (one drawing per case study), flights/ (camera paths),
                 home.ts and work.ts (the live controllers), posters.ts (still image sizes)
   og/           altitude.ts — Open Graph cards (Satori + resvg), drawn at build time
-  pages/        index, work/[slug], writing/, [short] (bio short links), og/ (Open Graph images), 404,
+  pages/        index, work/[slug], [short] (bio short links), og/ (Open Graph images), 404,
                 lab/ (style guide, scene and brand pages; noindex, out of the sitemap)
 public/         fonts, favicon, robots.txt, _headers and _redirects (Cloudflare Pages)
 brand/          social covers and post templates, rendered locally (see brand/README.md)
@@ -55,16 +55,13 @@ scripts/        check-old-urls.mjs — checks that every old address redirects t
 Design tokens are defined once in `src/system/tokens.mjs`; `npm run build` regenerates
 `src/system/tokens.css` and fails on drift or on any text pair under WCAG AA.
 
-## /writing
+## Writing
 
-Notes and articles, from the `writing` collection (`src/content/writing/`; the rules for a
-post file are in `_contract.md` there). Only entries with `draft: false` appear. A published
-entry gets a page, an Open Graph card, `BlogPosting` data, a sitemap entry, a listing row and the
-Writing item in the nav. With none published, `/writing/` shows "No posts yet." and carries
-`noindex`.
-
-`lighthouserc.json` audits `/writing/` and one note (all notes share a template) with the full
-set of assertions.
+Notes and articles are their own site, <https://writing.yashverma.cloud/>, built from the
+repository `yashverma-cloud/writing`, so a new note never rebuilds this one. The nav's Writing
+item links there. `public/_redirects` sends the old addresses (`/writing/`, `/writing/<slug>/`,
+`/og/writing/<slug>.png`) to the same page on the subdomain with one 301 each, and the uptime
+check watches both the subdomain and one old address.
 
 ## Deploys
 
@@ -77,14 +74,15 @@ set of assertions.
   check performance on a real device.
 - `public/_headers` sets the security and caching headers; the script and style sources are
   in the CSP `<meta>` that Astro writes from `security.csp` in `astro.config.mjs`.
-  `public/_redirects` answers the bio short links and the runbook's old paths at the edge.
+  `public/_redirects` answers the bio short links and the old runbook and writing paths at the edge.
 - CI caches Astro's encoded images (`node_modules/.astro`), keyed on `src/assets/`, the config
   and the lockfile, so a warm run skips re-encoding the stills. The output is the same.
 
 ## Monitoring
 
 - Uptime (`.github/workflows/uptime.yml`): every 15 minutes, the home page, a case study, the
-  runbook and one old github.io address (which must still redirect). Three tries per URL; a
+  runbook, the writing site, one old `/writing/` address and one old github.io address (both
+  must still redirect). Three tries per URL; a
   failed run is the alert, emailed by GitHub to the account that owns the schedule.
 - Lighthouse on the live site (`.github/workflows/lighthouse-live.yml`, config
   `lighthouserc.live.json`): weekly, the same gates as CI; reports kept as an artifact for 90 days.

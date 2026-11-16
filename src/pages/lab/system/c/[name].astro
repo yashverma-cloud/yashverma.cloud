@@ -4,7 +4,7 @@
  * Real content throughout: every component reads the same collections the site does.
  */
 import type { GetStaticPaths } from 'astro';
-import { getEntry, render } from 'astro:content';
+import { getEntry } from 'astro:content';
 import Page from '../../../../system/Page.astro';
 import Hero from '../../../../system/components/Hero.astro';
 import SectionHeader from '../../../../system/components/SectionHeader.astro';
@@ -15,12 +15,9 @@ import Stack from '../../../../system/components/Stack.astro';
 import RunbookLink from '../../../../system/components/RunbookLink.astro';
 import Recognition from '../../../../system/components/Recognition.astro';
 import Credentials from '../../../../system/components/Credentials.astro';
-import WritingList from '../../../../system/components/WritingList.astro';
 import Contact from '../../../../system/components/Contact.astro';
 import NotFound from '../../../../system/components/NotFound.astro';
 import ScenePoster from '../../../../system/components/ScenePoster.astro';
-import Article from '../../../../system/templates/Article.astro';
-import Note from '../../../../system/templates/Note.astro';
 import { poster } from '../../../../altitude/posters';
 
 import { COMPONENTS, type ComponentName } from '../../../../system/demos';
@@ -31,20 +28,6 @@ const { name } = Astro.params as { name: ComponentName };
 const hero = await poster('lab/altitude/hero');
 const close = await poster('lab/altitude/close');
 const karpenter = await getEntry('work', 'karpenter-autoscaling');
-const draft = await getEntry('writing', 'tuning-karpenter-disruption');
-const Draft = draft ? (await render(draft)).Content : null;
-const posts = draft
-  ? [
-      { id: 'specimen-article', title: draft.data.title, description: draft.data.description, published: draft.data.published, kind: 'article' as const },
-      {
-        id: 'specimen-note',
-        title: 'Autoscaling that is not tuned',
-        description: 'Autoscaling that is not tuned is just a faster way to move workloads you did not want moved.',
-        published: '2026-09-20',
-        kind: 'note' as const,
-      },
-    ]
-  : [];
 ---
 
 <Page title={`${name} — Altitude system`} noindex analytics={false} nav={name === 'nav' || name === 'hero' ? 'over' : 'none'} wordmark={name !== 'hero'} footer={name === 'footer' || name === 'not-found'} bodyClass="demo">
@@ -132,41 +115,6 @@ const posts = draft
         <SectionHeader title="Certifications and education" id="certifications" />
         <Credentials />
       </div>
-    )
-  }
-  {
-    name === 'writing-list' && (
-      <div class="demo-pad">
-        <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
-        <WritingList posts={posts} />
-      </div>
-    )
-  }
-  {
-    name === 'writing-empty' && (
-      <div class="demo-pad">
-        <SectionHeader title="Writing" id="writing" as="h1" lead="Postmortems and notes on running production infrastructure." />
-        <WritingList posts={[]} />
-      </div>
-    )
-  }
-  {
-    name === 'article' && draft && Draft && (
-      <Article title={draft.data.title} description={draft.data.description} published={draft.data.published}>
-        <Draft />
-      </Article>
-    )
-  }
-  {
-    name === 'note' && (
-      <Note title="Autoscaling that is not tuned" published="2026-09-20">
-        <p>
-          Installing it was the short part. Most of the work was what came after, because a controller that adds and removes
-          capacity on its own will do exactly that, and its defaults have no way of knowing which of your workloads mind
-          being moved.
-        </p>
-        <p>Autoscaling that is not tuned is just a faster way to move workloads you did not want moved.</p>
-      </Note>
     )
   }
   {

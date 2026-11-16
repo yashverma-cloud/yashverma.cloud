@@ -18,3 +18,12 @@
 /yv-cloud-runbook/*  https://runbook.yashverma.cloud/:splat  301
 /runbook             https://runbook.yashverma.cloud/  301
 /runbook/*           https://runbook.yashverma.cloud/:splat  301
+
+# Writing moved to its own site on 15 Nov 2026. One hop each, to the trailing-slash URL the
+# subdomain serves; the card images keep their file names under /og/.
+/writing                 https://writing.yashverma.cloud/  301
+/writing/                https://writing.yashverma.cloud/  301
+/writing/:slug/          https://writing.yashverma.cloud/:slug/  301
+/writing/:slug           https://writing.yashverma.cloud/:slug/  301
+/writing/*               https://writing.yashverma.cloud/  301
+/og/writing/:file        https://writing.yashverma.cloud/og/:file  301
