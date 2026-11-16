@@ -1,7 +1,7 @@
 ---
 role: 'Associate DevOps / SRE Engineer'
 company: 'Treebo Hospitality Ventures'
-location: 'Bengaluru, India'
+location: 'India'
 start: '2021-12'
 end: '2024-06'
 order: 4
